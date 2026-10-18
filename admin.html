@@ -466,9 +466,9 @@ var ICONS = {
 function ico(n) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + ICONS[n] + "</svg>"; }
 /* soon:true = planned module, NOT built yet. It opens an honest "not built" page. */
 var NAV = [
-  ["Main", [["overview", "Dashboard", "grid"], ["leads", "Leads & Inquiries", "mail"], ["assessments", "Assessments", "check"], ["enrollments", "Enrollments", "users"]]],
+  ["Main", [["overview", "Dashboard", "grid"], ["leads", "Leads & Inquiries", "mail"], ["assessments", "Assessments", "check"], ["enrollments", "Enrollments", "users"], ["students", "Students", "user"]]],
   ["Website", [["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
-  ["Academy (planned)", [["soon/students", "Students", "user", 1], ["soon/classes", "Classes & Timetable", "cal", 1], ["soon/teachers", "Teachers", "users", 1], ["soon/finance", "Finance", "cash", 1], ["soon/brand", "Brand & Logo", "brush", 1], ["soon/automation", "Automation", "bolt", 1]]],
+  ["Academy (planned)", [["soon/classes", "Classes & Timetable", "cal", 1], ["soon/teachers", "Teachers", "users", 1], ["soon/finance", "Finance", "cash", 1], ["soon/brand", "Brand & Logo", "brush", 1], ["soon/automation", "Automation", "bolt", 1]]],
   ["System", [["settings", "Settings", "gear"]]]
 ];
 var navShut = {};
@@ -526,8 +526,7 @@ $("#bell").addEventListener("click", function () { var p = $("#bell-pop"); close
 
 /* planned modules: honest placeholder, nothing is faked */
 var SOON = {
-  students: ["Students", "Convert a confirmed inquiry into a student record: guardian details, level, status history, notes, documents.", "Phase 2 (next)"],
-  classes: ["Classes & Timetable", "Groups, schedules, teacher assignment, attendance and holidays.", "Phase 3"],
+  classes: ["Classes & Timetable", "Groups, schedules, teacher assignment, attendance and holidays.", "Phase 3 (next)"],
   teachers: ["Teachers", "Teacher profiles, availability, assignments and compensation records.", "Phase 3"],
   finance: ["Finance", "Fee plans, invoices, manual payment records and reports. No card details are ever stored.", "Phase 4"],
   brand: ["Brand & Logo", "Logo and brand colour management with safe previews.", "Phase 5"],
@@ -638,6 +637,134 @@ VIEWS.overview = async function (el) {
   }
   render();
 };
+/* ================= STUDENTS (Phase 2) ================= */
+var SSTAT = ["Active", "On Hold", "Completed", "Withdrawn"];
+var SS = { q: "", status: "", archived: false };
+function sbadge(v) { return '<span class="badge b-' + (v === "Active" ? "Enrollment-Confirmed" : v === "Withdrawn" ? "Not-Proceeding" : "Follow-up-Required") + '">' + h(v) + "</span>"; }
+function progName(progs, id) { var p = progs.filter(function (x) { return x.id === id; })[0]; return p ? p.title : "—"; }
+
+VIEWS.students = async function (el, args) {
+  if (args[0]) return studentDetail(el, args[0]);
+  var progs = (await q(sb.from("programs").select("id,title").order("sort_order"))).data || [];
+  el.innerHTML = pageHead("Students", "Learners who have enrolled. Created from a confirmed inquiry or added manually.",
+    '<button class="btn ghost wbtn" id="st-conv">Convert from inquiry</button><button class="btn wbtn" id="st-add">+ Add student</button>') +
+    '<div class="panel"><div class="row" style="gap:10px;margin-bottom:12px"><input id="st-q" type="search" placeholder="Search name or code…" style="max-width:280px" value="' + h(SS.q) + '">' +
+    '<select id="st-s" style="width:auto"><option value="">All statuses</option>' + SSTAT.map(function (s) { return '<option' + (SS.status === s ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select>" +
+    '<label class="row small" style="gap:6px"><input id="st-a" type="checkbox"' + (SS.archived ? " checked" : "") + '> Show archived</label></div><div id="st-list"></div></div>';
+  var rows = (await q(sb.from("students").select("id,student_code,full_name,status,country,program_id,start_date,created_at,deleted_at").order("created_at", { ascending: false }).limit(1000))).data || [];
+  function draw() {
+    var t = SS.q.toLowerCase();
+    var r = rows.filter(function (s) { return (SS.archived ? !!s.deleted_at : !s.deleted_at) && (!SS.status || s.status === SS.status) && (!t || (s.full_name + " " + s.student_code).toLowerCase().indexOf(t) > -1); });
+    $("#st-list").innerHTML = r.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Student</th><th>Program</th><th>Status</th><th>Country</th><th>Added</th></tr></thead><tbody>' +
+      r.map(function (s) { return '<tr class="click" data-id="' + s.id + '"><td><b>' + h(s.full_name) + '</b><br><span class="muted small">' + h(s.student_code) + "</span></td><td>" + h(progName(progs, s.program_id)) + "</td><td>" + sbadge(s.status) + "</td><td>" + h(s.country || "—") + "</td><td>" + fmtD(s.created_at) + "</td></tr>"; }).join("") + "</tbody></table></div>" :
+      '<div class="empty">' + (rows.length ? "No students match." : "No students yet. Convert a confirmed inquiry or add one manually.") + "</div>";
+    $$("tr[data-id]", $("#st-list")).forEach(function (tr) { tr.onclick = function () { location.hash = "#students/" + tr.getAttribute("data-id"); }; });
+  }
+  $("#st-q").oninput = function () { SS.q = this.value; draw(); };
+  $("#st-s").onchange = function () { SS.status = this.value; draw(); };
+  $("#st-a").onchange = function () { SS.archived = this.checked; draw(); };
+  draw();
+  $("#st-add").onclick = function () {
+    if (!needWrite()) return;
+    modal({ title: "Add student", okLabel: "Create student",
+      body: F("n-name", "Full name", "", { req: 1, max: 120 }) + '<div class="g2">' + F("n-gender", "Gender", "", { type: "select", options: [["", "Not stated"], "Male", "Female"] }) + F("n-dob", "Date of birth", "", { type: "date" }) + "</div>" +
+        F("n-country", "Country", "", { max: 80 }) + F("n-prog", "Program", "", { type: "select", options: [["", "Not assigned"]].concat(progs.map(function (p) { return [p.id, p.title]; })) }),
+      onOk: async function () {
+        var name = val("n-name"); mark("n-name", null, !name); if (!name) { toast("Enter the student's name.", true); return false; }
+        var r = await q(sb.from("students").insert({ full_name: name, gender: val("n-gender") || null, date_of_birth: val("n-dob") || null, country: val("n-country") || null, program_id: val("n-prog") || null, created_by: me.id }).select("id").single());
+        location.hash = "#students/" + r.data.id;
+      } });
+  };
+  $("#st-conv").onclick = async function () {
+    if (!needWrite()) return;
+    var have = {}; rows.forEach(function (s) { if (s.lead_id) have[s.lead_id] = 1; });
+    var linked = (await q(sb.from("students").select("lead_id").limit(2000))).data || []; linked.forEach(function (s) { if (s.lead_id) have[s.lead_id] = 1; });
+    var ls = ((await q(sb.from("leads").select("id,lead_code,name,student_name").eq("status", "Enrollment Confirmed").order("created_at", { ascending: false }).limit(300))).data || []).filter(function (l) { return !have[l.id]; });
+    if (!ls.length) { modal({ title: "Convert from inquiry", body: '<p>No inquiries are waiting. Only inquiries with status <b>Enrollment Confirmed</b> can be converted. Change the status in <a href="#leads">Leads</a> first.</p>', ok: false, cancelLabel: "Close" }); return; }
+    modal({ title: "Convert from inquiry", okLabel: "Create student",
+      body: F("c-lead", "Confirmed inquiry", "", { type: "select", options: ls.map(function (l) { return [l.id, l.name + (l.student_name ? " — student: " + l.student_name : "") + " (" + l.lead_code + ")"]; }) }) +
+        '<div class="hint">Copies the student name, country, program and the contact as primary guardian. You can edit everything afterwards. The inquiry itself stays unchanged.</div>',
+      onOk: async function () { var r = await q(sb.rpc("convert_lead_to_student", { p_lead_id: val("c-lead") })); location.hash = "#students/" + r.data; } });
+  };
+};
+
+async function studentDetail(el, id) {
+  var s = (await q(sb.from("students").select("*").eq("id", id).single())).data;
+  var progs = (await q(sb.from("programs").select("id,title").order("sort_order"))).data || [];
+  var levels = (await q(sb.from("program_levels").select("id,program_id,level_number,title").order("level_number"))).data || [];
+  var gs = (await q(sb.from("guardians").select("*").eq("student_id", id).order("created_at"))).data || [];
+  var notes = (await q(sb.from("student_notes").select("*").eq("student_id", id).order("created_at", { ascending: false }).limit(100))).data || [];
+  var evs = (await q(sb.from("student_events").select("*").eq("student_id", id).order("created_at", { ascending: false }).limit(50))).data || [];
+  var lead = s.lead_id ? (await sb.from("leads").select("id,lead_code,name").eq("id", s.lead_id).maybeSingle()).data : null;
+  var dirty = false; guard = function () { return dirty; };
+  function lvlOpts(pid) { return [["", "Not assigned"]].concat(levels.filter(function (l) { return l.program_id === pid; }).map(function (l) { return [l.id, "Level " + l.level_number + ": " + l.title]; })); }
+
+  el.innerHTML = '<a href="#students" class="muted">← All students</a>' + pageHead(h(s.full_name) + (s.deleted_at ? ' <span class="badge b-Not-Proceeding">Archived</span>' : ""), h(s.student_code) + (lead ? ' · from inquiry <a href="#leads/' + lead.id + '">' + h(lead.lead_code) + "</a>" : " · added manually"),
+    '<select id="sd-st" class="wbtn" style="width:auto">' + SSTAT.map(function (x) { return "<option" + (x === s.status ? " selected" : "") + ">" + x + "</option>"; }).join("") + '</select><button class="btn ghost wbtn" id="sd-arch">' + (s.deleted_at ? "Restore" : "Archive") + "</button>") +
+    '<div class="dash"><div><div class="panel"><h3 style="margin:0 0 12px">Profile</h3><div class="g2">' + F("p-name", "Full name", s.full_name, { req: 1, max: 120 }) + F("p-gender", "Gender", s.gender || "", { type: "select", options: [["", "Not stated"], "Male", "Female"] }) +
+    F("p-dob", "Date of birth", s.date_of_birth || "", { type: "date" }) + F("p-country", "Country", s.country || "", { max: 80 }) +
+    F("p-prog", "Program", s.program_id || "", { type: "select", options: [["", "Not assigned"]].concat(progs.map(function (p) { return [p.id, p.title]; })) }) + F("p-level", "Level", s.level_id || "", { type: "select", options: lvlOpts(s.program_id) }) + "</div>" +
+    F("p-start", "Start date", s.start_date || "", { type: "date" }) + F("p-notes", "Summary notes", s.notes, { type: "textarea", rows: 3, max: 2000 }) +
+    '<button class="btn wbtn" id="p-save">Save profile</button></div>' +
+    '<div class="panel"><div class="ph2"><h3>Guardians / contacts</h3><button class="btn ghost wbtn" id="g-add">+ Add</button></div><div id="g-list"></div></div></div><div>' +
+    '<div class="panel"><h3 style="margin:0 0 10px">Notes</h3><textarea id="nt-body" rows="2" maxlength="2000" placeholder="Add a note…" class="wbtn"></textarea><button class="btn wbtn" id="nt-add" style="margin:8px 0 12px">Add note</button><div id="nt-list"></div></div>' +
+    '<div class="panel"><h3 style="margin:0 0 10px">History</h3><div id="ev-list"></div></div></div></div>';
+
+  $("#p-prog").onchange = function () { $("#p-level").innerHTML = lvlOpts(this.value).map(function (o) { return '<option value="' + h(o[0]) + '">' + h(o[1]) + "</option>"; }).join(""); };
+  $$("#view input,#view select,#view textarea").forEach(function (x) { if (/^p-/.test(x.id)) x.addEventListener("input", function () { dirty = true; }); });
+
+  function drawG() {
+    $("#g-list").innerHTML = gs.length ? gs.map(function (g) { return '<div class="rl" style="cursor:default"><span class="av2">' + h((g.name || "?").charAt(0).toUpperCase()) + '</span><span class="t"><b>' + h(g.name) + (g.is_primary ? ' <span class="badge b-Enrollment-Confirmed">Primary</span>' : "") + "</b><small>" + h([g.relationship, g.whatsapp, g.email].filter(Boolean).join(" · ") || "No contact details") + '</small></span><button class="btn ghost wbtn" data-ge="' + g.id + '">Edit</button></div>'; }).join("") : '<div class="empty">No guardian or contact yet.</div>';
+    $$("[data-ge]", $("#g-list")).forEach(function (b) { b.onclick = function () { gModal(gs.filter(function (g) { return g.id === b.getAttribute("data-ge"); })[0]); }; });
+  }
+  function gModal(g) {
+    if (!needWrite()) return; g = g || {};
+    var m = modal({ title: g.id ? "Edit contact" : "Add contact", okLabel: "Save",
+      body: F("g-name", "Name", g.name || "", { req: 1, max: 120 }) + F("g-rel", "Relationship (e.g. Mother, Father, Self)", g.relationship || "", { max: 60 }) +
+        '<div class="g2">' + F("g-wa", "WhatsApp", g.whatsapp || "", { max: 40 }) + F("g-em", "Email", g.email || "", { type: "email", max: 160 }) + "</div>" +
+        '<label class="row small" style="gap:6px"><input id="g-pri" type="checkbox"' + (g.is_primary ? " checked" : "") + "> Primary contact</label>" +
+        (g.id ? '<p><button class="btn danger ghost" id="g-del" type="button">Remove this contact</button></p>' : ""),
+      onOk: async function () {
+        var name = val("g-name"); mark("g-name", null, !name); if (!name) { toast("Enter a name.", true); return false; }
+        var em = val("g-em"); if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { mark("g-em", null, true); toast("That email looks wrong.", true); return false; }
+        var row = { student_id: id, name: name, relationship: val("g-rel") || null, whatsapp: val("g-wa") || null, email: em || null, is_primary: val("g-pri") };
+        if (row.is_primary) await q(sb.from("guardians").update({ is_primary: false }).eq("student_id", id));
+        if (g.id) await q(sb.from("guardians").update(row).eq("id", g.id)); else await q(sb.from("guardians").insert(row));
+        gs = (await q(sb.from("guardians").select("*").eq("student_id", id).order("created_at"))).data || []; drawG(); toast("Saved.");
+      } });
+    var d = $("#g-del", m.el); if (d) d.onclick = async function () {
+      if (!await confirmBox("Remove <b>" + h(g.name) + "</b> from this student? This cannot be undone.", { danger: true, okLabel: "Remove" })) return;
+      await q(sb.from("guardians").delete().eq("id", g.id)); gs = gs.filter(function (x) { return x.id !== g.id; }); drawG(); m.close(); toast("Removed.");
+    };
+  }
+  function drawN() {
+    $("#nt-list").innerHTML = notes.length ? '<ul class="tl">' + notes.map(function (n) { return "<li>" + h(n.body).replace(/\n/g, "<br>") + '<br><span class="muted small">' + h(n.author_email || "staff") + " · " + fmtDT(n.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty" style="padding:8px 0">No notes yet.</div>';
+    $("#ev-list").innerHTML = evs.length ? '<ul class="tl">' + evs.map(function (e) { return "<li>" + (e.event_type === "status_change" ? "Status " + h(e.from_status) + " → " + h(e.to_status) : e.event_type === "created" ? "Created — " + h(e.note || "") : h(e.event_type)) + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty" style="padding:8px 0">No history yet.</div>';
+  }
+  async function reloadEv() { evs = (await q(sb.from("student_events").select("*").eq("student_id", id).order("created_at", { ascending: false }).limit(50))).data || []; drawN(); }
+  drawG(); drawN();
+
+  $("#g-add").onclick = function () { gModal(null); };
+  $("#nt-add").onclick = async function () {
+    if (!needWrite()) return; var b = val("nt-body"); if (!b) return;
+    await q(sb.from("student_notes").insert({ student_id: id, author: me.id, author_email: me.email, body: b }));
+    notes = (await q(sb.from("student_notes").select("*").eq("student_id", id).order("created_at", { ascending: false }).limit(100))).data || []; $("#nt-body").value = ""; drawN();
+  };
+  $("#p-save").onclick = async function () {
+    if (!needWrite()) return; var name = val("p-name"); mark("p-name", null, !name); if (!name) { toast("Enter the student's name.", true); return; }
+    await q(sb.from("students").update({ full_name: name, gender: val("p-gender") || null, date_of_birth: val("p-dob") || null, country: val("p-country") || null, program_id: val("p-prog") || null, level_id: val("p-level") || null, start_date: val("p-start") || null, notes: val("p-notes") }).eq("id", id));
+    dirty = false; toast("Profile saved.");
+  };
+  $("#sd-st").onchange = async function () {
+    if (!needWrite()) { this.value = s.status; return; }
+    await q(sb.from("students").update({ status: this.value }).eq("id", id)); s.status = this.value; toast("Status updated."); reloadEv();
+  };
+  $("#sd-arch").onclick = async function () {
+    if (!needWrite()) return;
+    if (!s.deleted_at && !await confirmBox("Archive <b>" + h(s.full_name) + "</b>? They are hidden from the main list but nothing is deleted, and you can restore them.", { okLabel: "Archive" })) return;
+    await q(sb.from("students").update({ deleted_at: s.deleted_at ? null : new Date().toISOString() }).eq("id", id)); dirty = false; route();
+  };
+}
 /* ================= WEBSITE CONTENT (page editor + FAQ) ================= */
 function deep(o) { return JSON.parse(JSON.stringify(o)); }
 async function moveItem(table, list, idx, dir) {

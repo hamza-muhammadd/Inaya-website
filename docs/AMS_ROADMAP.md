@@ -13,7 +13,8 @@ Rule for this project: one module at a time, each tested before the next starts.
 | Admin: Media Library, Analytics (first-party), Settings | **Built** (mock-tested) |
 | Admin UI shell v2 (sage frame, floating sidebar, topbar search, alerts bell, user menu) | **Built this step** |
 | Dashboard with real data (KPIs, inquiries chart, pipeline, follow-up week calendar) | **Built this step** |
-| Students, Classes, Teachers, Finance, Brand/Logo, Automation | **Not built** — shown in sidebar as "SOON" with an honest placeholder page |
+| Students (Phase 2): list/search/filter, add manually, convert from a *Enrollment Confirmed* inquiry, profile, guardians, notes, status history, archive/restore | **Built** (mock-tested). Needs `sql/002_students.sql` run in Supabase |
+| Classes, Teachers, Finance, Brand/Logo, Automation | **Not built** — shown in sidebar as "SOON" with an honest placeholder page |
 
 Not verified against real services: Supabase SQL execution, real login, email reset, storage upload, Vercel deploy, domain.
 
@@ -25,8 +26,8 @@ Static HTML + vanilla JS on Vercel; Supabase Postgres/Auth/Storage; all authoriz
 
 ## 4. Roadmap (one at a time; each ends with a test and your approval)
 1. **Done:** UI shell + real-data dashboard + this audit.
-2. **Next:** Students — lead→student conversion, guardian info, notes, status history.
-3. Teachers + Classes & Timetable + attendance.
+2. **Done (needs SQL run):** Students — `sql/002_students.sql`. Guardian contacts are hard-deleted (with confirmation); students are soft-deleted (archive).
+3. **Next:** Teachers + Classes & Timetable + attendance.
 4. Finance — fee plans, manual payment records, reports.
 5. Brand & Logo editor.
 6. Automation/notifications, richer roles & permissions, trash & audit viewer, reports.
