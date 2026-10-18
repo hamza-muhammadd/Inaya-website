@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ — Inaya Quran Academy</title>
+<meta name="description" content="Answers to common questions about programs, assessment and enrollment at Inaya Quran Academy.">
+
+<link rel="canonical" href="https://inayaquran.com/faq">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Inaya Quran Academy">
+<meta property="og:title" content="FAQ — Inaya Quran Academy">
+<meta property="og:description" content="Answers to common questions about programs, assessment and enrollment at Inaya Quran Academy.">
+<meta property="og:url" content="https://inayaquran.com/faq">
+<meta property="og:image" content="https://inayaquran.com/assets/img/og-default.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://inayaquran.com/assets/img/og-default.jpg">
+<meta name="theme-color" content="#0F4C3A">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" href="/assets/img/favicon.png">
+<link rel="apple-touch-icon" href="/assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;500;600&family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<link rel="stylesheet" href="/css/site.css">
+
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header id="site-header"></header>
+<main id="main"></main>
+<footer id="site-footer"></footer>
+<noscript><p style="padding:20px;text-align:center">Please enable JavaScript to view this page. / এই পেজ দেখতে JavaScript চালু করুন।</p></noscript>
+<script src="/config.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/sections.js"></script>
+<script>
+Inaya.boot(async function (s) {
+  var res = await Promise.all([Inaya.loadFaqs()]);
+  var S = InayaSections, ctx = { settings: s };
+  document.getElementById("main").innerHTML =
+    S.render([S.newSection("page_head", { eyebrow: "FAQ", heading: "Frequently asked questions", body: "Can't find your answer? Message us and we will be happy to help." })], ctx) +
+    '<section class="section"><div class="container">' + S.faqByCategory(res[0]) + "</div></section>" +
+    S.render([S.newSection("cta", { heading: "Still have a question?", body: "Send us a message or book a free assessment.", button_label: "Contact us", button_href: "/contact", button2_label: s.cta_primary_label, button2_href: s.cta_primary_href, bg: "soft" })], ctx);
+  Inaya.setMeta({ title: "FAQ — " + s.academy_name, description: "Answers to common questions about programs, assessment and enrollment.", image: s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/faq" });
+});
+</script>
+</body>
+</html>
