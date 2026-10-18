@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Admin — Inaya Quran Academy</title>
 <link rel="icon" href="/favicon.ico" sizes="32x32">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,600&display=swap">
 <style>
 :root{--g:#0F4C3A;--g2:#0A3528;--sand:#B8975A;--sand-soft:#F3ECDB;--bg:#F6F3EA;--card:#fff;--tx:#26312C;--mu:#66726B;--bd:#E4DECE;--bad:#A12B2B;--ok:#1F7A4D;--warn:#9A6B12;--r:12px;
 --f:"Inter",system-ui,-apple-system,"Segoe UI","Hind Siliguri",sans-serif}
@@ -48,19 +48,50 @@ input.bad,select.bad,textarea.bad{border-color:var(--bad)}
 .chk{display:flex;gap:8px;align-items:center;font-size:.9rem}.chk input{width:17px;height:17px;accent-color:var(--g)}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
 @media(max-width:700px){.g2,.g3{grid-template-columns:1fr}}
-/* shell */
-.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
-.side{background:var(--g);color:#DCE9E2;padding:18px 12px;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column}
-.side .logo{background:#FBF7EE;border-radius:10px;padding:8px 10px;margin-bottom:18px;text-align:center}.side .logo img{height:36px;display:inline-block}
-.side nav a{display:flex;gap:10px;align-items:center;color:#DCE9E2;text-decoration:none;padding:9px 12px;border-radius:9px;margin-bottom:2px;font-size:.92rem}
-.side nav a:hover{background:rgba(255,255,255,.08)}.side nav a.on{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
-.side .who{margin-top:auto;font-size:.8rem;padding:12px;border-top:1px solid rgba(255,255,255,.16)}
-.side .who b{color:#fff;display:block;word-break:break-all}
-.main{padding:22px 26px 60px;min-width:0}
-.top{display:none}
-@media(max-width:860px){.app{grid-template-columns:1fr}.side{position:fixed;z-index:60;left:0;top:0;width:250px;transform:translateX(-100%);transition:transform .2s}.side.open{transform:none}
-.top{display:flex;align-items:center;gap:10px;background:var(--g);color:#fff;padding:10px 14px;position:sticky;top:0;z-index:40}.top button{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:5px 10px}
-.main{padding:16px 14px 60px}}
+/* shell (v2 — rounded sage look) */
+:root{--bg:#8C9A8E;--page:#ECF0EA;--sage1:#E1E9DF;--sage2:#E6E8DA;--sage3:#F0E8D6;--sage4:#EBDFD9;--r:20px;--f:"Plus Jakarta Sans","Inter",system-ui,-apple-system,"Segoe UI","Hind Siliguri",sans-serif}
+body{background:var(--bg);font-family:var(--f)}
+h1,h2,h3{font-family:var(--f);font-weight:700;letter-spacing:-.01em}
+h1{font-size:1.5rem}h2{font-size:1.2rem}
+.shell{padding:28px}
+.frame{max-width:1640px;margin:0 auto;background:var(--page);border-radius:32px;padding:20px 28px 40px;min-height:calc(100vh - 56px)}
+.topbar{display:flex;align-items:center;gap:18px;margin-bottom:20px}
+.topbar .brand{display:flex;align-items:center;gap:8px;text-decoration:none;flex:none}.topbar .brand img{height:40px;width:auto;border-radius:8px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.search{position:relative;flex:0 1 400px}
+.search input{padding:10px 14px 10px 42px;border-radius:14px;background:var(--sage1);border:1px solid var(--bd)}
+.search .si{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mu);pointer-events:none}
+.pop{position:absolute;z-index:90;background:#fff;border:1px solid var(--bd);border-radius:16px;box-shadow:0 18px 40px rgba(20,40,30,.18);padding:8px;min-width:280px}
+.search .pop{left:0;right:0;top:calc(100% + 8px)}
+.pop a,.pop button.pi{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:9px 10px;border-radius:10px;color:var(--tx);text-decoration:none;font-size:.9rem}
+.pop a:hover,.pop button.pi:hover{background:var(--sage1)}
+.pop .ph{padding:6px 10px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mu)}
+.ibtn{position:relative;width:42px;height:42px;border-radius:12px;border:1px solid var(--bd);background:var(--sage1);display:grid;place-items:center;color:var(--g)}
+.ibtn:hover{background:#d6e1d3}
+.ibtn .dot{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:99px;background:#C0432E;color:#fff;font-size:.68rem;font-weight:700;display:grid;place-items:center;padding:0 5px}
+.uchip{display:flex;align-items:center;gap:10px;border:0;background:none;padding:2px 4px;border-radius:14px;color:var(--tx);text-align:left}
+.uchip .av{width:40px;height:40px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;font-weight:700}
+.uchip b{display:block;font-size:.88rem;line-height:1.2}.uchip span{font-size:.78rem;color:var(--mu)}
+.rel{position:relative}.pop.right{right:0;top:calc(100% + 8px)}
+#menu{display:none}
+.body{display:grid;grid-template-columns:252px minmax(0,1fr);gap:24px;align-items:start}
+.side{background:#fff;border-radius:26px;padding:14px 12px 16px;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto}
+.ng{margin-bottom:6px}
+.ng-h{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:10px 12px 6px;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#8A968E;font-weight:700}
+.ng-h svg{transition:transform .15s}.ng.shut .ng-h svg{transform:rotate(-90deg)}.ng.shut .ng-b{display:none}
+.side a{display:flex;gap:12px;align-items:center;color:#7F8D84;text-decoration:none;padding:10px 12px;border-radius:13px;font-weight:600;font-size:.92rem}
+.side a:hover{background:var(--sage1);color:var(--g)}
+.side a.on{background:var(--sage1);color:var(--g2);font-weight:700}
+.side a .soon{margin-left:auto;font-size:.62rem;font-weight:700;letter-spacing:.04em;background:var(--sage3);color:#8A6C2E;border-radius:99px;padding:2px 8px}
+.ic{width:20px;height:20px;flex:none}
+.main{padding:0;min-width:0}
+@media(max-width:1000px){
+ .shell{padding:0}.frame{border-radius:0;padding:14px 14px 40px;min-height:100vh}
+ .body{grid-template-columns:1fr}
+ .side{position:fixed;z-index:70;left:10px;top:10px;bottom:10px;width:270px;max-height:none;transform:translateX(-110%);transition:transform .2s;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+ .side.open{transform:none}#menu{display:grid}.search{flex:1}.uchip>div{display:none}.topbar .brand img{height:34px}
+}
+@media(max-width:560px){.topbar{gap:10px}.topbar .brand{display:none}}
 .page-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:18px}
 .card+.card{margin-top:14px}
@@ -121,6 +152,78 @@ table.tbl{border-collapse:collapse;width:100%;min-width:640px}
 .mcard.pick{cursor:pointer}.mcard.pick:hover{border-color:var(--g)}
 .steps{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}.steps span{font-size:.72rem;padding:3px 9px;border-radius:999px;background:#EEE9D9;color:#5A5440}.steps span.done{background:#DDF0E4;color:#175B38}.steps span.cur{background:var(--g);color:#fff}
 .bar{height:8px;background:#EEE9D9;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--sand)}
+/* v2 overrides so every existing screen matches the new look */
+.card{border-radius:var(--r);border-color:var(--bd);padding:20px}
+.tiles{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.tile{border:0;border-radius:var(--r);background:var(--sage1);padding:18px}
+.tile:nth-child(4n+2){background:var(--sage2)}.tile:nth-child(4n+3){background:var(--sage3)}.tile:nth-child(4n+4){background:var(--sage4)}
+.tile b{font-family:var(--f);font-weight:800;font-size:2rem;color:var(--tx)}
+.tw{border-radius:var(--r);border-color:var(--bd)}
+.tbl th{background:#F3F6F1}
+.btn{border-radius:12px}.btn.ghost{background:#fff}
+.modal{border-radius:24px}.drawer{border-radius:26px 0 0 26px}
+.mcard,.sec,.item,.items{border-radius:16px}
+.tabs button{border-radius:10px 10px 0 0}
+input[type=text],input[type=email],input[type=password],input[type=search],input[type=date],input[type=url],input[type=number],input[type=tel],select,textarea{border-radius:12px;border-color:#D3DCD1}
+.page-h h1{margin:0}
+.login-card{border-radius:28px}
+/* dashboard */
+.dash{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media(max-width:1180px){.dash{grid-template-columns:minmax(0,1fr)}}.dash>div{min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:20px}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{border:0;text-align:left;border-radius:24px;padding:18px 20px 20px;color:var(--tx);cursor:pointer;transition:transform .12s}
+.kpi:hover{transform:translateY(-2px)}
+.kpi.k1{background:var(--sage1)}.kpi.k2{background:var(--sage2)}.kpi.k3{background:var(--sage3)}.kpi.k4{background:var(--sage4)}
+.kpi .top{display:flex;justify-content:space-between;align-items:center;min-height:28px}.kpi .l{display:block}.kpi small{min-height:2.7em}
+.chip2{display:inline-flex;align-items:center;gap:3px;background:#fff;border-radius:9px;padding:3px 9px;font-size:.78rem;font-weight:700}
+.chip2.up{color:#1F7A4D}.chip2.down{color:#C0432E}.chip2.flat{color:var(--mu)}
+.kpi b{display:block;font-size:2.2rem;font-weight:800;margin:14px 0 2px;line-height:1.1}
+.kpi span.l{font-size:1rem;color:#3A463F}
+.kpi small{display:block;color:var(--mu);font-size:.74rem;margin-top:6px;line-height:1.35}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 18px}
+.pillb{border:1px solid var(--bd);background:#fff;border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:600;color:var(--tx)}
+.pillb b{color:var(--g);margin-left:4px}.pillb:hover{background:var(--sage1)}
+.panel{background:#fff;border-radius:26px;padding:22px 24px;margin-bottom:20px}
+.panel.dark{background:var(--g);color:#E6EFE9}
+.panel.dark h3{color:#fff}
+.ph2{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.ph2 h3{font-size:1.25rem;margin:0}
+.ph2 select{width:auto;padding:6px 10px;border:0;background:transparent;color:var(--mu);font-weight:600;font-size:.86rem}
+.panel.dark .ph2 select{color:#B9CFC3}
+.legend{display:flex;gap:16px;font-size:.82rem;color:var(--mu);margin:6px 0 14px;flex-wrap:wrap}
+.panel.dark .legend{color:#B9CFC3}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.bars{display:flex;gap:10px;align-items:flex-end;height:230px;padding-top:6px}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;height:100%;min-width:0;border:0;background:none;padding:0;color:inherit;text-align:center}
+.bcol .v{font-size:.76rem;color:var(--mu);margin-bottom:5px;min-height:1em}
+.panel.dark .bcol .v{color:#B9CFC3}
+.bcol .trk{border-radius:12px;background:#DFE8DD;position:relative;overflow:hidden;display:flex;align-items:flex-end}
+.bcol .fil{width:100%;background:var(--g);border-radius:12px 12px 0 0}
+.panel.dark .bcol .trk{background:#E6EFE8}
+.panel.dark .bcol .trk.thin{background:#E6EFE8}
+.bcol .x{font-size:.74rem;color:var(--mu);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel.dark .bcol .x{color:#B9CFC3}
+.bcol:hover .trk{filter:brightness(.96)}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-h b{font-size:1.15rem}
+.cal-h button{width:34px;height:34px;border-radius:10px;border:1px solid var(--bd);background:#fff;color:var(--mu)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px}
+.day{border:0;background:none;border-radius:12px;padding:8px 0;text-align:center;color:var(--mu);font-size:.76rem}
+.day b{display:block;font-size:1.05rem;color:var(--tx);margin-top:3px}
+.day.sel{background:var(--sage1)}.day.today b{color:var(--g)}
+.day i{display:block;width:6px;height:6px;border-radius:50%;background:var(--sand);margin:3px auto 0}
+.day:not(.has) i{visibility:hidden}
+.ev{display:block;width:100%;text-align:left;border:0;border-left:4px solid var(--g);background:var(--sage1);border-radius:12px;padding:12px 14px;margin-bottom:10px;color:var(--tx)}
+.ev.over{border-color:#C0432E;background:var(--sage4)}.ev.fut{border-color:var(--sand);background:var(--sage3)}
+.ev small{display:block;color:var(--mu);font-size:.76rem}.ev b{display:block;margin:2px 0 3px}
+.rl{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #EEF2EC;width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:var(--tx)}
+.rl:last-child{border-bottom:0}
+.rl .av2{width:40px;height:40px;border-radius:12px;background:var(--sage1);color:var(--g);display:grid;place-items:center;font-weight:800;flex:none}
+.rl .t{flex:1;min-width:0}.rl .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rl .t small{color:var(--mu)}
+.qa{display:flex;gap:8px;flex-wrap:wrap}
+.soonbox{max-width:760px}
+.soonbox ul{padding-left:20px;color:#3A463F}
 </style>
 </head>
 <body>
@@ -153,27 +256,24 @@ table.tbl{border-collapse:collapse;width:100%;min-width:640px}
 </div>
 
 <!-- ============ APP ============ -->
-<div id="app" class="app hidden">
-  <aside class="side" id="side">
-    <div class="logo"><img src="/assets/img/logo.png" alt="Inaya"></div>
-    <nav id="nav">
-      <a href="#overview" data-v="overview">▦ Overview</a>
-      <a href="#content" data-v="content">✎ Website Content</a>
-      <a href="#programs" data-v="programs">☰ Programs &amp; Curriculum</a>
-      <a href="#leads" data-v="leads">✉ Leads &amp; Inquiries</a>
-      <a href="#assessments" data-v="assessments">✔ Assessments</a>
-      <a href="#enrollments" data-v="enrollments">☑ Enrollments</a>
-      <a href="#media" data-v="media">▣ Media Library</a>
-      <a href="#analytics" data-v="analytics">◔ Analytics</a>
-      <a href="#settings" data-v="settings">⚙ Settings</a>
-    </nav>
-    <div class="who"><span class="muted" style="color:#B7CBC0">Signed in as</span><b id="who-email"></b><span id="who-role" style="color:#B7CBC0"></span><br>
-      <a href="/" target="_blank" style="color:#fff">View website ↗</a> · <a href="#" id="signout" style="color:#fff">Sign out</a></div>
-  </aside>
-  <div>
-    <div class="top"><button id="menu">☰ Menu</button><b>Inaya Admin</b></div>
+<div id="app" class="shell hidden">
+ <div class="frame">
+  <header class="topbar">
+    <button id="menu" class="ibtn" aria-label="Open menu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <a class="brand" href="#overview"><img src="/assets/img/logo.png" alt="Inaya Quran Academy"></a>
+    <div class="search rel"><svg class="si ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="gsearch" type="search" placeholder="Search inquiries…" autocomplete="off" aria-label="Search inquiries"><div id="gres" class="pop hidden"></div></div>
+    <div class="tb-right">
+      <div class="rel"><button id="bell" class="ibtn" aria-label="Alerts"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span id="bell-n" class="dot hidden"></span></button><div id="bell-pop" class="pop right hidden"></div></div>
+      <div class="rel"><button id="uchip" class="uchip"><span class="av" id="who-av">A</span><div><b id="who-email"></b><span id="who-role"></span></div></button>
+        <div id="u-pop" class="pop right hidden" style="min-width:220px"><a href="/" target="_blank">View website ↗</a><a href="#settings">Settings</a><a href="#" id="signout">Sign out</a></div></div>
+    </div>
+  </header>
+  <div class="body">
+    <aside class="side" id="side"><nav id="nav" aria-label="Admin sections"></nav></aside>
     <main class="main" id="view"></main>
   </div>
+ </div>
 </div>
 
 <div id="overlay-root"></div>
@@ -288,7 +388,7 @@ async function enter(session) {
   }
   role = r.data.role; canWrite = ["owner", "administrator", "assessor"].indexOf(role) > -1; canAdmin = ["owner", "administrator"].indexOf(role) > -1;
   document.body.classList.toggle("ro", !canWrite);
-  $("#who-email").textContent = me.email; $("#who-role").textContent = "Role: " + role;
+  $("#who-email").textContent = me.email; $("#who-role").textContent = role; $("#who-av").textContent = (me.email || "A").charAt(0).toUpperCase();
   var s = await sb.from("site_settings").select("data").eq("id", 1).maybeSingle();
   settings = I.merge(I.DEFAULT_SETTINGS, (s.data && s.data.data) || {});
   showOnly("app"); resetIdle(); route();
@@ -329,14 +429,13 @@ $("#newpass-form").addEventListener("submit", async function (e) {
   history.replaceState(null, "", location.pathname); loginMsg(""); var s = await sb.auth.getSession(); if (s.data.session) enter(s.data.session); else loginMode("in");
 });
 $("#signout").addEventListener("click", async function (e) { e.preventDefault(); if (guard && guard() && !confirm("You have unsaved changes. Sign out anyway?")) return; guard = null; await sb.auth.signOut(); });
-$("#menu").addEventListener("click", function () { $("#side").classList.toggle("open"); });
 
 /* ---------- router ---------- */
 var VIEWS = {}, prevHash = "#overview";
 function route() {
   if (!me) return;
   var parts = (location.hash.slice(1) || "overview").split("/"), name = VIEWS[parts[0]] ? parts[0] : "overview";
-  $$("#nav a").forEach(function (a) { a.classList.toggle("on", a.getAttribute("data-v") === name); });
+  $$("#nav a").forEach(function (a) { var key = a.getAttribute("data-v"); a.classList.toggle("on", key === name || key === parts.slice(0, 2).join("/")); });
   $("#side").classList.remove("open"); view = $("#view"); view.innerHTML = '<div class="muted">Loading…</div>'; guard = null; window.scrollTo(0, 0);
   Promise.resolve(VIEWS[name](view, parts.slice(1))).catch(function (e) { fail(e); view.innerHTML = '<div class="alert bad">Could not load this section: ' + h(e.message || e) + "</div>"; });
 }
@@ -346,58 +445,198 @@ window.addEventListener("hashchange", function () {
 });
 window.addEventListener("beforeunload", function (e) { if (guard && guard()) { e.preventDefault(); e.returnValue = ""; } });
 
+/* ================= SHELL (nav, search, alerts, user menu) ================= */
+var ICONS = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M22 20a7 7 0 0 0-4-6.3"/>',
+  img: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.8"/><path d="m21 16-5-5L5 21"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+  brush: '<path d="M9.6 14.4 4 20l4-1 1.4-1.4M20 4l-9 9"/><path d="M14 10a3 3 0 0 0-4 4"/>',
+  bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  chev: '<path d="m6 9 6 6 6-6"/>'
+};
+function ico(n) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + ICONS[n] + "</svg>"; }
+/* soon:true = planned module, NOT built yet. It opens an honest "not built" page. */
+var NAV = [
+  ["Main", [["overview", "Dashboard", "grid"], ["leads", "Leads & Inquiries", "mail"], ["assessments", "Assessments", "check"], ["enrollments", "Enrollments", "users"]]],
+  ["Website", [["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
+  ["Academy (planned)", [["soon/students", "Students", "user", 1], ["soon/classes", "Classes & Timetable", "cal", 1], ["soon/teachers", "Teachers", "users", 1], ["soon/finance", "Finance", "cash", 1], ["soon/brand", "Brand & Logo", "brush", 1], ["soon/automation", "Automation", "bolt", 1]]],
+  ["System", [["settings", "Settings", "gear"]]]
+];
+var navShut = {};
+try { navShut = JSON.parse(localStorage.getItem("inaya_nav_shut") || "{}"); } catch (e) {}
+function renderNav() {
+  $("#nav").innerHTML = NAV.map(function (g, gi) {
+    return '<div class="ng' + (navShut[gi] ? " shut" : "") + '" data-g="' + gi + '"><button class="ng-h" type="button">' + h(g[0]) + ico("chev") + '</button><div class="ng-b">' +
+      g[1].map(function (n) { return '<a href="#' + n[0] + '" data-v="' + n[0] + '">' + ico(n[2]) + "<span>" + h(n[1]) + "</span>" + (n[3] ? '<em class="soon">SOON</em>' : "") + "</a>"; }).join("") + "</div></div>";
+  }).join("");
+  $$(".ng-h", $("#nav")).forEach(function (b) {
+    b.onclick = function () {
+      var g = b.parentNode, i = g.getAttribute("data-g"); g.classList.toggle("shut"); navShut[i] = g.classList.contains("shut");
+      try { localStorage.setItem("inaya_nav_shut", JSON.stringify(navShut)); } catch (e) {}
+    };
+  });
+}
+function closePops(except) { ["gres", "bell-pop", "u-pop"].forEach(function (id) { if (id !== except) $("#" + id).classList.add("hidden"); }); }
+document.addEventListener("click", function (e) { if (!e.target.closest(".rel")) closePops(); });
+$("#menu").addEventListener("click", function () { $("#side").classList.toggle("open"); });
+$("#uchip").addEventListener("click", function () { var p = $("#u-pop"); closePops("u-pop"); p.classList.toggle("hidden"); });
+$("#u-pop").addEventListener("click", function () { $("#u-pop").classList.add("hidden"); });
+
+/* global lead search (real query, 8 results) */
+var gTimer = null;
+$("#gsearch").addEventListener("input", function () {
+  clearTimeout(gTimer); var t = this.value.trim(), box = $("#gres");
+  if (t.length < 2) { box.classList.add("hidden"); return; }
+  gTimer = setTimeout(async function () {
+    try {
+      var s = t.replace(/[%,()*"\\]/g, " ").trim(); if (!s) return;
+      var r = await q(sb.from("leads").select("id,lead_code,name,student_name,status").or("name.ilike.%" + s + "%,email.ilike.%" + s + "%,whatsapp.ilike.%" + s + "%,lead_code.ilike.%" + s + "%,student_name.ilike.%" + s + "%").limit(8));
+      box.innerHTML = '<div class="ph">Inquiries</div>' + (r.data.length ? r.data.map(function (l) { return '<a href="#leads/' + l.id + '"><span class="av2" style="width:32px;height:32px;border-radius:10px;background:var(--sage1);display:grid;place-items:center;font-weight:800;color:var(--g)">' + h((l.name || "?").charAt(0).toUpperCase()) + "</span><span><b>" + h(l.name) + '</b><br><small class="muted">' + h(l.lead_code) + " · " + h(l.status) + "</small></span></a>"; }).join("") : '<div class="muted" style="padding:10px">No matching inquiry.</div>');
+      box.classList.remove("hidden"); closePops("gres");
+    } catch (e) { fail(e); }
+  }, 250);
+});
+$("#gres").addEventListener("click", function () { $("#gres").classList.add("hidden"); $("#gsearch").value = ""; });
+
+/* alerts bell: real counts only */
+async function countOf(query) { try { var r = await query; return r && r.count ? r.count : 0; } catch (e) { return 0; } }
+async function refreshBell() {
+  var today = todayISO(), H = { count: "exact", head: true };
+  var a = await countOf(sb.from("leads").select("id", H).eq("status", "New"));
+  var b = await countOf(sb.from("leads").select("id", H).lt("follow_up_date", today).not("status", "in", '("Enrollment Confirmed","Not Proceeding")'));
+  var c = await countOf(sb.from("contact_messages").select("id", H).eq("handled", false));
+  var n = a + b + c, dot = $("#bell-n");
+  dot.textContent = n > 99 ? "99+" : n; dot.classList.toggle("hidden", !n);
+  $("#bell-pop").innerHTML = '<div class="ph">Needs attention</div>' +
+    '<a href="#leads" data-st="New">New inquiries not contacted <b style="margin-left:auto">' + a + "</b></a>" +
+    '<a href="#leads">Overdue follow-ups <b style="margin-left:auto">' + b + "</b></a>" +
+    '<a href="#leads/messages">Unhandled contact messages <b style="margin-left:auto">' + c + "</b></a>";
+  $$("[data-st]", $("#bell-pop")).forEach(function (x) { x.onclick = function () { LS.status = "New"; LS.page = 0; }; });
+}
+$("#bell").addEventListener("click", function () { var p = $("#bell-pop"); closePops("bell-pop"); p.classList.toggle("hidden"); refreshBell(); });
+
+/* planned modules: honest placeholder, nothing is faked */
+var SOON = {
+  students: ["Students", "Convert a confirmed inquiry into a student record: guardian details, level, status history, notes, documents.", "Phase 2 (next)"],
+  classes: ["Classes & Timetable", "Groups, schedules, teacher assignment, attendance and holidays.", "Phase 3"],
+  teachers: ["Teachers", "Teacher profiles, availability, assignments and compensation records.", "Phase 3"],
+  finance: ["Finance", "Fee plans, invoices, manual payment records and reports. No card details are ever stored.", "Phase 4"],
+  brand: ["Brand & Logo", "Logo and brand colour management with safe previews.", "Phase 5"],
+  automation: ["Automation", "Reminders and notifications you control.", "Phase 6"]
+};
+VIEWS.soon = function (el, args) {
+  var s = SOON[args[0]] || ["Planned module", "", ""];
+  el.innerHTML = pageHead(h(s[0]), "") + '<div class="panel soonbox"><span class="badge b-Not-Proceeding" style="background:var(--sage3);color:#8A6C2E">Not built yet</span><p style="font-size:1.05rem">' + h(s[1]) + "</p>" +
+    '<p class="muted">This module does not exist yet, so nothing here is saved or counted. Planned for <b>' + h(s[2]) + '</b>. See <code>docs/AMS_ROADMAP.md</code>.</p><a class="btn" href="#overview">Back to dashboard</a></div>';
+};
+renderNav();
 async function saveSettings(data) {
   await q(sb.from("site_settings").upsert({ id: 1, data: data, updated_at: new Date().toISOString() }));
   settings = I.merge(I.DEFAULT_SETTINGS, data);
 }
-/* ================= OVERVIEW ================= */
+/* ================= OVERVIEW (dashboard, real data only) ================= */
 var STATUSES = ["New", "Contacted", "Assessment Scheduled", "Assessment Completed", "Follow-up Required", "Enrollment Pending", "Enrollment Confirmed", "Not Proceeding"];
+var DAY = 864e5;
+function isoLocal(d) { return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
+function trendChip(cur, prev) {
+  if (!prev) return cur ? '<span class="chip2 flat">new</span>' : '<span class="chip2 flat">—</span>';
+  var p = Math.round((cur - prev) / prev * 100);
+  return '<span class="chip2 ' + (p > 0 ? "up" : p < 0 ? "down" : "flat") + '">' + (p > 0 ? "▲ +" : p < 0 ? "▼ " : "") + p + "%</span>";
+}
 
 VIEWS.overview = async function (el) {
-  var range = { k: "all", from: "", to: "" };
-  el.innerHTML = pageHead("Overview", "Live numbers from your database. Nothing here is sample data.",
-    '<select id="rg" style="width:auto"><option value="all">All time</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="custom">Custom range…</option></select>' +
-    '<span id="cust" class="row hidden"><input id="rf" type="date" style="width:auto"><input id="rt" type="date" style="width:auto"></span>') +
-    '<div id="ov-body"><div class="muted">Loading…</div></div>';
+  var today = todayISO(), now = new Date();
+  var st = { chart: "7", weekStart: null };
+  var wd = new Date(now); wd.setHours(0, 0, 0, 0); wd.setDate(wd.getDate() - ((wd.getDay() + 6) % 7)); st.weekStart = wd;
+  el.innerHTML = pageHead("Dashboard", "Live numbers from your database. Nothing here is sample data.") + '<div id="ov-body"><div class="muted">Loading…</div></div>';
 
-  async function load() {
-    var from = null, to = null, now = new Date();
-    if (range.k === "7" || range.k === "30" || range.k === "90") from = new Date(now - (+range.k) * 864e5).toISOString();
-    if (range.k === "custom") { if (range.from) from = new Date(range.from + "T00:00:00").toISOString(); if (range.to) to = new Date(new Date(range.to + "T00:00:00").getTime() + 864e5).toISOString(); }
-    var m = (await q(sb.rpc("dashboard_metrics", { p_from: from, p_to: to }))).data || {};
-    var today = todayISO();
-    var rec = await q(sb.from("leads").select("id,lead_code,name,student_name,status,program_interest,created_at").order("created_at", { ascending: false }).limit(8));
-    var due = await q(sb.from("leads").select("id,lead_code,name,status,follow_up_date").lte("follow_up_date", today).not("status", "in", '("Enrollment Confirmed","Not Proceeding")').order("follow_up_date").limit(8));
-    var ev = await q(sb.from("lead_events").select("id,event_type,from_status,to_status,created_at,leads(id,lead_code,name)").order("created_at", { ascending: false }).limit(8));
-    var msgs = await sb.from("contact_messages").select("id", { count: "exact", head: true }).eq("handled", false);
-    var T = [
-      ["Total inquiries", m.total, "All website assessment inquiries submitted in this period."],
-      ["New", m.new, "Status “New”: submitted, nobody has followed up yet."],
-      ["Contacted", m.contacted, "Status “Contacted”: we have reached out."],
-      ["Assessment scheduled", m.assess_sched, "Status “Assessment Scheduled”: assessment requested and booked."],
-      ["Assessment completed", m.assess_done, "Status “Assessment Completed”: the assessor has evaluated the learner."],
-      ["Follow-up required", m.followup, "Status “Follow-up Required”."],
-      ["Enrollment pending", m.enroll_pending, "Status “Enrollment Pending”: family is deciding / paperwork in progress."],
-      ["Enrollment confirmed", m.enroll_confirmed, "Status “Enrollment Confirmed”. This is NOT a payment confirmation."],
-      ["Not proceeding", m.not_proceeding, "Status “Not Proceeding”."]
-    ];
-    var an = (settings.analytics || {}).provider;
-    $("#ov-body").innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="tile"><span>' + h(t[0]) + "</span><b>" + (t[1] == null ? 0 : t[1]) + "</b><small>" + h(t[2]) + "</small></div>"; }).join("") + "</div>" +
-      ((msgs.count || 0) ? '<div class="alert warn">You have <b>' + msgs.count + "</b> unhandled contact message" + (msgs.count > 1 ? "s" : "") + '. <a href="#leads/messages">Open messages</a></div>' : "") +
-      '<div class="g2" style="gap:14px"><div class="card"><h3>Recent inquiries</h3>' +
-      (rec.data.length ? '<div class="tw"><table class="tbl"><tbody>' + rec.data.map(function (l) { return '<tr class="click" data-lead="' + l.id + '"><td><b>' + h(l.name) + '</b><br><span class="muted small">' + h(l.lead_code) + " · " + fmtDT(l.created_at) + "</span></td><td>" + badge(l.status) + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">No inquiries yet. When someone submits the free assessment form, it appears here.</div>') +
-      '</div><div class="card"><h3>Follow-ups due</h3>' +
-      (due.data.length ? '<div class="tw"><table class="tbl"><tbody>' + due.data.map(function (l) { return '<tr class="click" data-lead="' + l.id + '"><td><b>' + h(l.name) + '</b><br><span class="muted small">' + h(l.lead_code) + "</span></td><td>" + fmtD(l.follow_up_date) + "</td><td>" + badge(l.status) + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">No follow-ups are due.</div>') + "</div></div>" +
-      '<div class="card"><h3>Recent administrative activity</h3>' +
-      (ev.data.length ? '<ul class="tl">' + ev.data.map(function (e) { return "<li><b>" + h(e.leads ? e.leads.name : "Lead") + "</b> <span class=\"muted\">(" + h(e.leads ? e.leads.lead_code : "") + ")</span> — " + (e.event_type === "created" ? "inquiry received" : "status " + h(e.from_status) + " → " + h(e.to_status)) + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty">No activity yet.</div>') + "</div>" +
-      '<div class="card"><h3>Website analytics</h3>' + (an === "ga4" || an === "plausible" ?
-        '<p class="muted" style="margin:0">Provider connected: <b>' + h(an === "ga4" ? "Google Analytics 4" : "Plausible") + '</b>. Open its own dashboard for visitor numbers. First-party click counts are on the <a href="#analytics">Analytics</a> page.</p>' :
-        '<p class="muted" style="margin:0"><b>Analytics not connected.</b> Visitor and session numbers need an analytics service (Settings → Analytics). Button clicks and form submissions are still counted on the <a href="#analytics">Analytics</a> page.</p>') + "</div>";
-    $$("[data-lead]", $("#ov-body")).forEach(function (r) { r.onclick = function () { location.hash = "#leads/" + r.getAttribute("data-lead"); }; });
+  var since = new Date(now - 400 * DAY).toISOString();
+  var all = (await q(sb.from("leads").select("id,lead_code,name,student_name,status,program_interest,created_at,follow_up_date").gte("created_at", since).order("created_at", { ascending: false }).limit(5000))).data || [];
+  var fu = (await q(sb.from("leads").select("id,lead_code,name,status,follow_up_date").not("follow_up_date", "is", null).not("status", "in", '("Enrollment Confirmed","Not Proceeding")').order("follow_up_date").limit(500))).data || [];
+  var ev = (await q(sb.from("lead_events").select("id,event_type,from_status,to_status,created_at,leads(id,lead_code,name)").order("created_at", { ascending: false }).limit(6))).data || [];
+  var msgs = await sb.from("contact_messages").select("id", { count: "exact", head: true }).eq("handled", false);
+  var unhandled = msgs.count || 0;
+
+  var cnt = function (s) { return all.filter(function (l) { return l.status === s; }).length; };
+  var last30 = all.filter(function (l) { return new Date(l.created_at) >= now - 30 * DAY; }).length;
+  var prev30 = all.filter(function (l) { var t = new Date(l.created_at); return t < now - 30 * DAY && t >= now - 60 * DAY; }).length;
+  var newN = cnt("New"), overdue = fu.filter(function (l) { return l.follow_up_date < today; }).length, dueToday = fu.filter(function (l) { return l.follow_up_date === today; }).length;
+  var conf = cnt("Enrollment Confirmed"), total = all.length, rate = total ? Math.round(conf / total * 100) : 0;
+  var oldestNew = all.filter(function (l) { return l.status === "New"; }).map(function (l) { return Math.floor((now - new Date(l.created_at)) / DAY); }).sort(function (a, b) { return b - a; })[0];
+
+  function buckets() {
+    var out = [], k = st.chart;
+    if (k === "7" || k === "30") {
+      var n = +k;
+      for (var i = n - 1; i >= 0; i--) { var d = new Date(now - i * DAY), iso = isoLocal(d); out.push({ key: iso, label: n === 7 ? d.toLocaleDateString([], { weekday: "short" }) : (d.getDate() % 5 === 0 || i === 0 ? String(d.getDate()) : ""), n: 0 }); }
+      all.forEach(function (l) { var iso = isoLocal(new Date(l.created_at)); var b = out.filter(function (x) { return x.key === iso; })[0]; if (b) b.n++; });
+    } else {
+      for (var m = 11; m >= 0; m--) { var dm = new Date(now.getFullYear(), now.getMonth() - m, 1); out.push({ key: dm.getFullYear() + "-" + dm.getMonth(), label: dm.toLocaleDateString([], { month: "short" }), n: 0 }); }
+      all.forEach(function (l) { var d = new Date(l.created_at), key = d.getFullYear() + "-" + d.getMonth(); var b = out.filter(function (x) { return x.key === key; })[0]; if (b) b.n++; });
+    }
+    return out;
   }
-  $("#rg").onchange = function () { range.k = this.value; $("#cust").classList.toggle("hidden", this.value !== "custom"); if (this.value !== "custom") load().catch(fail); };
-  $("#rf").onchange = $("#rt").onchange = function () { range.from = $("#rf").value; range.to = $("#rt").value; load().catch(fail); };
-  await load();
+  function bars(data, dark) {
+    var mx = Math.max.apply(null, data.map(function (b) { return b.n; }).concat([1]));
+    return '<div class="bars">' + data.map(function (b) { var hgt = Math.max(b.n / mx * 100, b.n ? 8 : 0); return '<div class="bcol" title="' + h(b.label + ": " + b.n) + '"><div class="v">' + (b.n || "") + '</div><div class="trk" style="height:' + (b.n ? hgt * 1.7 : 3) + 'px"><div class="fil" style="height:100%;background:' + (dark ? "#E6EFE8" : "var(--g)") + '"></div></div><div class="x">' + h(b.label) + "</div></div>"; }).join("") + "</div>";
+  }
+
+  function render() {
+    var data = buckets(), sum = data.reduce(function (a, b) { return a + b.n; }, 0);
+    var pipe = STATUSES.map(function (s) { return { label: s.replace("Assessment ", "Assess. ").replace("Enrollment ", "Enrol. ").replace("Follow-up Required", "Follow-up"), n: cnt(s) }; });
+    var ws = st.weekStart, days = [];
+    for (var i = 0; i < 7; i++) { var d = new Date(ws); d.setDate(d.getDate() + i); days.push(d); }
+    var selIso = st.sel || (days.some(function (d) { return isoLocal(d) === today; }) ? today : isoLocal(days[0]));
+    var dayEv = fu.filter(function (l) { return l.follow_up_date === selIso; });
+    var rangeLbl = days[0].toLocaleDateString([], { month: "short", day: "numeric" }) + " – " + days[6].toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+    var k = function (cls, label, val, chip, note, go) { return '<button class="kpi ' + cls + '" data-go="' + go + '"><div class="top"><span></span>' + chip + "</div><b>" + val + '</b><span class="l">' + label + "</span><small>" + note + "</small></button>"; };
+
+    $("#ov-body").innerHTML =
+      '<div class="kpis">' +
+      k("k1", "Inquiries (30 days)", last30, trendChip(last30, prev30), "vs " + prev30 + " in the 30 days before", "") +
+      k("k2", "New inquiries", newN, '<span class="chip2 ' + (newN ? "down" : "up") + '">' + (newN ? (oldestNew != null ? "oldest " + oldestNew + "d" : "waiting") : "all clear") + "</span>", "Status “New”. Click to open the list.", "New") +
+      k("k3", "Follow-ups due", overdue + dueToday, '<span class="chip2 ' + (overdue ? "down" : "flat") + '">' + overdue + " overdue</span>", "Overdue plus due today (" + dueToday + " today).", "") +
+      k("k4", "Enrollment confirmed", conf, '<span class="chip2 flat">' + rate + "% of " + total + "</span>", "Share of inquiries (last 400 days). Not a payment record.", "Enrollment Confirmed") +
+      "</div>" +
+      '<div class="pills">' + [["Assessment Scheduled"], ["Assessment Completed"], ["Follow-up Required"], ["Enrollment Pending"], ["Not Proceeding"]].map(function (s) { return '<button class="pillb" data-go="' + s[0] + '">' + h(s[0]) + "<b>" + cnt(s[0]) + "</b></button>"; }).join("") + "</div>" +
+      (unhandled ? '<div class="alert warn">You have <b>' + unhandled + "</b> unhandled contact message" + (unhandled > 1 ? "s" : "") + '. <a href="#leads/messages">Open messages</a></div>' : "") +
+      '<div class="dash"><div>' +
+      '<div class="panel"><div class="ph2"><h3>Inquiries received</h3><select id="ch-range"><option value="7"' + (st.chart === "7" ? " selected" : "") + '>Last 7 days</option><option value="30"' + (st.chart === "30" ? " selected" : "") + '>Last 30 days</option><option value="12"' + (st.chart === "12" ? " selected" : "") + ">Last 12 months</option></select></div>" +
+      '<div class="legend"><span><i style="background:var(--g)"></i>Website inquiries: ' + sum + "</span></div>" + bars(data, false) + "</div>" +
+      '<div class="panel dark"><div class="ph2"><h3>Lead pipeline</h3></div><div class="legend"><span>Current count by status (last 400 days)</span></div>' + bars(pipe, true) + "</div>" +
+      '<div class="panel"><h3 style="margin:0 0 8px">Recent inquiries</h3>' +
+      (all.length ? all.slice(0, 6).map(function (l) { return '<button class="rl" data-lead="' + l.id + '"><span class="av2">' + h((l.name || "?").charAt(0).toUpperCase()) + '</span><span class="t"><b>' + h(l.name) + "</b><small>" + h(l.lead_code) + " · " + fmtDT(l.created_at) + "</small></span>" + badge(l.status) + "</button>"; }).join("") : '<div class="empty">No inquiries yet. When someone submits the free assessment form, it appears here.</div>') + "</div>" +
+      "</div><div>" +
+      '<div class="panel"><div class="cal-h"><button id="wk-p" aria-label="Previous week">‹</button><b>' + h(rangeLbl) + '</b><button id="wk-n" aria-label="Next week">›</button></div><div class="week">' +
+      days.map(function (d) { var iso = isoLocal(d), has = fu.some(function (l) { return l.follow_up_date === iso; }); return '<button class="day' + (iso === selIso ? " sel" : "") + (iso === today ? " today" : "") + (has ? " has" : "") + '" data-day="' + iso + '">' + d.toLocaleDateString([], { weekday: "short" }) + "<b>" + d.getDate() + "</b><i></i></button>"; }).join("") + "</div>" +
+      '<div class="muted small" style="margin-bottom:8px">Follow-ups on ' + h(fmtD(selIso)) + "</div>" +
+      (dayEv.length ? dayEv.map(function (l) { return '<button class="ev ' + (l.follow_up_date < today ? "over" : l.follow_up_date > today ? "fut" : "") + '" data-lead="' + l.id + '"><small>' + h(l.lead_code) + "</small><b>" + h(l.name) + "</b><small>" + h(l.status) + "</small></button>"; }).join("") : '<div class="empty" style="padding:14px 0">No follow-ups on this day.</div>') +
+      (overdue ? '<div class="alert bad" style="margin-top:8px"><b>' + overdue + "</b> follow-up" + (overdue > 1 ? "s are" : " is") + " overdue. Oldest: " + h(fu[0].name) + " (" + fmtD(fu[0].follow_up_date) + ").</div>" : "") + "</div>" +
+      '<div class="panel"><h3 style="margin:0 0 10px">Quick actions</h3><div class="qa"><a class="btn" href="#leads">Open leads</a><a class="btn ghost" href="#content">Edit website</a><a class="btn ghost" href="#media">Media</a><a class="btn ghost" href="/" target="_blank">View site ↗</a></div></div>' +
+      '<div class="panel"><h3 style="margin:0 0 8px">Recent activity</h3>' +
+      (ev.length ? '<ul class="tl">' + ev.map(function (e) { return "<li><b>" + h(e.leads ? e.leads.name : "Lead") + "</b> — " + (e.event_type === "created" ? "inquiry received" : "status " + h(e.from_status) + " → " + h(e.to_status)) + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty">No activity yet.</div>') + "</div>" +
+      '<div class="panel"><h3 style="margin:0 0 8px">Website analytics</h3>' + (((settings.analytics || {}).provider === "ga4" || (settings.analytics || {}).provider === "plausible") ?
+        '<p class="muted" style="margin:0">Provider connected. Open its own dashboard for visitor numbers. Click counts: <a href="#analytics">Analytics</a>.</p>' :
+        '<p class="muted" style="margin:0"><b>Not connected.</b> Visitor numbers need an analytics service (Settings → Analytics). Button clicks and form submissions are counted on the <a href="#analytics">Analytics</a> page.</p>') + "</div>" +
+      "</div></div>";
+
+    $$("[data-lead]", $("#ov-body")).forEach(function (r) { r.onclick = function () { location.hash = "#leads/" + r.getAttribute("data-lead"); }; });
+    $$("[data-go]", $("#ov-body")).forEach(function (r) { r.onclick = function () { var s = r.getAttribute("data-go"); LS.status = s; LS.page = 0; location.hash = "#leads"; }; });
+    $$("[data-day]", $("#ov-body")).forEach(function (r) { r.onclick = function () { st.sel = r.getAttribute("data-day"); render(); }; });
+    $("#ch-range").onchange = function () { st.chart = this.value; render(); };
+    $("#wk-p").onclick = function () { st.weekStart = new Date(st.weekStart.getTime() - 7 * DAY); st.sel = null; render(); };
+    $("#wk-n").onclick = function () { st.weekStart = new Date(st.weekStart.getTime() + 7 * DAY); st.sel = null; render(); };
+  }
+  render();
 };
 /* ================= WEBSITE CONTENT (page editor + FAQ) ================= */
 function deep(o) { return JSON.parse(JSON.stringify(o)); }
