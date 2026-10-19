@@ -224,6 +224,8 @@ input[type=text],input[type=email],input[type=password],input[type=search],input
 .qa{display:flex;gap:8px;flex-wrap:wrap}
 .soonbox{max-width:760px}
 .soonbox ul{padding-left:20px;color:#3A463F}
+.tt{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.tt .panel{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -468,7 +470,7 @@ function ico(n) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke
 var NAV = [
   ["Main", [["overview", "Dashboard", "grid"], ["leads", "Leads & Inquiries", "mail"], ["assessments", "Assessments", "check"], ["enrollments", "Enrollments", "users"], ["students", "Students", "user"]]],
   ["Website", [["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
-  ["Academy (planned)", [["soon/classes", "Classes & Timetable", "cal", 1], ["soon/teachers", "Teachers", "users", 1], ["soon/finance", "Finance", "cash", 1], ["soon/brand", "Brand & Logo", "brush", 1], ["soon/automation", "Automation", "bolt", 1]]],
+  ["Academy", [["classes", "Classes & Timetable", "cal"], ["teachers", "Teachers", "users"], ["soon/finance", "Finance", "cash", 1], ["soon/brand", "Brand & Logo", "brush", 1], ["soon/automation", "Automation", "bolt", 1]]],
   ["System", [["settings", "Settings", "gear"]]]
 ];
 var navShut = {};
@@ -526,9 +528,7 @@ $("#bell").addEventListener("click", function () { var p = $("#bell-pop"); close
 
 /* planned modules: honest placeholder, nothing is faked */
 var SOON = {
-  classes: ["Classes & Timetable", "Groups, schedules, teacher assignment, attendance and holidays.", "Phase 3 (next)"],
-  teachers: ["Teachers", "Teacher profiles, availability, assignments and compensation records.", "Phase 3"],
-  finance: ["Finance", "Fee plans, invoices, manual payment records and reports. No card details are ever stored.", "Phase 4"],
+  finance: ["Finance", "Fee plans, invoices, manual payment records, teacher compensation and reports. No card details are ever stored.", "Phase 4 (next)"],
   brand: ["Brand & Logo", "Logo and brand colour management with safe previews.", "Phase 5"],
   automation: ["Automation", "Reminders and notifications you control.", "Phase 6"]
 };
@@ -764,6 +764,201 @@ async function studentDetail(el, id) {
     if (!s.deleted_at && !await confirmBox("Archive <b>" + h(s.full_name) + "</b>? They are hidden from the main list but nothing is deleted, and you can restore them.", { okLabel: "Archive" })) return;
     await q(sb.from("students").update({ deleted_at: s.deleted_at ? null : new Date().toISOString() }).eq("id", id)); dirty = false; route();
   };
+}
+/* ================= TEACHERS + CLASSES (Phase 3) ================= */
+var TSTAT = ["Active", "On Leave", "Inactive"], CSTAT = ["Planned", "Active", "Paused", "Completed"];
+var WD = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+var TZS = ["UTC", "Asia/Dhaka", "Europe/London", "America/New_York", "America/Toronto", "Asia/Riyadh", "Asia/Dubai", "Australia/Sydney"];
+var TS = { q: "", status: "", archived: false }, CS = { q: "", status: "", archived: false };
+function hhmm(t) { return String(t || "").slice(0, 5); }
+function mins(t) { var p = hhmm(t).split(":"); return (+p[0]) * 60 + (+p[1]); }
+function endTime(t, d) { var m = mins(t) + (+d); m = m % 1440; return ("0" + Math.floor(m / 60)).slice(-2) + ":" + ("0" + (m % 60)).slice(-2); }
+function pbadge(v) { return '<span class="badge b-' + (v === "Active" ? "Enrollment-Confirmed" : v === "Inactive" || v === "Completed" ? "Not-Proceeding" : "Follow-up-Required") + '">' + h(v) + "</span>"; }
+/* does slot a overlap slot b (same weekday + same timezone label)? */
+function slotsClash(a, b) { return a.weekday === b.weekday && a.timezone === b.timezone && mins(a.start_time) < mins(b.start_time) + b.duration_minutes && mins(b.start_time) < mins(a.start_time) + a.duration_minutes; }
+async function teacherClashes(teacherId, classId, slots) {
+  if (!teacherId || !slots.length) return [];
+  var cl = (await q(sb.from("class_groups").select("id,name,status,deleted_at").eq("teacher_id", teacherId).limit(500))).data || [];
+  cl = cl.filter(function (c) { return c.id !== classId && !c.deleted_at && (c.status === "Planned" || c.status === "Active"); });
+  if (!cl.length) return [];
+  var all = (await q(sb.from("class_slots").select("*").limit(5000))).data || [], out = [];
+  cl.forEach(function (c) { all.filter(function (s) { return s.class_id === c.id; }).forEach(function (s) { slots.forEach(function (m) { if (slotsClash(m, s)) out.push(c.name + " — " + WD[s.weekday] + " " + hhmm(s.start_time) + "–" + endTime(s.start_time, s.duration_minutes)); }); }); });
+  return out;
+}
+
+/* ---------- Teachers ---------- */
+VIEWS.teachers = async function (el, args) {
+  if (args[0]) return teacherDetail(el, args[0]);
+  el.innerHTML = pageHead("Teachers", "Teacher profiles and availability. Pay and compensation are not part of this module.", '<button class="btn wbtn" id="t-add">+ Add teacher</button>') +
+    '<div class="panel"><div class="row" style="gap:10px;margin-bottom:12px"><input id="t-q" type="search" placeholder="Search name or code…" style="max-width:280px" value="' + h(TS.q) + '"><select id="t-s" style="width:auto"><option value="">All statuses</option>' + TSTAT.map(function (s) { return "<option" + (TS.status === s ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select><label class="row small" style="gap:6px"><input id="t-a" type="checkbox"' + (TS.archived ? " checked" : "") + '> Show archived</label></div><div id="t-list"></div></div>';
+  var rows = (await q(sb.from("teachers").select("id,teacher_code,full_name,email,whatsapp,status,country,deleted_at").order("full_name").limit(1000))).data || [];
+  var cls = (await q(sb.from("class_groups").select("id,teacher_id,status,deleted_at").limit(2000))).data || [];
+  function draw() {
+    var t = TS.q.toLowerCase();
+    var r = rows.filter(function (x) { return (TS.archived ? !!x.deleted_at : !x.deleted_at) && (!TS.status || x.status === TS.status) && (!t || (x.full_name + " " + x.teacher_code).toLowerCase().indexOf(t) > -1); });
+    $("#t-list").innerHTML = r.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Teacher</th><th>Status</th><th>Contact</th><th>Active classes</th></tr></thead><tbody>' + r.map(function (x) {
+      var n = cls.filter(function (c) { return c.teacher_id === x.id && !c.deleted_at && c.status === "Active"; }).length;
+      return '<tr class="click" data-id="' + x.id + '"><td><b>' + h(x.full_name) + '</b><br><span class="muted small">' + h(x.teacher_code) + "</span></td><td>" + pbadge(x.status) + "</td><td>" + h([x.whatsapp, x.email].filter(Boolean).join(" · ") || "—") + "</td><td>" + n + "</td></tr>"; }).join("") + "</tbody></table></div>" :
+      '<div class="empty">' + (rows.length ? "No teachers match." : "No teachers yet. Add the first one.") + "</div>";
+    $$("tr[data-id]", $("#t-list")).forEach(function (tr) { tr.onclick = function () { location.hash = "#teachers/" + tr.getAttribute("data-id"); }; });
+  }
+  $("#t-q").oninput = function () { TS.q = this.value; draw(); }; $("#t-s").onchange = function () { TS.status = this.value; draw(); }; $("#t-a").onchange = function () { TS.archived = this.checked; draw(); };
+  draw();
+  $("#t-add").onclick = function () {
+    if (!needWrite()) return;
+    modal({ title: "Add teacher", okLabel: "Create teacher", body: F("tn-name", "Full name", "", { req: 1, max: 120 }) + '<div class="g2">' + F("tn-wa", "WhatsApp", "", { max: 40 }) + F("tn-em", "Email", "", { type: "email", max: 160 }) + "</div>",
+      onOk: async function () {
+        var n = val("tn-name"); mark("tn-name", null, !n); if (!n) { toast("Enter the teacher's name.", true); return false; }
+        var em = val("tn-em"); if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { mark("tn-em", null, true); toast("That email looks wrong.", true); return false; }
+        var r = await q(sb.from("teachers").insert({ full_name: n, whatsapp: val("tn-wa") || null, email: em || null }).select("id").single()); location.hash = "#teachers/" + r.data.id; } });
+  };
+};
+async function teacherDetail(el, id) {
+  var t = (await q(sb.from("teachers").select("*").eq("id", id).single())).data;
+  var cls = ((await q(sb.from("class_groups").select("id,name,status,deleted_at").eq("teacher_id", id).order("name"))).data || []).filter(function (c) { return !c.deleted_at; });
+  var dirty = false; guard = function () { return dirty; };
+  el.innerHTML = '<a href="#teachers" class="muted">← All teachers</a>' + pageHead(h(t.full_name) + (t.deleted_at ? ' <span class="badge b-Not-Proceeding">Archived</span>' : ""), h(t.teacher_code),
+    '<select id="td-st" class="wbtn" style="width:auto">' + TSTAT.map(function (x) { return "<option" + (x === t.status ? " selected" : "") + ">" + x + "</option>"; }).join("") + '</select><button class="btn ghost wbtn" id="td-arch">' + (t.deleted_at ? "Restore" : "Archive") + "</button>") +
+    '<div class="dash"><div class="panel"><h3 style="margin:0 0 12px">Profile</h3><div class="g2">' + F("tp-name", "Full name", t.full_name, { req: 1, max: 120 }) + F("tp-gender", "Gender", t.gender || "", { type: "select", options: [["", "Not stated"], "Male", "Female"] }) +
+    F("tp-wa", "WhatsApp", t.whatsapp || "", { max: 40 }) + F("tp-em", "Email", t.email || "", { type: "email", max: 160 }) + F("tp-country", "Country", t.country || "", { max: 80 }) + "</div>" +
+    F("tp-qual", "Qualifications (as stated by the teacher)", t.qualifications, { type: "textarea", rows: 3, max: 2000 }) + F("tp-avail", "Availability", t.availability_note, { type: "textarea", rows: 2, max: 1000 }) + F("tp-notes", "Internal notes", t.notes, { type: "textarea", rows: 3, max: 2000 }) +
+    '<button class="btn wbtn" id="tp-save">Save profile</button></div><div class="panel"><h3 style="margin:0 0 10px">Assigned classes</h3>' +
+    (cls.length ? cls.map(function (c) { return '<a class="rl" href="#classes/' + c.id + '" style="text-decoration:none"><span class="t"><b>' + h(c.name) + "</b></span>" + pbadge(c.status) + "</a>"; }).join("") : '<div class="empty">No classes assigned.</div>') + "</div></div>";
+  $$("#view input,#view select,#view textarea").forEach(function (x) { if (/^tp-/.test(x.id)) x.addEventListener("input", function () { dirty = true; }); });
+  $("#tp-save").onclick = async function () {
+    if (!needWrite()) return; var n = val("tp-name"); mark("tp-name", null, !n); if (!n) { toast("Enter the teacher's name.", true); return; }
+    var em = val("tp-em"); if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { mark("tp-em", null, true); toast("That email looks wrong.", true); return; }
+    await q(sb.from("teachers").update({ full_name: n, gender: val("tp-gender") || null, whatsapp: val("tp-wa") || null, email: em || null, country: val("tp-country") || null, qualifications: val("tp-qual"), availability_note: val("tp-avail"), notes: val("tp-notes") }).eq("id", id)); dirty = false; toast("Profile saved.");
+  };
+  $("#td-st").onchange = async function () { if (!needWrite()) { this.value = t.status; return; } await q(sb.from("teachers").update({ status: this.value }).eq("id", id)); t.status = this.value; toast("Status updated."); };
+  $("#td-arch").onclick = async function () {
+    if (!needWrite()) return;
+    if (!t.deleted_at && !await confirmBox("Archive <b>" + h(t.full_name) + "</b>?" + (cls.length ? " They are still assigned to " + cls.length + " class(es); reassign those afterwards." : "") + " Nothing is deleted; you can restore them.", { okLabel: "Archive" })) return;
+    await q(sb.from("teachers").update({ deleted_at: t.deleted_at ? null : new Date().toISOString() }).eq("id", id)); dirty = false; route();
+  };
+}
+
+/* ---------- Classes ---------- */
+VIEWS.classes = async function (el, args) {
+  if (args[0] === "timetable") return timetable(el);
+  if (args[0]) return classDetail(el, args[0]);
+  var progs = (await q(sb.from("programs").select("id,title").order("sort_order"))).data || [];
+  var teachers = ((await q(sb.from("teachers").select("id,full_name,status,deleted_at").order("full_name"))).data || []).filter(function (x) { return !x.deleted_at; });
+  el.innerHTML = pageHead("Classes", "Groups, their teacher, weekly schedule and roster.", '<a class="btn ghost" href="#classes/timetable">Weekly timetable</a><button class="btn wbtn" id="c-add">+ New class</button>') +
+    '<div class="panel"><div class="row" style="gap:10px;margin-bottom:12px"><input id="c-q" type="search" placeholder="Search class name…" style="max-width:280px" value="' + h(CS.q) + '"><select id="c-s" style="width:auto"><option value="">All statuses</option>' + CSTAT.map(function (s) { return "<option" + (CS.status === s ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select><label class="row small" style="gap:6px"><input id="c-a" type="checkbox"' + (CS.archived ? " checked" : "") + '> Show archived</label></div><div id="c-list"></div></div>';
+  var rows = (await q(sb.from("class_groups").select("id,name,status,program_id,teacher_id,capacity,deleted_at").order("name").limit(1000))).data || [];
+  var cs = (await q(sb.from("class_students").select("class_id,left_on").limit(5000))).data || [];
+  function draw() {
+    var t = CS.q.toLowerCase();
+    var r = rows.filter(function (x) { return (CS.archived ? !!x.deleted_at : !x.deleted_at) && (!CS.status || x.status === CS.status) && (!t || x.name.toLowerCase().indexOf(t) > -1); });
+    $("#c-list").innerHTML = r.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Class</th><th>Program</th><th>Teacher</th><th>Status</th><th>Students</th></tr></thead><tbody>' + r.map(function (x) {
+      var tc = teachers.filter(function (y) { return y.id === x.teacher_id; })[0], n = cs.filter(function (y) { return y.class_id === x.id && !y.left_on; }).length;
+      return '<tr class="click" data-id="' + x.id + '"><td><b>' + h(x.name) + "</b></td><td>" + h(progName(progs, x.program_id)) + "</td><td>" + (tc ? h(tc.full_name) : '<span class="muted">Not assigned</span>') + "</td><td>" + pbadge(x.status) + "</td><td>" + n + (x.capacity ? " / " + x.capacity : "") + "</td></tr>"; }).join("") + "</tbody></table></div>" :
+      '<div class="empty">' + (rows.length ? "No classes match." : "No classes yet. Create the first one.") + "</div>";
+    $$("tr[data-id]", $("#c-list")).forEach(function (tr) { tr.onclick = function () { location.hash = "#classes/" + tr.getAttribute("data-id"); }; });
+  }
+  $("#c-q").oninput = function () { CS.q = this.value; draw(); }; $("#c-s").onchange = function () { CS.status = this.value; draw(); }; $("#c-a").onchange = function () { CS.archived = this.checked; draw(); };
+  draw();
+  $("#c-add").onclick = function () {
+    if (!needWrite()) return;
+    modal({ title: "New class", okLabel: "Create class", body: F("cn-name", "Class name", "", { req: 1, max: 120 }) + F("cn-prog", "Program", "", { type: "select", options: [["", "Not assigned"]].concat(progs.map(function (p) { return [p.id, p.title]; })) }),
+      onOk: async function () { var n = val("cn-name"); mark("cn-name", null, !n); if (!n) { toast("Enter a class name.", true); return false; }
+        var r = await q(sb.from("class_groups").insert({ name: n, program_id: val("cn-prog") || null }).select("id").single()); location.hash = "#classes/" + r.data.id; } });
+  };
+};
+
+async function classDetail(el, id) {
+  var c = (await q(sb.from("class_groups").select("*").eq("id", id).single())).data;
+  var progs = (await q(sb.from("programs").select("id,title").order("sort_order"))).data || [];
+  var levels = (await q(sb.from("program_levels").select("id,program_id,level_number,title").order("level_number"))).data || [];
+  var teachers = ((await q(sb.from("teachers").select("id,full_name,status,deleted_at").order("full_name"))).data || []).filter(function (x) { return !x.deleted_at && x.status !== "Inactive"; });
+  var slots = (await q(sb.from("class_slots").select("*").eq("class_id", id).order("weekday").order("start_time"))).data || [];
+  var roster = (await q(sb.from("class_students").select("*").eq("class_id", id).order("joined_on"))).data || [];
+  var studs = (await q(sb.from("students").select("id,student_code,full_name,status,deleted_at").limit(2000))).data || [];
+  var dirty = false; guard = function () { return dirty; };
+  function lvl(pid) { return [["", "Not assigned"]].concat(levels.filter(function (l) { return l.program_id === pid; }).map(function (l) { return [l.id, "Level " + l.level_number + ": " + l.title]; })); }
+  function sname(sid) { var s = studs.filter(function (x) { return x.id === sid; })[0]; return s ? s : { full_name: "(unknown)", student_code: "" }; }
+  var activeN = function () { return roster.filter(function (r) { return !r.left_on; }).length; };
+
+  el.innerHTML = '<a href="#classes" class="muted">← All classes</a>' + pageHead(h(c.name) + (c.deleted_at ? ' <span class="badge b-Not-Proceeding">Archived</span>' : ""), "",
+    '<select id="cd-st" class="wbtn" style="width:auto">' + CSTAT.map(function (x) { return "<option" + (x === c.status ? " selected" : "") + ">" + x + "</option>"; }).join("") + '</select><button class="btn ghost wbtn" id="cd-arch">' + (c.deleted_at ? "Restore" : "Archive") + "</button>") +
+    '<div class="dash"><div><div class="panel"><h3 style="margin:0 0 12px">Details</h3><div class="g2">' + F("cp-name", "Class name", c.name, { req: 1, max: 120 }) + F("cp-teacher", "Teacher", c.teacher_id || "", { type: "select", options: [["", "Not assigned"]].concat(teachers.map(function (t) { return [t.id, t.full_name + (t.status && t.status !== "Active" ? " (" + t.status + ")" : "")]; })) }) +
+    F("cp-prog", "Program", c.program_id || "", { type: "select", options: [["", "Not assigned"]].concat(progs.map(function (p) { return [p.id, p.title]; })) }) + F("cp-level", "Level", c.level_id || "", { type: "select", options: lvl(c.program_id) }) +
+    F("cp-cap", "Capacity (optional)", c.capacity || "", { type: "number", attrs: 'min="1" max="200"' }) + F("cp-start", "Start date", c.start_date || "", { type: "date" }) + F("cp-end", "End date", c.end_date || "", { type: "date" }) + "</div>" +
+    F("cp-notes", "Notes", c.notes, { type: "textarea", rows: 3, max: 2000 }) + '<button class="btn wbtn" id="cp-save">Save details</button></div>' +
+    '<div class="panel"><div class="ph2"><h3>Weekly schedule</h3><button class="btn ghost wbtn" id="sl-add">+ Add time</button></div><div id="sl-list"></div></div></div>' +
+    '<div><div class="panel"><div class="ph2"><h3>Students <span class="muted" id="ro-n"></span></h3><button class="btn ghost wbtn" id="ro-add">+ Add student</button></div><div id="ro-list"></div></div></div></div>';
+
+  $("#cp-prog").onchange = function () { $("#cp-level").innerHTML = lvl(this.value).map(function (o) { return '<option value="' + h(o[0]) + '">' + h(o[1]) + "</option>"; }).join(""); };
+  $$("#view input,#view select,#view textarea").forEach(function (x) { if (/^cp-/.test(x.id)) x.addEventListener("input", function () { dirty = true; }); });
+
+  function drawS() {
+    $("#sl-list").innerHTML = slots.length ? slots.map(function (s) { return '<div class="rl" style="cursor:default"><span class="t"><b>' + WD[s.weekday] + " " + hhmm(s.start_time) + "–" + endTime(s.start_time, s.duration_minutes) + "</b><small>" + s.duration_minutes + " min · " + h(s.timezone) + '</small></span><button class="btn ghost wbtn" data-sd="' + s.id + '">Remove</button></div>'; }).join("") : '<div class="empty">No weekly time set.</div>';
+    $$("[data-sd]", $("#sl-list")).forEach(function (b) { b.onclick = async function () { if (!needWrite()) return; if (!await confirmBox("Remove this class time?", { danger: true, okLabel: "Remove" })) return; await q(sb.from("class_slots").delete().eq("id", b.getAttribute("data-sd"))); slots = slots.filter(function (x) { return x.id !== b.getAttribute("data-sd"); }); drawS(); }; });
+  }
+  function drawR() {
+    $("#ro-n").textContent = "(" + activeN() + (c.capacity ? " / " + c.capacity : "") + ")";
+    var cur = roster.filter(function (r) { return !r.left_on; }), past = roster.filter(function (r) { return r.left_on; });
+    $("#ro-list").innerHTML = (cur.length ? cur.map(function (r) { var s = sname(r.student_id); return '<div class="rl" style="cursor:default"><span class="t"><a href="#students/' + r.student_id + '"><b>' + h(s.full_name) + "</b></a><small>" + h(s.student_code) + " · joined " + fmtD(r.joined_on) + '</small></span><button class="btn ghost wbtn" data-rm="' + r.id + '">Remove</button></div>'; }).join("") : '<div class="empty">No students in this class.</div>') +
+      (past.length ? '<p class="muted small" style="margin:12px 0 4px">Left this class</p>' + past.map(function (r) { return '<div class="muted small">' + h(sname(r.student_id).full_name) + " — left " + fmtD(r.left_on) + "</div>"; }).join("") : "");
+    $$("[data-rm]", $("#ro-list")).forEach(function (b) { b.onclick = async function () { if (!needWrite()) return; if (!await confirmBox("Remove this student from the class? Their record stays; the date they left is kept.", { okLabel: "Remove" })) return; var d = todayISO(); await q(sb.from("class_students").update({ left_on: d }).eq("id", b.getAttribute("data-rm"))); roster.forEach(function (r) { if (r.id === b.getAttribute("data-rm")) r.left_on = d; }); drawR(); }; });
+  }
+  drawS(); drawR();
+
+  $("#cp-save").onclick = async function () {
+    if (!needWrite()) return; var n = val("cp-name"); mark("cp-name", null, !n); if (!n) { toast("Enter a class name.", true); return; }
+    var s = val("cp-start"), e = val("cp-end"); if (s && e && e < s) { mark("cp-end", null, true); toast("End date is before the start date.", true); return; }
+    var tid = val("cp-teacher") || null;
+    if (tid && tid !== c.teacher_id) { var cl = await teacherClashes(tid, id, slots); if (cl.length && !await confirmBox("This teacher already has overlapping time:<br>" + cl.map(h).join("<br>") + "<br>Assign anyway?", { okLabel: "Assign anyway" })) return; }
+    await q(sb.from("class_groups").update({ name: n, teacher_id: tid, program_id: val("cp-prog") || null, level_id: val("cp-level") || null, capacity: parseInt(val("cp-cap"), 10) || null, start_date: s || null, end_date: e || null, notes: val("cp-notes") }).eq("id", id));
+    c.teacher_id = tid; c.capacity = parseInt(val("cp-cap"), 10) || null; dirty = false; drawR(); toast("Details saved.");
+  };
+  $("#cd-st").onchange = async function () { if (!needWrite()) { this.value = c.status; return; } await q(sb.from("class_groups").update({ status: this.value }).eq("id", id)); c.status = this.value; toast("Status updated."); };
+  $("#cd-arch").onclick = async function () {
+    if (!needWrite()) return;
+    if (!c.deleted_at && !await confirmBox("Archive <b>" + h(c.name) + "</b>? Nothing is deleted; you can restore it.", { okLabel: "Archive" })) return;
+    await q(sb.from("class_groups").update({ deleted_at: c.deleted_at ? null : new Date().toISOString() }).eq("id", id)); dirty = false; route();
+  };
+  $("#sl-add").onclick = function () {
+    if (!needWrite()) return;
+    modal({ title: "Add class time", okLabel: "Add",
+      body: F("s-day", "Day", "1", { type: "select", options: WD.slice(1).map(function (d, i) { return [String(i + 1), d]; }) }) + '<div class="g2">' + F("s-time", "Start time", "", { type: "time", req: 1 }) + F("s-dur", "Length (minutes)", "45", { type: "number", attrs: 'min="10" max="300"' }) + "</div>" +
+        F("s-tz", "Time zone", c.__tz || "UTC", { type: "select", options: TZS }) + '<div class="hint">Pick the time zone this time is written in. Two times are only compared for clashes when they use the same time zone.</div>',
+      onOk: async function () {
+        var tm = val("s-time"), d = parseInt(val("s-dur"), 10); mark("s-time", null, !tm); if (!tm || !d || d < 10 || d > 300) { toast("Enter a start time and a length of 10–300 minutes.", true); return false; }
+        var row = { class_id: id, weekday: parseInt(val("s-day"), 10), start_time: tm, duration_minutes: d, timezone: val("s-tz") };
+        var tid = val("cp-teacher") || c.teacher_id;
+        var cl = await teacherClashes(tid, id, [row]); if (cl.length && !await confirmBox("The teacher already has overlapping time:<br>" + cl.map(h).join("<br>") + "<br>Add anyway?", { okLabel: "Add anyway" })) return false;
+        await q(sb.from("class_slots").insert(row)); slots = (await q(sb.from("class_slots").select("*").eq("class_id", id).order("weekday").order("start_time"))).data || []; drawS(); } });
+  };
+  $("#ro-add").onclick = function () {
+    if (!needWrite()) return; var inc = {}; roster.forEach(function (r) { if (!r.left_on) inc[r.student_id] = 1; });
+    var av = studs.filter(function (s) { return !s.deleted_at && s.status === "Active" && !inc[s.id]; });
+    if (!av.length) { modal({ title: "Add student", body: '<p>No active students are available to add. Create or activate students in <a href="#students">Students</a>.</p>', ok: false, cancelLabel: "Close" }); return; }
+    modal({ title: "Add student to class", okLabel: "Add", body: F("r-st", "Student", "", { type: "select", options: av.map(function (s) { return [s.id, s.full_name + " (" + s.student_code + ")"]; }) }),
+      onOk: async function () {
+        if (c.capacity && activeN() >= c.capacity && !await confirmBox("This class is full (" + activeN() + " of " + c.capacity + "). Add anyway?", { okLabel: "Add anyway" })) return false;
+        var sid = val("r-st"), prev = roster.filter(function (r) { return r.student_id === sid; })[0];
+        if (prev) await q(sb.from("class_students").update({ left_on: null, joined_on: todayISO() }).eq("id", prev.id)); else await q(sb.from("class_students").insert({ class_id: id, student_id: sid, joined_on: todayISO() }));
+        roster = (await q(sb.from("class_students").select("*").eq("class_id", id).order("joined_on"))).data || []; drawR(); } });
+  };
+}
+
+/* ---------- Weekly timetable (read-only view of real slots) ---------- */
+async function timetable(el) {
+  var cls = ((await q(sb.from("class_groups").select("id,name,status,teacher_id,deleted_at").limit(2000))).data || []).filter(function (c) { return !c.deleted_at && (c.status === "Planned" || c.status === "Active"); });
+  var tchs = (await q(sb.from("teachers").select("id,full_name").limit(2000))).data || [];
+  var slots = (await q(sb.from("class_slots").select("*").limit(5000))).data || [];
+  var tzs = {}; slots.forEach(function (s) { tzs[s.timezone] = 1; });
+  el.innerHTML = '<a href="#classes" class="muted">← All classes</a>' + pageHead("Weekly timetable", "Planned and active classes. Times are shown in the time zone they were entered in; they are not converted." + (Object.keys(tzs).length > 1 ? " <b>More than one time zone is in use.</b>" : ""));
+  var html = '<div class="tt">';
+  for (var d = 1; d <= 7; d++) {
+    var day = slots.filter(function (s) { return s.weekday === d && cls.some(function (c) { return c.id === s.class_id; }); }).sort(function (a, b) { return mins(a.start_time) - mins(b.start_time); });
+    html += '<div class="panel" style="padding:14px 16px"><h3 style="margin:0 0 8px;font-size:1rem">' + WD[d] + "</h3>" + (day.length ? day.map(function (s) {
+      var c = cls.filter(function (x) { return x.id === s.class_id; })[0], t = tchs.filter(function (x) { return x.id === c.teacher_id; })[0];
+      return '<a class="ev ' + (c.status === "Planned" ? "fut" : "") + '" href="#classes/' + c.id + '" style="text-decoration:none"><small>' + hhmm(s.start_time) + "–" + endTime(s.start_time, s.duration_minutes) + " · " + h(s.timezone) + "</small><b>" + h(c.name) + "</b><small>" + (t ? h(t.full_name) : "No teacher") + "</small></a>"; }).join("") : '<div class="muted small">Nothing scheduled.</div>') + "</div>";
+  }
+  el.insertAdjacentHTML("beforeend", html + "</div>");
 }
 /* ================= WEBSITE CONTENT (page editor + FAQ) ================= */
 function deep(o) { return JSON.parse(JSON.stringify(o)); }

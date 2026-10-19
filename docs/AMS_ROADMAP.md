@@ -14,7 +14,8 @@ Rule for this project: one module at a time, each tested before the next starts.
 | Admin UI shell v2 (sage frame, floating sidebar, topbar search, alerts bell, user menu) | **Built this step** |
 | Dashboard with real data (KPIs, inquiries chart, pipeline, follow-up week calendar) | **Built this step** |
 | Students (Phase 2): list/search/filter, add manually, convert from a *Enrollment Confirmed* inquiry, profile, guardians, notes, status history, archive/restore | **Built** (mock-tested). Needs `sql/002_students.sql` run in Supabase |
-| Classes, Teachers, Finance, Brand/Logo, Automation | **Not built** — shown in sidebar as "SOON" with an honest placeholder page |
+| Teachers + Classes & Timetable (Phase 3): teacher profiles/status/availability, classes with teacher, program/level, capacity, weekly time slots, student roster (join/leave dates), teacher-clash and capacity warnings, weekly timetable view | **Built** (mock-tested). Needs `sql/003_classes.sql` run in Supabase |
+| Finance, Brand/Logo, Automation, Attendance | **Not built** — shown in sidebar as "SOON" with an honest placeholder page |
 
 Not verified against real services: Supabase SQL execution, real login, email reset, storage upload, Vercel deploy, domain.
 
@@ -27,8 +28,8 @@ Static HTML + vanilla JS on Vercel; Supabase Postgres/Auth/Storage; all authoriz
 ## 4. Roadmap (one at a time; each ends with a test and your approval)
 1. **Done:** UI shell + real-data dashboard + this audit.
 2. **Done (needs SQL run):** Students — `sql/002_students.sql`. Guardian contacts are hard-deleted (with confirmation); students are soft-deleted (archive).
-3. **Next:** Teachers + Classes & Timetable + attendance.
-4. Finance — fee plans, manual payment records, reports.
+3. **Done (needs SQL run):** Teachers + Classes & Timetable — `sql/003_classes.sql`. Clash/capacity checks are warnings in the admin page, not database rules. Times are not converted between time zones. Attendance is NOT built yet.
+4. **Next:** Finance — fee plans, manual payment records, teacher compensation, reports. (Attendance can follow.)
 5. Brand & Logo editor.
 6. Automation/notifications, richer roles & permissions, trash & audit viewer, reports.
 
