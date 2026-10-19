@@ -388,7 +388,7 @@ async function enter(session) {
     loginMsg("This account is not authorised for the admin area. Ask the owner to add you as an admin.");
     return;
   }
-  role = r.data.role; canWrite = ["owner", "administrator", "assessor"].indexOf(role) > -1; canAdmin = ["owner", "administrator"].indexOf(role) > -1;
+  role = r.data.role; canWrite = ["owner", "administrator", "assessor"].indexOf(role) > -1; canAdmin = ["owner", "administrator"].indexOf(role) > -1; renderNav();
   document.body.classList.toggle("ro", !canWrite);
   $("#who-email").textContent = me.email; $("#who-role").textContent = role; $("#who-av").textContent = (me.email || "A").charAt(0).toUpperCase();
   var s = await sb.from("site_settings").select("data").eq("id", 1).maybeSingle();
@@ -470,15 +470,16 @@ function ico(n) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke
 var NAV = [
   ["Main", [["overview", "Dashboard", "grid"], ["leads", "Leads & Inquiries", "mail"], ["assessments", "Assessments", "check"], ["enrollments", "Enrollments", "users"], ["students", "Students", "user"]]],
   ["Website", [["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
-  ["Academy", [["classes", "Classes & Timetable", "cal"], ["teachers", "Teachers", "users"], ["soon/finance", "Finance", "cash", 1], ["soon/brand", "Brand & Logo", "brush", 1], ["soon/automation", "Automation", "bolt", 1]]],
-  ["System", [["settings", "Settings", "gear"]]]
+  ["Academy", [["classes", "Classes & Timetable", "cal"], ["teachers", "Teachers", "users"], ["finance", "Finance", "cash"], ["reminders", "Reminders", "bolt"]]],
+  ["System", [["reports", "Reports", "chart"], ["activity", "Activity log", "check"], ["users", "Users & Access", "users"], ["settings", "Settings & Brand", "gear"]]]
 ];
 var navShut = {};
 try { navShut = JSON.parse(localStorage.getItem("inaya_nav_shut") || "{}"); } catch (e) {}
+var NAV_ADMIN = { finance: 1 }, NAV_OWNER = { users: 1 };
 function renderNav() {
   $("#nav").innerHTML = NAV.map(function (g, gi) {
     return '<div class="ng' + (navShut[gi] ? " shut" : "") + '" data-g="' + gi + '"><button class="ng-h" type="button">' + h(g[0]) + ico("chev") + '</button><div class="ng-b">' +
-      g[1].map(function (n) { return '<a href="#' + n[0] + '" data-v="' + n[0] + '">' + ico(n[2]) + "<span>" + h(n[1]) + "</span>" + (n[3] ? '<em class="soon">SOON</em>' : "") + "</a>"; }).join("") + "</div></div>";
+      g[1].filter(function (n) { return (canAdmin || !NAV_ADMIN[n[0]]) && (role === "owner" || !NAV_OWNER[n[0]]); }).map(function (n) { return '<a href="#' + n[0] + '" data-v="' + n[0] + '">' + ico(n[2]) + "<span>" + h(n[1]) + "</span>" + (n[3] ? '<em class="soon">SOON</em>' : "") + "</a>"; }).join("") + "</div></div>";
   }).join("");
   $$(".ng-h", $("#nav")).forEach(function (b) {
     b.onclick = function () {
@@ -528,9 +529,6 @@ $("#bell").addEventListener("click", function () { var p = $("#bell-pop"); close
 
 /* planned modules: honest placeholder, nothing is faked */
 var SOON = {
-  finance: ["Finance", "Fee plans, invoices, manual payment records, teacher compensation and reports. No card details are ever stored.", "Phase 4 (next)"],
-  brand: ["Brand & Logo", "Logo and brand colour management with safe previews.", "Phase 5"],
-  automation: ["Automation", "Reminders and notifications you control.", "Phase 6"]
 };
 VIEWS.soon = function (el, args) {
   var s = SOON[args[0]] || ["Planned module", "", ""];
@@ -708,7 +706,7 @@ async function studentDetail(el, id) {
     '<button class="btn wbtn" id="p-save">Save profile</button></div>' +
     '<div class="panel"><div class="ph2"><h3>Guardians / contacts</h3><button class="btn ghost wbtn" id="g-add">+ Add</button></div><div id="g-list"></div></div></div><div>' +
     '<div class="panel"><h3 style="margin:0 0 10px">Notes</h3><textarea id="nt-body" rows="2" maxlength="2000" placeholder="Add a note…" class="wbtn"></textarea><button class="btn wbtn" id="nt-add" style="margin:8px 0 12px">Add note</button><div id="nt-list"></div></div>' +
-    '<div class="panel"><h3 style="margin:0 0 10px">History</h3><div id="ev-list"></div></div></div></div>';
+    '<div class="panel"><h3 style="margin:0 0 10px">Attendance (last 90 days)</h3><div id="att-sum" class="muted">Loading…</div></div>' + '<div class="panel"><h3 style="margin:0 0 10px">History</h3><div id="ev-list"></div></div></div></div>';
 
   $("#p-prog").onchange = function () { $("#p-level").innerHTML = lvlOpts(this.value).map(function (o) { return '<option value="' + h(o[0]) + '">' + h(o[1]) + "</option>"; }).join(""); };
   $$("#view input,#view select,#view textarea").forEach(function (x) { if (/^p-/.test(x.id)) x.addEventListener("input", function () { dirty = true; }); });
@@ -743,6 +741,12 @@ async function studentDetail(el, id) {
   }
   async function reloadEv() { evs = (await q(sb.from("student_events").select("*").eq("student_id", id).order("created_at", { ascending: false }).limit(50))).data || []; drawN(); }
   drawG(); drawN();
+  (async function () {
+    var since = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+    var a = (await q(sb.from("attendance").select("status,session_date").eq("student_id", id).gte("session_date", since))).data || [], c = {};
+    a.forEach(function (x) { c[x.status] = (c[x.status] || 0) + 1; });
+    $("#att-sum").innerHTML = a.length ? ["Present", "Late", "Absent", "Excused"].map(function (k) { return "<b>" + (c[k] || 0) + "</b> " + k.toLowerCase(); }).join(" · ") + ' <span class="small">(' + a.length + " recorded sessions)</span>" : "No attendance recorded yet.";
+  })().catch(fail);
 
   $("#g-add").onclick = function () { gModal(null); };
   $("#nt-add").onclick = async function () {
@@ -887,7 +891,8 @@ async function classDetail(el, id) {
     F("cp-cap", "Capacity (optional)", c.capacity || "", { type: "number", attrs: 'min="1" max="200"' }) + F("cp-start", "Start date", c.start_date || "", { type: "date" }) + F("cp-end", "End date", c.end_date || "", { type: "date" }) + "</div>" +
     F("cp-notes", "Notes", c.notes, { type: "textarea", rows: 3, max: 2000 }) + '<button class="btn wbtn" id="cp-save">Save details</button></div>' +
     '<div class="panel"><div class="ph2"><h3>Weekly schedule</h3><button class="btn ghost wbtn" id="sl-add">+ Add time</button></div><div id="sl-list"></div></div></div>' +
-    '<div><div class="panel"><div class="ph2"><h3>Students <span class="muted" id="ro-n"></span></h3><button class="btn ghost wbtn" id="ro-add">+ Add student</button></div><div id="ro-list"></div></div></div></div>';
+    '<div><div class="panel"><div class="ph2"><h3>Students <span class="muted" id="ro-n"></span></h3><button class="btn ghost wbtn" id="ro-add">+ Add student</button></div><div id="ro-list"></div></div>' +
+    '<div class="panel"><h3 style="margin:0 0 8px">Attendance</h3><div class="row" style="gap:10px;margin-bottom:10px"><input id="at-d" type="date" max="' + todayISO() + '" value="' + todayISO() + '" style="width:auto"><button class="btn ghost" id="at-all">All present</button></div><div id="at-list"></div><button class="btn wbtn" id="at-save" style="margin-top:10px">Save attendance</button></div></div></div>';
 
   $("#cp-prog").onchange = function () { $("#cp-level").innerHTML = lvl(this.value).map(function (o) { return '<option value="' + h(o[0]) + '">' + h(o[1]) + "</option>"; }).join(""); };
   $$("#view input,#view select,#view textarea").forEach(function (x) { if (/^cp-/.test(x.id)) x.addEventListener("input", function () { dirty = true; }); });
@@ -904,6 +909,22 @@ async function classDetail(el, id) {
     $$("[data-rm]", $("#ro-list")).forEach(function (b) { b.onclick = async function () { if (!needWrite()) return; if (!await confirmBox("Remove this student from the class? Their record stays; the date they left is kept.", { okLabel: "Remove" })) return; var d = todayISO(); await q(sb.from("class_students").update({ left_on: d }).eq("id", b.getAttribute("data-rm"))); roster.forEach(function (r) { if (r.id === b.getAttribute("data-rm")) r.left_on = d; }); drawR(); }; });
   }
   drawS(); drawR();
+  var ATT = ["Present", "Absent", "Late", "Excused"], attRows = {};
+  async function drawA() {
+    var d = $("#at-d").value, el2 = $("#at-list");
+    if (!d || d > todayISO()) { el2.innerHTML = '<div class="empty">Pick today or an earlier date.</div>'; return; }
+    var inClass = roster.filter(function (r) { return r.joined_on <= d && (!r.left_on || r.left_on >= d); });
+    var ex = (await q(sb.from("attendance").select("*").eq("class_id", id).eq("session_date", d))).data || []; attRows = {}; ex.forEach(function (a) { attRows[a.student_id] = a; });
+    el2.innerHTML = inClass.length ? inClass.map(function (r) { var cur = attRows[r.student_id] ? attRows[r.student_id].status : ""; return '<div class="rl" style="cursor:default"><span class="t"><b>' + h(sname(r.student_id).full_name) + '</b></span><select data-at="' + r.student_id + '" style="width:auto"><option value="">—</option>' + ATT.map(function (x) { return "<option" + (x === cur ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></div>"; }).join("") : '<div class="empty">No students were in this class on that date.</div>';
+  }
+  $("#at-d").onchange = drawA; drawA();
+  $("#at-all").onclick = function () { $$("[data-at]", $("#at-list")).forEach(function (x) { x.value = "Present"; }); };
+  $("#at-save").onclick = async function () {
+    if (!needWrite()) return; var d = $("#at-d").value; if (!d || d > todayISO()) { toast("Pick today or an earlier date.", true); return; }
+    var rows = []; $$("[data-at]", $("#at-list")).forEach(function (x) { if (x.value) rows.push({ class_id: id, student_id: x.getAttribute("data-at"), session_date: d, status: x.value, recorded_by: me.id }); });
+    if (!rows.length) { toast("Choose a status for at least one student.", true); return; }
+    await q(sb.from("attendance").upsert(rows, { onConflict: "class_id,student_id,session_date" })); toast("Attendance saved for " + rows.length + " student" + (rows.length > 1 ? "s" : "") + "."); drawA();
+  };
 
   $("#cp-save").onclick = async function () {
     if (!needWrite()) return; var n = val("cp-name"); mark("cp-name", null, !n); if (!n) { toast("Enter a class name.", true); return; }
@@ -960,6 +981,228 @@ async function timetable(el) {
   }
   el.insertAdjacentHTML("beforeend", html + "</div>");
 }
+/* ================= FINANCE (Phase 4) — manual records only ================= */
+var CURR = ["USD", "GBP", "EUR", "CAD", "AUD", "BDT", "SAR", "AED"], METHODS = ["Cash", "Bank transfer", "Mobile wallet", "Other"], PERIODS = ["Monthly", "Term", "One-time"];
+var FS = { tab: "overview", q: "", status: "" };
+function money(n, c) { try { return new Intl.NumberFormat([], { style: "currency", currency: c }).format(+n || 0); } catch (e) { return (+n || 0).toFixed(2) + " " + c; } }
+function r2(n) { return Math.round((+n || 0) * 100) / 100; }
+function cardLike(v) { return /(\d[ -]?){13,}/.test(String(v || "")); }
+function csvOut(name, keys, rows) { download(name + "-" + todayISO() + ".csv", "﻿" + keys.join(",") + "\n" + rows.map(function (r) { return keys.map(function (k) { return csvCell(r[k]); }).join(","); }).join("\n")); }
+function invState(inv, paid, today) { if (inv.voided_at) return "Void"; if (paid >= inv.amount - 0.001) return "Paid"; if (inv.due_date < today) return "Overdue"; return paid > 0 ? "Part-paid" : "Unpaid"; }
+function fbadge(v) { var m = { Paid: "Enrollment-Confirmed", Overdue: "Not-Proceeding", Void: "draft", "Part-paid": "Follow-up-Required", Unpaid: "New", Due: "New" }; return '<span class="badge b-' + (m[v] || "New") + '">' + h(v) + "</span>"; }
+
+VIEWS.finance = async function (el, args) {
+  if (!canAdmin) { el.innerHTML = pageHead("Finance", "") + '<div class="alert warn">Finance is visible to the owner and administrators only.</div>'; return; }
+  var tab = ["overview", "invoices", "plans", "teacherpay"].indexOf(args[0]) > -1 ? args[0] : "overview"; FS.tab = tab;
+  el.innerHTML = pageHead("Finance", "Manual records only. Payments are recorded after they are received outside this system. No card details are ever stored.") +
+    '<div class="tabs">' + [["overview", "Overview"], ["invoices", "Invoices"], ["plans", "Fee plans"], ["teacherpay", "Teacher pay"]].map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? "on" : "") + '">' + t[1] + "</button>"; }).join("") + '</div><div id="fin"></div>';
+  $$(".tabs button", el).forEach(function (b) { b.onclick = function () { location.hash = "#finance/" + b.getAttribute("data-t"); }; });
+  var today = todayISO();
+  var students = (await q(sb.from("students").select("id,student_code,full_name,status,deleted_at").limit(3000))).data || [];
+  var sn = function (id) { var s = students.filter(function (x) { return x.id === id; })[0]; return s ? s.full_name + " (" + s.student_code + ")" : "(unknown)"; };
+  var plans = (await q(sb.from("fee_plans").select("*").order("name"))).data || [];
+
+  async function loadInv() {
+    var invs = (await q(sb.from("invoices").select("*").order("created_at", { ascending: false }).limit(5000))).data || [];
+    var pays = (await q(sb.from("payments").select("*").order("received_on", { ascending: false }).limit(10000))).data || [];
+    var paidBy = {}; pays.forEach(function (p) { if (!p.voided_at) paidBy[p.invoice_id] = r2((paidBy[p.invoice_id] || 0) + +p.amount); });
+    invs.forEach(function (i) { i._paid = paidBy[i.id] || 0; i._state = invState(i, i._paid, today); });
+    return { invs: invs, pays: pays };
+  }
+
+  if (tab === "overview") {
+    var D = await loadInv(), cur = {};
+    D.invs.forEach(function (i) { if (i._state === "Void") return; var c = cur[i.currency] = cur[i.currency] || { inv: 0, rec: 0, out: 0, od: 0, odN: 0 }; c.inv = r2(c.inv + +i.amount); c.rec = r2(c.rec + i._paid); c.out = r2(c.out + (i.amount - i._paid)); if (i._state === "Overdue") { c.od = r2(c.od + (i.amount - i._paid)); c.odN++; } });
+    var od = D.invs.filter(function (i) { return i._state === "Overdue"; }).sort(function (a, b) { return a.due_date < b.due_date ? -1 : 1; });
+    var keys = Object.keys(cur);
+    $("#fin").innerHTML = (keys.length ? keys.map(function (c, n) { var v = cur[c]; return '<div class="panel"><h3 style="margin:0 0 12px">' + h(c) + '</h3><div class="kpis" style="margin:0">' +
+      [["Invoiced", money(v.inv, c), ""], ["Received", money(v.rec, c), ""], ["Outstanding", money(v.out, c), ""], ["Overdue", money(v.od, c), v.odN + " invoice" + (v.odN === 1 ? "" : "s")]].map(function (k, i) { return '<div class="kpi k' + (i + 1) + '" style="cursor:default"><span class="l">' + k[0] + "</span><b>" + k[1] + "</b><small>" + k[2] + "</small></div>"; }).join("") + "</div></div>"; }).join("") +
+      '<p class="muted small">Totals are shown per currency and are never added together across currencies. Voided invoices are excluded.</p>' : '<div class="panel"><div class="empty">No invoices yet. Create one in the Invoices tab.</div></div>') +
+      '<div class="panel"><div class="ph2"><h3>Overdue invoices</h3><div class="row"><button class="btn ghost" id="x-inv">Export invoices CSV</button><button class="btn ghost" id="x-pay">Export payments CSV</button></div></div>' +
+      (od.length ? od.slice(0, 15).map(function (i) { return '<button class="rl" data-inv="' + i.id + '"><span class="t"><b>' + h(sn(i.student_id)) + "</b><small>" + h(i.invoice_no) + " · due " + fmtD(i.due_date) + '</small></span><b>' + money(i.amount - i._paid, i.currency) + "</b></button>"; }).join("") : '<div class="empty">Nothing is overdue.</div>') + "</div>";
+    $$("[data-inv]", $("#fin")).forEach(function (b) { b.onclick = function () { FS.open = b.getAttribute("data-inv"); location.hash = "#finance/invoices"; }; });
+    $("#x-inv").onclick = function () { csvOut("inaya-invoices", ["invoice_no", "student", "description", "amount", "currency", "paid", "status", "due_date", "created_at"], D.invs.map(function (i) { return { invoice_no: i.invoice_no, student: sn(i.student_id), description: i.description, amount: i.amount, currency: i.currency, paid: i._paid, status: i._state, due_date: i.due_date, created_at: i.created_at }; })); };
+    $("#x-pay").onclick = function () { var inv = {}; D.invs.forEach(function (i) { inv[i.id] = i; }); csvOut("inaya-payments", ["invoice_no", "student", "amount", "currency", "method", "received_on", "reference", "voided"], D.pays.map(function (p) { var i = inv[p.invoice_id] || {}; return { invoice_no: i.invoice_no, student: i.student_id ? sn(i.student_id) : "", amount: p.amount, currency: i.currency, method: p.method, received_on: p.received_on, reference: p.reference, voided: p.voided_at ? "yes" : "" }; })); };
+    return;
+  }
+
+  if (tab === "invoices") {
+    var D2 = await loadInv();
+    $("#fin").innerHTML = '<div class="panel"><div class="row" style="gap:10px;margin-bottom:12px"><input id="i-q" type="search" placeholder="Search invoice no. or student…" style="max-width:280px" value="' + h(FS.q) + '"><select id="i-s" style="width:auto"><option value="">All statuses</option>' + ["Unpaid", "Part-paid", "Overdue", "Paid", "Void"].map(function (s) { return "<option" + (FS.status === s ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select><span style="flex:1"></span><button class="btn wbtn" id="i-new">+ New invoice</button></div><div id="i-list"></div></div>';
+    var drawI = function () {
+      var t = FS.q.toLowerCase();
+      var r = D2.invs.filter(function (i) { return (!FS.status || i._state === FS.status) && (!t || (i.invoice_no + " " + sn(i.student_id)).toLowerCase().indexOf(t) > -1); });
+      $("#i-list").innerHTML = r.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Invoice</th><th>Student</th><th>Amount</th><th>Paid</th><th>Due</th><th>Status</th></tr></thead><tbody>' + r.slice(0, 300).map(function (i) { return '<tr class="click" data-id="' + i.id + '"><td><b>' + h(i.invoice_no) + "</b></td><td>" + h(sn(i.student_id)) + "</td><td>" + money(i.amount, i.currency) + "</td><td>" + money(i._paid, i.currency) + "</td><td>" + fmtD(i.due_date) + "</td><td>" + fbadge(i._state) + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">' + (D2.invs.length ? "No invoices match." : "No invoices yet.") + "</div>";
+      $$("tr[data-id]", $("#i-list")).forEach(function (tr) { tr.onclick = function () { openInv(tr.getAttribute("data-id")); }; });
+    };
+    $("#i-q").oninput = function () { FS.q = this.value; drawI(); }; $("#i-s").onchange = function () { FS.status = this.value; drawI(); }; drawI();
+    $("#i-new").onclick = function () {
+      if (!needWrite()) return; var act = students.filter(function (s) { return !s.deleted_at && s.status === "Active"; });
+      if (!act.length) { modal({ title: "New invoice", body: '<p>There are no active students. Add or activate a student first in <a href="#students">Students</a>.</p>', ok: false, cancelLabel: "Close" }); return; }
+      var m = modal({ title: "New invoice", okLabel: "Create invoice", body: F("v-st", "Student", "", { type: "select", options: act.map(function (s) { return [s.id, s.full_name + " (" + s.student_code + ")"]; }) }) +
+        F("v-plan", "Fee plan (optional — fills the fields below)", "", { type: "select", options: [["", "No plan"]].concat(plans.filter(function (p) { return p.active; }).map(function (p) { return [p.id, p.name + " — " + money(p.amount, p.currency)]; })) }) + F("v-desc", "Description", "", { max: 200 }) +
+        '<div class="g2">' + F("v-amt", "Amount", "", { type: "number", attrs: 'min="0.01" step="0.01"', req: 1 }) + F("v-cur", "Currency", "USD", { type: "select", options: CURR }) + "</div>" + F("v-due", "Due date", today, { type: "date", req: 1 }),
+        onOk: async function () {
+          var a = r2(val("v-amt")), due = val("v-due"); mark("v-amt", null, !(a > 0)); mark("v-due", null, !due); if (!(a > 0) || !due) { toast("Enter an amount above zero and a due date.", true); return false; }
+          await q(sb.from("invoices").insert({ student_id: val("v-st"), plan_id: val("v-plan") || null, description: val("v-desc"), amount: a, currency: val("v-cur"), due_date: due, created_by: me.id })); toast("Invoice created."); route(); } });
+      $("#v-plan", m.el).onchange = function () { var p = plans.filter(function (x) { return x.id === this.value; }.bind(this))[0]; if (!p) return; $("#v-amt").value = p.amount; $("#v-cur").value = p.currency; if (!$("#v-desc").value) $("#v-desc").value = p.name; };
+    };
+    async function openInv(id) {
+      var i = D2.invs.filter(function (x) { return x.id === id; })[0]; if (!i) return;
+      var ps = D2.pays.filter(function (p) { return p.invoice_id === id; });
+      var m = modal({ title: i.invoice_no, wide: true, ok: false, cancelLabel: "Close", body: '<div class="muted" style="margin-bottom:8px">' + h(sn(i.student_id)) + (i.description ? " · " + h(i.description) : "") + '</div><div class="row" style="gap:18px;margin-bottom:12px"><span>Amount <b>' + money(i.amount, i.currency) + "</b></span><span>Paid <b>" + money(i._paid, i.currency) + "</b></span><span>Balance <b>" + money(i.amount - i._paid, i.currency) + "</b></span><span>Due <b>" + fmtD(i.due_date) + "</b></span>" + fbadge(i._state) + "</span></div>" +
+        '<h3 style="margin:0 0 6px;font-size:1rem">Payments</h3>' + (ps.length ? ps.map(function (p) { return '<div class="rl" style="cursor:default"><span class="t"><b' + (p.voided_at ? ' style="text-decoration:line-through"' : "") + ">" + money(p.amount, i.currency) + "</b><small>" + h(p.method) + " · " + fmtD(p.received_on) + (p.reference ? " · ref " + h(p.reference) : "") + (p.voided_at ? " · voided" : "") + "</small></span>" + (p.voided_at ? "" : '<button class="btn ghost sm wbtn" data-vp="' + p.id + '">Void</button>') + "</div>"; }).join("") : '<div class="empty" style="padding:8px 0">No payments recorded.</div>') +
+        '<div class="row" style="margin-top:14px;gap:8px">' + (i._state !== "Void" && i._state !== "Paid" ? '<button class="btn wbtn" id="rp">Record payment</button>' : "") + (i._state !== "Void" ? '<button class="btn ghost danger wbtn" id="vi">Void invoice</button>' : "") + "</div>" });
+      var rp = $("#rp", m.el); if (rp) rp.onclick = function () {
+        if (!needWrite()) return; var bal = r2(i.amount - i._paid);
+        modal({ title: "Record payment", okLabel: "Record", body: '<div class="alert warn" style="margin-bottom:10px">Record only payments already received. Never enter card numbers.</div><div class="g2">' + F("pm-amt", "Amount (" + i.currency + ")", bal, { type: "number", attrs: 'min="0.01" step="0.01"', req: 1 }) + F("pm-m", "Method", "Bank transfer", { type: "select", options: METHODS }) + "</div>" + F("pm-d", "Received on", today, { type: "date", req: 1 }) + F("pm-ref", "Reference (bank/wallet transaction ID, optional)", "", { max: 60 }) + F("pm-note", "Note", "", { max: 300 }),
+          onOk: async function () {
+            var a = r2(val("pm-amt")), d = val("pm-d"), ref = val("pm-ref"); if (!(a > 0) || !d) { toast("Enter an amount above zero and the date received.", true); return false; }
+            if (a > bal + 0.001) { mark("pm-amt", null, true); toast("That is more than the balance (" + money(bal, i.currency) + ").", true); return false; }
+            if (d > today) { mark("pm-d", null, true); toast("The date received cannot be in the future.", true); return false; }
+            if (cardLike(ref)) { mark("pm-ref", null, true); toast("The reference looks like a card or account number. Do not store those.", true); return false; }
+            await q(sb.from("payments").insert({ invoice_id: id, amount: a, method: val("pm-m"), received_on: d, reference: ref || null, note: val("pm-note"), recorded_by: me.id })); m.close(); toast("Payment recorded."); route(); } });
+      };
+      $$("[data-vp]", m.el).forEach(function (b) { b.onclick = async function () { if (!needWrite()) return; if (!await confirmBox("Void this payment? It stays in the record, marked as voided, and no longer counts as received.", { danger: true, okLabel: "Void payment" })) return; await q(sb.from("payments").update({ voided_at: new Date().toISOString() }).eq("id", b.getAttribute("data-vp"))); m.close(); toast("Payment voided."); route(); }; });
+      var vi = $("#vi", m.el); if (vi) vi.onclick = async function () {
+        if (!needWrite()) return; if (i._paid > 0) { toast("Void the payments first, then void the invoice.", true); return; }
+        if (!await confirmBox("Void invoice <b>" + h(i.invoice_no) + "</b>? It stays in the record as void.", { danger: true, okLabel: "Void invoice" })) return;
+        await q(sb.from("invoices").update({ voided_at: new Date().toISOString() }).eq("id", id)); m.close(); toast("Invoice voided."); route(); };
+    }
+    if (FS.open) { var oid = FS.open; FS.open = null; openInv(oid); }
+    return;
+  }
+
+  if (tab === "plans") {
+    $("#fin").innerHTML = '<div class="panel"><div class="ph2"><h3>Fee plans</h3><button class="btn wbtn" id="pl-new">+ New plan</button></div>' +
+      (plans.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Plan</th><th>Amount</th><th>Period</th><th>Status</th><th></th></tr></thead><tbody>' + plans.map(function (p) { return "<tr><td><b>" + h(p.name) + '</b><br><span class="muted small">' + h(p.note) + "</span></td><td>" + money(p.amount, p.currency) + "</td><td>" + h(p.period) + "</td><td>" + (p.active ? fbadge("Paid").replace("Paid", "Active") : fbadge("Void").replace("Void", "Inactive")) + '</td><td><button class="btn ghost sm wbtn" data-pe="' + p.id + '">Edit</button></td></tr>'; }).join("") + "</tbody></table></div>" : '<div class="empty">No fee plans yet. Plans are optional templates for invoices. Enter your own prices; none are assumed.</div>') + "</div>";
+    var pm = function (p) {
+      if (!needWrite()) return; p = p || {};
+      modal({ title: p.id ? "Edit plan" : "New fee plan", okLabel: "Save", body: F("fp-name", "Plan name", p.name || "", { req: 1, max: 100 }) + '<div class="g2">' + F("fp-amt", "Amount", p.amount != null ? p.amount : "", { type: "number", attrs: 'min="0" step="0.01"', req: 1 }) + F("fp-cur", "Currency", p.currency || "USD", { type: "select", options: CURR }) + "</div>" + F("fp-per", "Billing period", p.period || "Monthly", { type: "select", options: PERIODS }) + F("fp-note", "Note", p.note || "", { max: 300 }) + '<label class="row small" style="gap:6px"><input id="fp-act" type="checkbox"' + (p.active === false ? "" : " checked") + "> Active</label>",
+        onOk: async function () { var n = val("fp-name"), a = val("fp-amt"); mark("fp-name", null, !n); mark("fp-amt", null, a === "" || +a < 0); if (!n || a === "" || +a < 0) { toast("Enter a name and an amount of zero or more.", true); return false; }
+          var row = { name: n, amount: r2(a), currency: val("fp-cur"), period: val("fp-per"), note: val("fp-note"), active: val("fp-act") };
+          if (p.id) await q(sb.from("fee_plans").update(row).eq("id", p.id)); else await q(sb.from("fee_plans").insert(row)); toast("Saved."); route(); } });
+    };
+    $("#pl-new").onclick = function () { pm(null); }; $$("[data-pe]", $("#fin")).forEach(function (b) { b.onclick = function () { pm(plans.filter(function (p) { return p.id === b.getAttribute("data-pe"); })[0]); }; });
+    return;
+  }
+
+  /* teacher pay */
+  var tchs = ((await q(sb.from("teachers").select("id,full_name,deleted_at").order("full_name"))).data || []);
+  var tn = function (id) { var t = tchs.filter(function (x) { return x.id === id; })[0]; return t ? t.full_name : "(unknown)"; };
+  var recs = ((await q(sb.from("teacher_pay_records").select("*").order("created_at", { ascending: false }).limit(3000))).data || []);
+  var dueBy = {}; recs.forEach(function (r) { if (!r.voided_at && r.status === "Due") dueBy[r.currency] = r2((dueBy[r.currency] || 0) + +r.amount); });
+  $("#fin").innerHTML = '<div class="panel"><div class="ph2"><div><h3>Teacher pay records</h3><div class="muted small">A manual ledger of what is due and what was paid. The system does not calculate rates or send money.</div></div><div class="row"><button class="btn ghost" id="x-tp">Export CSV</button><button class="btn wbtn" id="tp-new">+ New record</button></div></div>' +
+    (Object.keys(dueBy).length ? '<p>Due now: ' + Object.keys(dueBy).map(function (c) { return "<b>" + money(dueBy[c], c) + "</b>"; }).join(" · ") + "</p>" : "") +
+    (recs.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Teacher</th><th>Period</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>' + recs.map(function (r) { return "<tr><td><b>" + h(tn(r.teacher_id)) + "</b>" + (r.note ? '<br><span class="muted small">' + h(r.note) + "</span>" : "") + "</td><td>" + h(r.period) + "</td><td>" + money(r.amount, r.currency) + "</td><td>" + (r.voided_at ? fbadge("Void") : fbadge(r.status) + (r.paid_on ? ' <span class="muted small">' + fmtD(r.paid_on) + "</span>" : "")) + "</td><td>" + (r.voided_at ? "" : (r.status === "Due" ? '<button class="btn sm wbtn" data-pd="' + r.id + '">Mark paid</button> ' : "") + '<button class="btn ghost sm wbtn" data-pv="' + r.id + '">Void</button>') + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">No records yet.</div>') + "</div>";
+  $("#x-tp").onclick = function () { csvOut("inaya-teacher-pay", ["teacher", "period", "amount", "currency", "status", "paid_on", "voided"], recs.map(function (r) { return { teacher: tn(r.teacher_id), period: r.period, amount: r.amount, currency: r.currency, status: r.status, paid_on: r.paid_on, voided: r.voided_at ? "yes" : "" }; })); };
+  $("#tp-new").onclick = function () {
+    if (!needWrite()) return; var act = tchs.filter(function (t) { return !t.deleted_at; });
+    if (!act.length) { modal({ title: "New record", body: '<p>Add a teacher first in <a href="#teachers">Teachers</a>.</p>', ok: false, cancelLabel: "Close" }); return; }
+    modal({ title: "New teacher pay record", okLabel: "Save", body: F("tr-t", "Teacher", "", { type: "select", options: act.map(function (t) { return [t.id, t.full_name]; }) }) + F("tr-p", "Period (YYYY-MM)", today.slice(0, 7), { max: 7, req: 1 }) + '<div class="g2">' + F("tr-a", "Amount", "", { type: "number", attrs: 'min="0" step="0.01"', req: 1 }) + F("tr-c", "Currency", "USD", { type: "select", options: CURR }) + "</div>" + F("tr-n", "Note", "", { max: 300 }),
+      onOk: async function () { var p = val("tr-p"), a = val("tr-a"); var okp = /^\d{4}-(0[1-9]|1[0-2])$/.test(p); mark("tr-p", null, !okp); mark("tr-a", null, a === "" || +a < 0); if (!okp || a === "" || +a < 0) { toast("Use a period like 2026-10 and an amount of zero or more.", true); return false; }
+        await q(sb.from("teacher_pay_records").insert({ teacher_id: val("tr-t"), period: p, amount: r2(a), currency: val("tr-c"), status: "Due", note: val("tr-n") })); toast("Saved."); route(); } });
+  };
+  $$("[data-pd]", $("#fin")).forEach(function (b) { b.onclick = async function () { if (!needWrite()) return; if (!await confirmBox("Mark this record as paid today? Only do this after the payment was actually made.", { okLabel: "Mark paid" })) return; await q(sb.from("teacher_pay_records").update({ status: "Paid", paid_on: today }).eq("id", b.getAttribute("data-pd"))); route(); }; });
+  $$("[data-pv]", $("#fin")).forEach(function (b) { b.onclick = async function () { if (!needWrite()) return; if (!await confirmBox("Void this record? It stays in the list, marked void.", { danger: true, okLabel: "Void" })) return; await q(sb.from("teacher_pay_records").update({ voided_at: new Date().toISOString() }).eq("id", b.getAttribute("data-pv"))); route(); }; });
+};
+/* ================= REMINDERS / REPORTS / USERS / ACTIVITY (Phase 6) ================= */
+VIEWS.reminders = async function (el) {
+  var today = todayISO(), now = Date.now();
+  el.innerHTML = pageHead("Reminders", "Things that need attention, checked live each time you open this page.") + '<div id="rm"><div class="muted">Loading…</div></div>';
+  var DONE = '("Enrollment Confirmed","Not Proceeding")';
+  var leads = (await q(sb.from("leads").select("id,lead_code,name,status,created_at,follow_up_date").not("status", "in", DONE).limit(3000))).data || [];
+  var waiting = leads.filter(function (l) { return l.status === "New" && now - new Date(l.created_at) > 2 * 864e5; });
+  var over = leads.filter(function (l) { return l.follow_up_date && l.follow_up_date < today; }).sort(function (a, b) { return a.follow_up_date < b.follow_up_date ? -1 : 1; });
+  var msgs = (await q(sb.from("contact_messages").select("id,name,created_at").eq("handled", false).limit(200))).data || [];
+  var cls = ((await q(sb.from("class_groups").select("id,name,status,teacher_id,deleted_at").limit(2000))).data || []).filter(function (c) { return !c.deleted_at && c.status === "Active"; });
+  var slots = (await q(sb.from("class_slots").select("class_id").limit(5000))).data || [];
+  var ro = (await q(sb.from("class_students").select("student_id,left_on").limit(10000))).data || [];
+  var studs = ((await q(sb.from("students").select("id,full_name,student_code,status,deleted_at").limit(3000))).data || []).filter(function (s) { return !s.deleted_at && s.status === "Active"; });
+  var noT = cls.filter(function (c) { return !c.teacher_id; }), noS = cls.filter(function (c) { return !slots.some(function (s) { return s.class_id === c.id; }); });
+  var inCls = {}; ro.forEach(function (r) { if (!r.left_on) inCls[r.student_id] = 1; });
+  var noC = studs.filter(function (s) { return !inCls[s.id]; });
+  var R = [
+    ["New inquiries waiting more than 2 days", waiting.map(function (l) { return [l.name + " (" + l.lead_code + ")", "#leads/" + l.id]; }), "#leads"],
+    ["Follow-ups that are overdue", over.map(function (l) { return [l.name + " — due " + fmtD(l.follow_up_date), "#leads/" + l.id]; }), "#leads"],
+    ["Unhandled contact messages", msgs.map(function (m) { return [m.name + " — " + fmtD(m.created_at), "#leads/messages"]; }), "#leads/messages"],
+    ["Active classes with no teacher", noT.map(function (c) { return [c.name, "#classes/" + c.id]; }), "#classes"],
+    ["Active classes with no weekly time", noS.map(function (c) { return [c.name, "#classes/" + c.id]; }), "#classes"],
+    ["Active students not in any class", noC.map(function (s) { return [s.full_name + " (" + s.student_code + ")", "#students/" + s.id]; }), "#students"]
+  ];
+  if (canAdmin) {
+    var invs = (await q(sb.from("invoices").select("id,invoice_no,amount,due_date,voided_at").lt("due_date", today).limit(3000))).data || [];
+    var pays = (await q(sb.from("payments").select("invoice_id,amount,voided_at").limit(10000))).data || [], paid = {};
+    pays.forEach(function (p) { if (!p.voided_at) paid[p.invoice_id] = (paid[p.invoice_id] || 0) + +p.amount; });
+    var od = invs.filter(function (i) { return !i.voided_at && (paid[i.id] || 0) < i.amount - 0.001; });
+    R.push(["Overdue invoices", od.map(function (i) { return [i.invoice_no + " — due " + fmtD(i.due_date), "#finance/invoices"]; }), "#finance/invoices"]);
+  }
+  var total = R.reduce(function (a, r) { return a + r[1].length; }, 0);
+  $("#rm").innerHTML = (total ? "" : '<div class="alert ok">Nothing needs attention right now.</div>') + R.map(function (r) {
+    return '<div class="panel"><div class="ph2"><h3>' + h(r[0]) + ' <span class="chip2 ' + (r[1].length ? "down" : "up") + '">' + r[1].length + "</span></h3>" + (r[1].length ? '<a class="btn ghost sm" href="' + r[2] + '">Open</a>' : "") + "</div>" +
+      (r[1].length ? r[1].slice(0, 5).map(function (x) { return '<a class="rl" href="' + x[1] + '" style="text-decoration:none"><span class="t"><b>' + h(x[0]) + "</b></span></a>"; }).join("") + (r[1].length > 5 ? '<div class="muted small" style="margin-top:6px">…and ' + (r[1].length - 5) + " more</div>" : "") : '<div class="muted small">All clear.</div>') + "</div>";
+  }).join("") + '<p class="muted small">These reminders appear here and in the bell. Automatic emails or WhatsApp messages are <b>not</b> built: they need a server-side job and a messaging account, which is a separate step.</p>';
+};
+
+VIEWS.reports = async function (el) {
+  el.innerHTML = pageHead("Reports", "Download CSV files. Exports with personal information are for owners and administrators and should be kept private.") +
+    '<div class="panel"><h3 style="margin:0 0 8px">Summary</h3><div id="rp-sum" class="muted">Loading…</div></div>' +
+    '<div class="panel"><h3 style="margin:0 0 8px">Downloads</h3><div class="qa">' + (canAdmin ? '<button class="btn ghost" data-x="students">Students</button><button class="btn ghost" data-x="teachers">Teachers</button><button class="btn ghost" data-x="classes">Classes &amp; rosters</button><button class="btn ghost" data-x="attendance">Attendance</button><a class="btn ghost" href="#leads">Leads (from Leads page)</a><a class="btn ghost" href="#finance">Finance (from Finance page)</a>' : '<span class="muted">Downloads are available to owners and administrators.</span>') + "</div>" +
+    (canAdmin ? '<div class="row" style="margin-top:12px;gap:8px"><span class="muted small">Attendance range:</span><input id="at-f" type="date" style="width:auto"><input id="at-t" type="date" style="width:auto" value="' + todayISO() + '"></div>' : "") + "</div>";
+  var cnt = async function (t, f) { var r = await sb.from(t).select("id", { count: "exact", head: true }); return r.count || 0; };
+  var S = { students: await cnt("students"), teachers: await cnt("teachers"), classes: await cnt("class_groups"), leads: await cnt("leads") };
+  var act = ((await q(sb.from("students").select("status,deleted_at").limit(5000))).data || []).filter(function (s) { return !s.deleted_at && s.status === "Active"; }).length;
+  $("#rp-sum").innerHTML = "Inquiries <b>" + S.leads + "</b> · Students <b>" + S.students + "</b> (" + act + " active) · Teachers <b>" + S.teachers + "</b> · Classes <b>" + S.classes + "</b>";
+  if (!canAdmin) return;
+  $$("[data-x]", el).forEach(function (b) {
+    b.onclick = async function () {
+      if (!await confirmBox("This file contains personal information. Keep it private and delete it when you are finished.", { okLabel: "Download CSV" })) return;
+      try {
+        var k = b.getAttribute("data-x"), studs = (await q(sb.from("students").select("*").limit(10000))).data || [], progs = (await q(sb.from("programs").select("id,title"))).data || [];
+        var sn = function (id) { var s = studs.filter(function (x) { return x.id === id; })[0]; return s ? s.full_name : ""; };
+        if (k === "students") { var gs = (await q(sb.from("guardians").select("*").limit(20000))).data || []; csvOut("inaya-students", ["student_code", "full_name", "gender", "date_of_birth", "country", "status", "program", "start_date", "guardian", "guardian_whatsapp", "guardian_email", "archived"], studs.map(function (s) { var g = gs.filter(function (x) { return x.student_id === s.id; }).sort(function (a, b) { return (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0); })[0] || {}; return { student_code: s.student_code, full_name: s.full_name, gender: s.gender, date_of_birth: s.date_of_birth, country: s.country, status: s.status, program: progName(progs, s.program_id), start_date: s.start_date, guardian: g.name, guardian_whatsapp: g.whatsapp, guardian_email: g.email, archived: s.deleted_at ? "yes" : "" }; })); }
+        if (k === "teachers") { var t = (await q(sb.from("teachers").select("*").limit(5000))).data || []; csvOut("inaya-teachers", ["teacher_code", "full_name", "email", "whatsapp", "country", "status", "qualifications", "availability_note", "archived"], t.map(function (x) { return Object.assign({}, x, { archived: x.deleted_at ? "yes" : "" }); })); }
+        if (k === "classes") { var c = (await q(sb.from("class_groups").select("*").limit(5000))).data || [], ro = (await q(sb.from("class_students").select("*").limit(20000))).data || [], tt = (await q(sb.from("teachers").select("id,full_name"))).data || [], rows = [];
+          c.forEach(function (x) { var tn = (tt.filter(function (y) { return y.id === x.teacher_id; })[0] || {}).full_name || ""; var m = ro.filter(function (r) { return r.class_id === x.id; }); if (!m.length) rows.push({ class: x.name, status: x.status, teacher: tn, student: "", joined_on: "", left_on: "" }); m.forEach(function (r) { rows.push({ class: x.name, status: x.status, teacher: tn, student: sn(r.student_id), joined_on: r.joined_on, left_on: r.left_on }); }); });
+          csvOut("inaya-classes", ["class", "status", "teacher", "student", "joined_on", "left_on"], rows); }
+        if (k === "attendance") { var f = $("#at-f").value || "1900-01-01", to = $("#at-t").value || todayISO(); var a = (await q(sb.from("attendance").select("*").gte("session_date", f).lte("session_date", to).order("session_date").limit(50000))).data || [], cl = (await q(sb.from("class_groups").select("id,name"))).data || [];
+          csvOut("inaya-attendance", ["session_date", "class", "student", "status", "note"], a.map(function (r) { return { session_date: r.session_date, class: (cl.filter(function (y) { return y.id === r.class_id; })[0] || {}).name, student: sn(r.student_id), status: r.status, note: r.note }; })); }
+        toast("Downloaded.");
+      } catch (e) { fail(e); }
+    };
+  });
+};
+
+VIEWS.users = async function (el) {
+  if (role !== "owner") { el.innerHTML = pageHead("Users & Access", "") + '<div class="alert warn">Only the owner can manage users.</div>'; return; }
+  var RL = [["owner", "Owner — everything"], ["administrator", "Administrator — everything except managing users"], ["assessor", "Assessor — edit content, leads, students, classes; no finance"], ["teacher", "Teacher — read only (for now)"], ["readonly", "Read-only"]];
+  el.innerHTML = pageHead("Users & Access", "Who can sign in to this admin panel and what they can do.", '<button class="btn" id="u-add">+ Grant access</button>') +
+    '<div class="alert warn">A person must first have a login in Supabase → Authentication → Users. This page only gives that login a role. Passwords are never handled here.</div><div class="panel"><div id="u-list" class="muted">Loading…</div></div>';
+  async function load() {
+    var r = (await q(sb.rpc("list_admins"))).data || [];
+    $("#u-list").innerHTML = '<div class="tw"><table class="tbl"><thead><tr><th>User</th><th>Role</th><th></th></tr></thead><tbody>' + r.map(function (u) { var self = u.user_id === me.id;
+      return "<tr><td><b>" + h(u.email) + "</b>" + (self ? ' <span class="badge b-published">you</span>' : "") + "</td><td>" + (self ? h(u.role) : '<select data-ur="' + u.user_id + '" style="width:auto">' + RL.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === u.role ? " selected" : "") + ">" + h(o[0]) + "</option>"; }).join("") + "</select>") + "</td><td>" + (self ? "" : '<button class="btn ghost sm danger" data-urm="' + u.user_id + '" data-em="' + h(u.email) + '">Remove access</button>') + "</td></tr>"; }).join("") + "</tbody></table></div>" +
+      '<ul class="muted small" style="margin-top:12px">' + RL.map(function (o) { return "<li><b>" + o[0] + "</b>: " + h(o[1].split("— ")[1]) + "</li>"; }).join("") + "</ul>";
+    $$("[data-ur]", $("#u-list")).forEach(function (s) { s.onchange = async function () { try { await q(sb.rpc("set_admin_role", { p_user_id: s.getAttribute("data-ur"), p_role: s.value })); toast("Role updated."); } catch (e) { fail(e); load(); } }; });
+    $$("[data-urm]", $("#u-list")).forEach(function (b) { b.onclick = async function () { if (!await confirmBox("Remove admin access for <b>" + h(b.getAttribute("data-em")) + "</b>? Their login stays in Supabase but they can no longer open this panel.", { danger: true, okLabel: "Remove access" })) return; try { await q(sb.rpc("remove_admin", { p_user_id: b.getAttribute("data-urm") })); toast("Access removed."); load(); } catch (e) { fail(e); } }; });
+  }
+  $("#u-add").onclick = function () {
+    modal({ title: "Grant access", okLabel: "Grant", body: F("ua-em", "Email (must already exist in Supabase Authentication)", "", { type: "email", req: 1, max: 160 }) + F("ua-role", "Role", "readonly", { type: "select", options: RL.map(function (o) { return [o[0], o[1]]; }) }),
+      onOk: async function () { var em = val("ua-em"); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { mark("ua-em", null, true); toast("Enter a valid email.", true); return false; } await q(sb.rpc("add_admin_by_email", { p_email: em, p_role: val("ua-role") })); toast("Access granted."); load(); } });
+  };
+  await load();
+};
+
+VIEWS.activity = async function (el) {
+  el.innerHTML = pageHead("Activity log", "Recent status changes and creations for inquiries and students. Pay and attendance changes are not listed here.") + '<div class="panel" id="ac"><div class="muted">Loading…</div></div>';
+  var a = (await q(sb.from("lead_events").select("id,event_type,from_status,to_status,created_at,leads(id,lead_code,name)").order("created_at", { ascending: false }).limit(60))).data || [];
+  var studs = (await q(sb.from("students").select("id,full_name,student_code").limit(3000))).data || [];
+  var b = (await q(sb.from("student_events").select("*").order("created_at", { ascending: false }).limit(60))).data || [];
+  var rows = a.map(function (e) { return { t: e.created_at, who: e.leads ? e.leads.name + " (" + e.leads.lead_code + ")" : "Inquiry", link: e.leads ? "#leads/" + e.leads.id : "#leads", txt: e.event_type === "created" ? "Inquiry received" : "Status " + e.from_status + " → " + e.to_status, k: "Inquiry" }; })
+    .concat(b.map(function (e) { var s = studs.filter(function (x) { return x.id === e.student_id; })[0]; return { t: e.created_at, who: s ? s.full_name + " (" + s.student_code + ")" : "Student", link: "#students/" + e.student_id, txt: e.event_type === "status_change" ? "Status " + e.from_status + " → " + e.to_status : e.event_type === "created" ? "Student created" + (e.note ? " — " + e.note : "") : "Student " + e.event_type, k: "Student" }; }))
+    .sort(function (x, y) { return x.t < y.t ? 1 : -1; }).slice(0, 80);
+  $("#ac").innerHTML = rows.length ? '<ul class="tl">' + rows.map(function (r) { return '<li><span class="badge b-draft">' + r.k + '</span> <a href="' + r.link + '"><b>' + h(r.who) + "</b></a> — " + h(r.txt) + '<br><span class="muted small">' + fmtDT(r.t) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty">No activity yet.</div>';
+};
 /* ================= WEBSITE CONTENT (page editor + FAQ) ================= */
 function deep(o) { return JSON.parse(JSON.stringify(o)); }
 async function moveItem(table, list, idx, dir) {
