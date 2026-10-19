@@ -15,6 +15,10 @@
     academy_name: "Inaya Quran Academy",
     tagline: "Learn · Practice · Grow",
     logo_url: "assets/img/logo.png",
+    logo_height: 44,
+    footer_logo_url: "",
+    footer_logo_height: 44,
+    footer_logo_mode: "white",
     favicon_url: "",
     colors: { primary: "#0F4C3A", accent: "#B8975A", background: "#FBF7EE", text: "#26312C" },
     font: "Inter",
@@ -259,7 +263,9 @@
   function renderChrome(s) {
     var path = location.pathname.replace(/\/+$/, "") || "/";
     var logo = safeImg(s.logo_url), name = esc(s.academy_name);
-    var brand = logo ? '<img src="' + esc(logo) + '" alt="' + name + '" height="44">' : '<span class="brand-text">' + name + "</span>";
+    var lh = Math.min(160, Math.max(20, parseInt(s.logo_height, 10) || 44)), fh = Math.min(160, Math.max(20, parseInt(s.footer_logo_height, 10) || 44));
+    var flogo = safeImg(s.footer_logo_url) || logo, fmode = s.footer_logo_mode === "original" ? "original" : "white";
+    var brand = logo ? '<img src="' + esc(logo) + '" alt="' + name + '" style="height:' + lh + 'px;width:auto">' : '<span class="brand-text">' + name + "</span>";
     var links = (s.nav || []).map(function (n) {
       var h = safeHref(n.href), cur = (h === path || (h !== "/" && path.indexOf(h + "/") === 0)) ? ' aria-current="page"' : "";
       return '<a class="nav-link" href="' + esc(h) + '"' + cur + ">" + esc(n.label) + "</a>";
@@ -288,7 +294,7 @@
       if (!contact) contact = '<li><a href="/contact">Contact us</a></li>';
       footer.className = "site-footer";
       footer.innerHTML = '<div class="container"><div class="foot-grid">' +
-        '<div><span class="foot-logo">' + (logo ? '<img src="' + esc(logo) + '" alt="' + name + '">' : '<strong>' + name + "</strong>") + "</span>" +
+        '<div><span class="foot-logo">' + (flogo ? '<img src="' + esc(flogo) + '" alt="' + name + '" class="' + (fmode === "white" ? "mono" : "") + '" style="height:' + fh + 'px;width:auto">' : '<strong>' + name + "</strong>") + "</span>" +
         '<p style="max-width:34ch">' + esc(s.footer_text) + "</p></div>" +
         "<div><h4>Explore</h4><ul>" + (s.nav || []).map(function (n) { return '<li><a href="' + esc(safeHref(n.href)) + '">' + esc(n.label) + "</a></li>"; }).join("") + "</ul></div>" +
         "<div><h4>Get in touch</h4><ul>" + contact + '<li><a href="' + esc(safeHref(s.cta_primary_href)) + '">' + esc(s.cta_primary_label) + "</a></li></ul></div>" +

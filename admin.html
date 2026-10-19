@@ -240,7 +240,7 @@ input[type=text],input[type=email],input[type=password],input[type=search],input
     <div id="login-msg"></div>
     <form id="login-form" novalidate>
       <label class="l" for="li-email">Email</label><input id="li-email" type="email" autocomplete="username" required>
-      <label class="l" for="li-pass">Password</label><input id="li-pass" type="password" autocomplete="current-password" required>
+      <label class="l" for="li-pass">Password</label><input id="li-pass" type="password" autocomplete="current-password" required><label class="row small" style="gap:6px;margin-top:6px"><input id="li-show" type="checkbox"> Show password</label>
       <button class="btn" style="width:100%;justify-content:center;margin-top:18px" id="li-btn">Sign in</button>
     </form>
     <form id="reset-form" class="hidden" novalidate>
@@ -414,9 +414,19 @@ $("#login-form").addEventListener("submit", async function (e) {
   var b = $("#li-btn"); b.disabled = true; b.textContent = "Signing in…";
   var r = await sb.auth.signInWithPassword({ email: em, password: pw });
   b.disabled = false; b.textContent = "Sign in";
-  if (r.error) return loginMsg("Sign-in failed. Check your email and password.");
+  if (r.error) {
+    var m = String(r.error.message || ""), st = r.error.status, why;
+    if (/invalid login credentials/i.test(m)) why = "Supabase says: no user matches this email and password in THIS project. Either the password is wrong, or the user was never created in Supabase → Authentication → Users (or was created in a different Supabase project than the one in config.js).";
+    else if (/email not confirmed/i.test(m)) why = "The email is not confirmed yet. In Supabase → Authentication → Users, open the user and confirm it (or delete and re-create it with “Auto Confirm User” ticked).";
+    else if (/invalid api key|apikey/i.test(m)) why = "The anon key in config.js is wrong for this Supabase project. Copy it again from Settings → API (the “anon public” key).";
+    else if (st === 429 || /rate limit|too many/i.test(m)) why = "Too many attempts. Wait a few minutes and try again.";
+    else if (/fetch|network|failed/i.test(m) || !st) why = "Could not reach Supabase. Check SUPABASE_URL in config.js (it must look like https://xxxx.supabase.co) and your internet connection.";
+    else why = "Supabase said: " + m;
+    return loginMsg(why);
+  }
   $("#li-pass").value = ""; enter(r.data.session);
 });
+$("#li-show").addEventListener("change", function () { $("#li-pass").type = this.checked ? "text" : "password"; });
 $("#toggle-reset").addEventListener("click", function (e) { e.preventDefault(); loginMsg(""); loginMode($("#reset-form").classList.contains("hidden") ? "reset" : "in"); });
 $("#reset-form").addEventListener("submit", async function (e) {
   e.preventDefault(); var em = $("#rs-email").value.trim(); if (!em) return loginMsg("Enter your email.");
@@ -1278,7 +1288,7 @@ async function pageEditor(el, slug) {
     var logo = I.safeImg(settings.logo_url);
     var doc = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base target="_blank">' +
       '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600&family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap"><link rel="stylesheet" href="/css/site.css"><style>' + themeCss() + "</style></head><body>" +
-      '<header class="site-header"><div class="container header-in"><span class="brand">' + (logo ? '<img src="' + h(logo) + '" alt="">' : "<b>" + h(settings.academy_name) + "</b>") + '</span><span class="muted" style="font-size:.8rem">Preview</span></div></header>' +
+      '<header class="site-header"><div class="container header-in"><span class="brand">' + (logo ? '<img src="' + h(logo) + '" alt="" style="height:' + Math.min(160, Math.max(20, parseInt(settings.logo_height, 10) || 44)) + 'px;width:auto">' : "<b>" + h(settings.academy_name) + "</b>") + '</span><span class="muted" style="font-size:.8rem">Preview</span></div></header>' +
       "<main>" + S.render(draft, previewCtx) + "</main></body></html>";
     $("#pv").srcdoc = doc;
   }
@@ -1919,7 +1929,11 @@ VIEWS.settings = async function (el) {
   function colorField(k, label) { return '<div><label class="l" for="st-c-' + k + '">' + label + '</label><div class="sw"><input type="color" id="st-c-' + k + '" value="' + h(c[k]) + '"><input type="text" id="st-ch-' + k + '" value="' + h(c[k]) + '" maxlength="7" style="width:110px"></div></div>'; }
   el.innerHTML = pageHead("Settings", "Brand, contact details, menu, footer, SEO and forms. Saved changes go live immediately.", '<span id="st-dirty" class="badge b-draft hidden">unsaved changes</span><button class="btn wbtn" id="st-save">Save settings</button>') +
     '<div class="card"><h2>Brand</h2><div class="g2">' + F("st-name", "Academy name", s.academy_name, { req: true, max: 100 }) + F("st-tag", "Tagline", s.tagline, { max: 100 }) + "</div>" +
-    imgField("st-logo", "Logo", s.logo_url, "Used in the header, footer and emails. Transparent PNG works best. It is never stretched.") + '<div id="st-logo-pv" style="margin-top:8px;background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block"></div>' +
+    imgField("st-logo", "Logo", s.logo_url, "Used in the header, footer and emails. Transparent PNG works best. It is never stretched.") + '<div class="g2" style="margin-top:8px">' + F("st-lh", "Header logo height (px)", s.logo_height || 44, { type: "number", attrs: 'min="20" max="160" step="2"', hint: "20–160. The width follows automatically, so the logo is never stretched." }) + F("st-flh", "Footer logo height (px)", s.footer_logo_height || 44, { type: "number", attrs: 'min="20" max="160" step="2"' }) + "</div>" +
+    '<div id="st-logo-pv" style="margin-top:8px;background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block"></div>' +
+    imgField("st-flogo", "Footer logo (optional)", s.footer_logo_url, "Leave empty to use the main logo. Upload a light/white version here if your main logo is dark.") +
+    F("st-fmode", "Footer logo colour", s.footer_logo_mode === "original" ? "original" : "white", { type: "select", options: [["white", "Make it white (works with any transparent logo)"], ["original", "Keep original colours"]] }) +
+    '<div id="st-flogo-pv" style="margin-top:8px;background:' + (((s.colors || {}).primary) || "#0F4C3A") + ';border-radius:10px;padding:10px;display:inline-block"></div>' +
     imgField("st-fav", "Favicon (browser tab icon, optional)", s.favicon_url, "Square PNG or ICO. Leave empty for the default emblem.") +
     '<label class="l" style="margin-top:16px">Colours</label><div class="row" style="margin-bottom:8px">' + PRESETS.map(function (p, i) { return '<button class="chip" data-preset="' + i + '">' + h(p[0]) + "</button>"; }).join("") + '</div><div class="g2">' + colorField("primary", "Primary (headings, buttons)") + colorField("accent", "Accent (sand details)") + colorField("background", "Page background") + colorField("text", "Body text") + '</div><div id="st-contrast"></div>' +
     F("st-font", "Font", s.font, { type: "select", options: I.APPROVED_FONTS, hint: "Headings keep the Newsreader serif. Bangla and Arabic text use matching fonts automatically." }) + "</div>" +
@@ -1950,7 +1964,9 @@ VIEWS.settings = async function (el) {
 
   function colors() { return { primary: val("st-ch-primary"), accent: val("st-ch-accent"), background: val("st-ch-background"), text: val("st-ch-text") }; }
   function upd() {
-    var l = I.safeImg(val("st-logo")); $("#st-logo-pv").innerHTML = l ? '<img src="' + h(l) + '" alt="Logo preview" style="height:48px;width:auto">' : '<span class="muted small">No logo — the academy name is shown instead.</span>';
+    var lh = Math.min(160, Math.max(20, parseInt(val("st-lh"), 10) || 44)), fh = Math.min(160, Math.max(20, parseInt(val("st-flh"), 10) || 44)), fl = I.safeImg(val("st-flogo")) || I.safeImg(val("st-logo"));
+    $("#st-flogo-pv").innerHTML = fl ? '<img src="' + h(fl) + '" alt="Footer logo preview" style="height:' + fh + 'px;width:auto;display:block;' + (val("st-fmode") === "white" ? "filter:brightness(0) invert(1)" : "") + '">' : '<span class="small" style="color:#fff">No logo</span>';
+    var l = I.safeImg(val("st-logo")); $("#st-logo-pv").innerHTML = l ? '<img src="' + h(l) + '" alt="Logo preview" style="height:' + lh + 'px;width:auto;display:block">' : '<span class="muted small">No logo — the academy name is shown instead.</span>';
     var k = colors(), ok = Object.keys(k).every(function (x) { return /^#[0-9a-fA-F]{6}$/.test(k[x]); }), w = [];
     if (ok) { if (ratio(k.text, k.background) < 4.5) w.push("Body text on the page background is hard to read (contrast " + ratio(k.text, k.background).toFixed(1) + ":1, aim for 4.5+)."); if (ratio("#ffffff", k.primary) < 4.5) w.push("White text on the primary colour is hard to read (" + ratio("#ffffff", k.primary).toFixed(1) + ":1)."); if (ratio(k.primary, k.background) < 4.5) w.push("Headings in the primary colour on the background are low contrast (" + ratio(k.primary, k.background).toFixed(1) + ":1)."); }
     $("#st-contrast").innerHTML = !ok ? '<div class="alert bad">Colours must look like #0F4C3A.</div>' : w.length ? '<div class="alert warn"><b>Readability warning</b><ul style="margin:6px 0 0">' + w.map(function (x) { return "<li>" + h(x) + "</li>"; }).join("") + "</ul></div>" : '<div class="alert ok">Contrast looks good.</div>';
@@ -1961,7 +1977,7 @@ VIEWS.settings = async function (el) {
     $("#st-ch-" + k).oninput = function () { if (/^#[0-9a-fA-F]{6}$/.test(this.value)) $("#st-c-" + k).value = this.value; upd(); };
   });
   $$("[data-preset]", el).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); var p = PRESETS[+b.getAttribute("data-preset")][1]; Object.keys(p).forEach(function (k) { $("#st-c-" + k).value = p[k]; $("#st-ch-" + k).value = p[k]; }); dirtyNow(); upd(); }; });
-  $("#st-logo").addEventListener("input", upd); $("#st-wa").addEventListener("input", upd); upd();
+  ["st-logo", "st-lh", "st-flh", "st-flogo"].forEach(function (i) { $("#" + i).addEventListener("input", upd); }); $("#st-fmode").addEventListener("change", upd); $("#st-wa").addEventListener("input", upd); upd();
 
   $("#st-save").onclick = async function () {
     if (!needWrite()) return; var errs = [], k = colors();
@@ -1976,7 +1992,7 @@ VIEWS.settings = async function (el) {
     var prov = val("st-an"); if (prov === "ga4" && !/^G-[A-Z0-9]{4,14}$/.test(val("st-ga"))) errs.push("Enter a valid GA4 Measurement ID (like G-ABC123XYZ)."); if (prov === "plausible" && !/^[a-z0-9.\-]+\.[a-z]{2,}$/i.test(val("st-pl"))) errs.push("Enter the Plausible domain (like inayaquran.com).");
     if (errs.length) return modal({ title: "Please fix these first", ok: false, cancelLabel: "Close", body: "<ul>" + errs.map(function (x) { return "<li>" + h(x) + "</li>"; }).join("") + "</ul>" });
     var data = Object.assign({}, settings, {
-      academy_name: name, tagline: val("st-tag"), logo_url: val("st-logo"), favicon_url: val("st-fav"), colors: k, font: val("st-font"),
+      academy_name: name, tagline: val("st-tag"), logo_url: val("st-logo"), logo_height: Math.min(160, Math.max(20, parseInt(val("st-lh"), 10) || 44)), footer_logo_url: val("st-flogo"), footer_logo_height: Math.min(160, Math.max(20, parseInt(val("st-flh"), 10) || 44)), footer_logo_mode: val("st-fmode") === "original" ? "original" : "white", favicon_url: val("st-fav"), colors: k, font: val("st-font"),
       contact_email: email, whatsapp_number: wad, whatsapp_message: val("st-wam"), response_time: val("st-resp"),
       social: { facebook: val("st-fb"), instagram: val("st-ig"), telegram: val("st-tg"), youtube: val("st-yt") },
       nav: cl.map(function (n) { return { label: n.label.trim(), href: n.href.trim() }; }), cta_primary_label: val("st-c1l"), cta_primary_href: val("st-c1h"), cta_secondary_label: val("st-c2l"), cta_secondary_href: val("st-c2h"),
