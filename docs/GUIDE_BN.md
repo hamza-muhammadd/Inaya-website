@@ -231,3 +231,14 @@ Supabase → **SQL Editor** → **New query**-তে নিচের ফাই�
 7. **Page settings**: শিরোনাম, URL পরিবর্তন, SEO, শেয়ার-ছবি, ওয়েবসাইট মেনুতে দেখানো।
 8. **More… → Save as template** দিয়ে লেআউট সেভ করুন; পরে Create page-এ ব্যবহার করুন।
 9. নতুন পেজ Vercel-এ লাইভ দেখাতে নতুন কোড (`page.html`, `vercel.json`, `js/`, `css/`, `admin.html`) ডিপ্লয় করতে হবে।
+
+---
+
+## এখন সব পাবলিক পেজ Website Builder থেকে এডিট করা যায়
+
+Home, About, Privacy, Terms, Programs, FAQ, Contact, Assessment: এই ৮টা built-in পেজ Admin → Website Builder → Pages তালিকায় আছে।
+- যে পেজের এখনো ডেটাবেজে রো নেই, তাতে "default layout" ব্যাজ দেখায়। Edit চাপলেই রো তৈরি হয়ে যায়, আর আগের লেআউট হুবহু খোলে।
+- Programs পেজে "Programs in detail", FAQ পেজে "FAQ (all, by category)", Contact ও Assessment পেজে ফর্ম সেকশন আছে। ফর্ম সেকশন সরালে বা সাজালে পাবলিক পেজে ফর্মও সরে বা সাজে।
+- ফর্ম থেকে আসা অনুরোধ আগের মতোই Leads & Inquiries-এ আসে।
+- এই পেজগুলো unpublish, archive বা URL বদল করা যায় না, যাতে সাইট ভেঙে না যায়।
+- প্রতিটা সেকশনে "Animation when this section appears" থেকে অ্যানিমেশন বাছা যায়।

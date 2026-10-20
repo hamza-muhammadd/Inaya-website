@@ -1294,7 +1294,7 @@ async function faqTab(el) {
 /* ================= WEBSITE BUILDER ================= */
 /* Pages · Templates. The editor itself (pageEditor) is shared; Website Content → FAQ stays where it was. */
 var RESERVED_SLUGS = ["home", "about", "privacy", "terms", "programs", "program", "faq", "assessment", "contact", "admin", "page", "404", "assets", "css", "js", "sql", "docs", "config", "sitemap", "robots", "favicon", "index", "api", "login", "thank-you"];
-var SYSTEM_SLUGS = { home: 1, about: 1, privacy: 1, terms: 1 };
+var SYSTEM_SLUGS = { home: 1, about: 1, privacy: 1, terms: 1, programs: 1, faq: 1, contact: 1, assessment: 1 };
 var BS = { f: "all", s: "" };
 var BASE_URL_COLS = "slug,title,status,has_unpublished,updated_at,published_at,published_sections";
 var FEAT_COLS = ",archived,show_in_nav,nav_label,nav_order,noindex,is_system,draft_meta";
@@ -1365,7 +1365,11 @@ VIEWS.builder = async function (el, args) {
 
 async function pagesTab(el, feat) {
   var rows = (await q(sb.from("pages").select(BASE_URL_COLS + (feat ? FEAT_COLS : "")).order("slug"))).data;
-  rows.forEach(function (p) { p.system = feat ? !!p.is_system : !!SYSTEM_SLUGS[p.slug]; p.arch = feat && !!p.archived; p.state = p.arch ? "archived" : p.status; });
+  Object.keys(SYSTEM_SLUGS).forEach(function (sl) {     // built-in pages that have no database row yet: shown with their default layout, created on first edit
+    if (!rows.some(function (r) { return r.slug === sl; })) rows.push({ slug: sl, title: (S.META[sl] || {}).title || sl, status: "published", has_unpublished: false, updated_at: null, published_sections: [], virtual: true });
+  });
+  rows.sort(function (a, b) { return a.slug < b.slug ? -1 : 1; });
+  rows.forEach(function (p) { p.system = !!SYSTEM_SLUGS[p.slug] || (feat && !!p.is_system); p.arch = feat && !!p.archived; p.state = p.arch ? "archived" : p.status; });
   var counts = { all: 0, published: 0, draft: 0, archived: 0 };
   rows.forEach(function (p) { if (p.arch) counts.archived++; else { counts.all++; counts[p.status] = (counts[p.status] || 0) + 1; } });
   function filtered() {
@@ -1393,7 +1397,7 @@ async function pagesTab(el, feat) {
         }
       }
       if (canWrite && p.arch) acts += '<button class="btn sm ghost" data-res="' + i + '">Restore</button>';
-      return '<tr><td><b>' + h(p.title) + "</b>" + (p.system ? ' <span class="badge b-draft">built-in</span>' : "") + "</td><td>" + (live ? '<a href="' + h(url) + '" target="_blank" rel="noopener">' + h(url) + "</a>" : '<span class="muted">' + h(url) + "</span>") + "</td><td>" + badge(p.state) +
+      return '<tr><td><b>' + h(p.title) + "</b>" + (p.system ? ' <span class="badge b-draft">built-in</span>' : "") + (p.virtual ? ' <span class="badge b-New">default layout</span>' : "") + "</td><td>" + (live ? '<a href="' + h(url) + '" target="_blank" rel="noopener">' + h(url) + "</a>" : '<span class="muted">' + h(url) + "</span>") + "</td><td>" + badge(p.state) +
         (p.has_unpublished && !p.arch ? ' <span class="badge b-draft">unpublished changes</span>' : "") + (feat && p.show_in_nav && live ? ' <span class="badge b-New">in menu</span>' : "") + '</td><td class="nowrap">' + fmtDT(p.updated_at) + '</td><td class="nowrap">' + acts + "</td></tr>";
     }).join("") + "</tbody></table></div>" : '<div class="empty">' + (BS.s ? "No pages match your search." : BS.f === "archived" ? "No archived pages." : "No pages here yet. Click “Create page”.") + "</div>";
     $$("[data-dup]", el).forEach(function (b) { b.onclick = function () { if (needWrite()) createPageModal({ dup: list[+b.getAttribute("data-dup")] }, feat); }; });
@@ -1474,14 +1478,22 @@ async function templatesTab(el, feat) {
 
 /* ---------- PAGE EDITOR ---------- */
 var ITEM_LABEL = { title: "Title", text: "Text", value: "Value (e.g. 120+)", label: "Label", name: "Name", role: "Role", image: "Image", alt: "Alt text" };
+var NO_HEADING = { gallery: 1, programs_detail: 1, faq_all: 1, assessment_form: 1, contact_form: 1 };
 var BG_OPTS = [["", "Default (cream)"], ["soft", "Soft sand"], ["green", "Deep green"]];
 
 async function pageEditor(el, slug) {
-  var row = (await q(sb.from("pages").select("*").eq("slug", slug).single())).data;
+  var row = (await q(sb.from("pages").select("*").eq("slug", slug).maybeSingle())).data;
+  if (!row) {                                   // built-in page opened for the first time: create its row (published, default layout) so it can be edited
+    if (!S.META[slug] || !SYSTEM_SLUGS[slug]) { el.innerHTML = '<div class="alert bad">This page does not exist. <a href="#builder">Back to pages</a></div>'; return; }
+    if (!needWrite()) { el.innerHTML = '<div class="alert warn">This page has no saved version yet and your role is read-only. <a href="#builder">Back to pages</a></div>'; return; }
+    var nr = { slug: slug, title: S.META[slug].title, seo_description: S.META[slug].description || null, status: "published", draft_sections: [], published_sections: [], has_unpublished: false, published_at: new Date().toISOString() };
+    if (await probe007()) nr.is_system = true;
+    row = (await q(sb.from("pages").insert(nr).select().single())).data;
+  }
   var pubEmpty = !(row.published_sections && row.published_sections.length);
   var draft = deep(row.draft_sections && row.draft_sections.length ? row.draft_sections : (!pubEmpty ? row.published_sections : S.defaults(slug)));
   var usingDefaults = pubEmpty && !(row.draft_sections && row.draft_sections.length);
-  var feat = await probe007(), isSys = feat ? !!row.is_system : !!SYSTEM_SLUGS[slug], dm = (feat && row.draft_meta) || {};
+  var feat = await probe007(), isSys = !!SYSTEM_SLUGS[slug] || (feat && !!row.is_system), dm = (feat && row.draft_meta) || {};
   function pk(k, fb) { return dm[k] !== undefined && dm[k] !== null ? dm[k] : fb; }
   function liveMeta() { return { title: row.title || "", seo_title: row.seo_title || "", seo_description: row.seo_description || "", og_image: row.og_image || "", show_in_nav: !!row.show_in_nav, nav_label: row.nav_label || "", nav_order: row.nav_order == null ? 100 : row.nav_order, noindex: !!row.noindex }; }
   var meta = (function () { var l = liveMeta(); Object.keys(l).forEach(function (k) { l[k] = pk(k, l[k]); }); return l; })();
@@ -1510,7 +1522,7 @@ async function pageEditor(el, slug) {
     var errs = [];
     draft.forEach(function (x, i) {
       var T = S.TYPES[x.type], n = (i + 1) + ". " + T.label + ": ";
-      if (!(x.heading || "").trim() && x.type !== "gallery" && !(x.type === "rich_text" && (x.body || "").trim())) errs.push({ i: i, msg: n + "heading is required" });
+      if (!(x.heading || "").trim() && !NO_HEADING[x.type] && !(x.type === "rich_text" && (x.body || "").trim())) errs.push({ i: i, msg: n + "heading is required" });
       if (x.type === "rich_text" && !(x.body || "").trim()) errs.push({ i: i, msg: n + "text is required" });
       [["button_label", "button_href"], ["button2_label", "button2_href"]].forEach(function (p) {
         if ((x[p[0]] || "").trim() && !(x[p[1]] || "").trim()) errs.push({ i: i, msg: n + "button “" + x[p[0]] + "” needs a destination" });

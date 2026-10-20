@@ -28,22 +28,12 @@
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header id="site-header"></header>
-<main id="main"></main>
+<main id="main" data-page="faq"></main>
 <footer id="site-footer"></footer>
 <noscript><p style="padding:20px;text-align:center">Please enable JavaScript to view this page. / এই পেজ দেখতে JavaScript চালু করুন।</p></noscript>
 <script src="/config.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/sections.js"></script>
-<script>
-Inaya.boot(async function (s) {
-  var res = await Promise.all([Inaya.loadFaqs()]);
-  var S = InayaSections, ctx = { settings: s };
-  document.getElementById("main").innerHTML =
-    S.render([S.newSection("page_head", { eyebrow: "FAQ", heading: "Frequently asked questions", body: "Can't find your answer? Message us and we will be happy to help." })], ctx) +
-    '<section class="section"><div class="container">' + S.faqByCategory(res[0]) + "</div></section>" +
-    S.render([S.newSection("cta", { heading: "Still have a question?", body: "Send us a message or book a free assessment.", button_label: "Contact us", button_href: "/contact", button2_label: s.cta_primary_label, button2_href: s.cta_primary_href, bg: "soft" })], ctx);
-  Inaya.setMeta({ title: "FAQ | " + s.academy_name, description: "Answers to common questions about programs, assessment and enrollment.", image: s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/faq" });
-});
-</script>
+<script src="/js/page.js"></script>
 </body>
 </html>

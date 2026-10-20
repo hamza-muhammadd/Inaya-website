@@ -22,6 +22,10 @@
     cta:           { label: "CTA banner",        fields: ["heading", "body", "buttons"] },
     contact:       { label: "Contact details",   fields: ["eyebrow", "heading", "body"], note: "Uses the contact details from Settings." },
     gallery:       { label: "Image gallery",     fields: ["eyebrow", "heading", "items"], itemFields: ["image", "alt"] },
+    programs_detail: { label: "Programs in detail", fields: [], note: "Shows every published program with its description, objectives and levels. Content comes from Programs & Curriculum." },
+    faq_all:       { label: "FAQ (all, by category)", fields: ["eyebrow", "heading"], note: "Shows every published question, grouped by category. Questions are managed under Website Content, FAQ." },
+    assessment_form: { label: "Assessment request form", fields: [], note: "The free assessment form. Requests arrive in Leads & Inquiries. Visitors see the live form; this is a placeholder in the preview." },
+    contact_form:  { label: "Contact form + details", fields: [], note: "The message form with your contact details beside it. Messages arrive in Leads & Inquiries. Visitors see the live form; this is a placeholder in the preview." },
     rich_text:     { label: "Rich text",         fields: ["eyebrow", "heading", "body"] }
   };
 
@@ -59,6 +63,24 @@
         sec("faq", { eyebrow: "FAQ", heading: "Questions parents often ask", limit: 5, button_label: "More questions", button_href: "/faq" }),
         sec("cta", { heading: "Ready to begin?", body: "Book a free assessment, or message us to ask about programs and enrollment.",
           button_label: "Book a Free Assessment", button_href: "/assessment", button2_label: "Chat on WhatsApp", button2_href: "{whatsapp}", bg: "soft" })
+      ],
+      programs: [
+        sec("page_head", { eyebrow: "Our 3 Core Programs", heading: "Programs & levels", body: "Structured programs for every age and level. Each program has three clear levels. Begin with a free assessment and we will recommend the right starting point." }),
+        sec("programs_detail", {}),
+        sec("cta", { heading: "Not sure where to start?", body: "A free reading assessment helps us recommend the right program and level.", button_label: "Book a Free Assessment", button_href: "/assessment", button2_label: "Chat on WhatsApp", button2_href: "{whatsapp}", bg: "green" })
+      ],
+      faq: [
+        sec("page_head", { eyebrow: "FAQ", heading: "Frequently asked questions", body: "Can't find your answer? Message us and we will be happy to help." }),
+        sec("faq_all", {}),
+        sec("cta", { heading: "Still have a question?", body: "Send us a message or book a free assessment.", button_label: "Contact us", button_href: "/contact", button2_label: "Book a Free Assessment", button2_href: "/assessment", bg: "soft" })
+      ],
+      contact: [
+        sec("page_head", { eyebrow: "Contact", heading: "We'd love to hear from you", body: "Questions about programs, the free assessment or enrollment? Send us a message." }),
+        sec("contact_form", {})
+      ],
+      assessment: [
+        sec("page_head", { eyebrow: "Free assessment", heading: "Book a free Quran reading assessment", body: "Tell us a little about the learner. Our team will contact you to arrange a short reading assessment and recommend a starting level." }),
+        sec("assessment_form", {})
       ],
       about: [
         sec("page_head", { eyebrow: "About us", heading: "About Inaya Quran Academy",
@@ -122,6 +144,18 @@
   }
   function cols(n) { n = parseInt(n, 10); return n === 2 ? "c2" : n === 4 ? "c4" : "c3"; }
 
+  /* Forms are mounted by forms.js after the page is drawn. The text inside is only shown in the admin preview. */
+  function mountPoint(x, kind, note) {
+    return '<div data-mount="' + kind + '" data-sec="' + esc(x.id) + '"><section class="section"><div class="container"><div class="card" style="text-align:center"><p class="muted" style="margin:0">' + esc(note) + "</p></div></div></section></div>";
+  }
+  var META = {
+    home: { title: "Home", description: "" },
+    programs: { title: "Programs", description: "Three structured programs, three levels each." },
+    faq: { title: "FAQ", description: "Answers to common questions about programs, assessment and enrollment." },
+    contact: { title: "Contact", description: "Get in touch with Inaya Quran Academy." },
+    assessment: { title: "Book a Free Assessment", description: "Request a free Quran reading assessment." },
+    about: { title: "About", description: "" }, privacy: { title: "Privacy Policy", description: "" }, terms: { title: "Terms of Use", description: "" }
+  };
   var R = {
     page_head: function (x) {
       return '<section class="page-hero" data-sec="' + esc(x.id) + '" data-anim="' + anim(x.anim) + '"><div class="container">' +
@@ -173,6 +207,12 @@
       var items = (x.items || []).map(function (it) { return '<div class="stat"><b>' + esc(it.value) + "</b><span class=\"muted\">" + esc(it.label) + "</span></div>"; }).join("");
       return wrap(x, '<div class="sec-head">' + head(x, false) + '</div><div class="grid c4">' + items + "</div>");
     },
+    programs_detail: function (x, c) { return '<div data-sec="' + esc(x.id) + '" data-anim="' + anim(x.anim) + '">' + programsOverview(c) + "</div>"; },
+    faq_all: function (x, c) {
+      return wrap(x, (x.heading || x.eyebrow ? '<div class="sec-head">' + head(x) + "</div>" : "") + faqByCategory(c.faqs || []));
+    },
+    assessment_form: function (x) { return mountPoint(x, "assessment", "The free assessment form appears here."); },
+    contact_form: function (x) { return mountPoint(x, "contact", "The contact form and your contact details appear here."); },
     faq: function (x, c) {
       var list = (c.faqs || []).slice(0, parseInt(x.limit, 10) > 0 ? parseInt(x.limit, 10) : 100);
       return wrap(x, '<div class="sec-head">' + head(x) + "</div>" + faqHtml(list) + buttons(x, c.settings));
@@ -272,5 +312,5 @@
     }).join("");
   }
 
-  window.InayaSections = { TYPES: TYPES, defaults: defaults, render: render, faqHtml: faqHtml, faqByCategory: faqByCategory, programDetail: programDetail, programsOverview: programsOverview, uid: uid, newSection: sec };
+  window.InayaSections = { META: META, TYPES: TYPES, defaults: defaults, render: render, faqHtml: faqHtml, faqByCategory: faqByCategory, programDetail: programDetail, programsOverview: programsOverview, uid: uid, newSection: sec };
 })();

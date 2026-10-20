@@ -28,25 +28,12 @@
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header id="site-header"></header>
-<main id="main"></main>
+<main id="main" data-page="programs"></main>
 <footer id="site-footer"></footer>
 <noscript><p style="padding:20px;text-align:center">Please enable JavaScript to view this page. / এই পেজ দেখতে JavaScript চালু করুন।</p></noscript>
 <script src="/config.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/sections.js"></script>
-<script>
-Inaya.boot(async function (s) {
-  var programs = await Inaya.loadPrograms();
-  var ctx = { settings: s, programs: programs, faqs: [] };
-  var S = InayaSections;
-  document.getElementById("main").innerHTML =
-    S.render([S.newSection("page_head", { eyebrow: "Our 3 Core Programs", heading: "Programs & levels",
-      body: "Structured programs for every age and level. Each program has three clear levels. Begin with a free assessment and we will recommend the right starting point." })], ctx) +
-    S.programsOverview(ctx) +
-    S.render([S.newSection("cta", { heading: "Not sure where to start?", body: "A free reading assessment helps us recommend the right program and level.",
-      button_label: s.cta_primary_label, button_href: s.cta_primary_href, button2_label: "Chat on WhatsApp", button2_href: "{whatsapp}", bg: "green" })], ctx);
-  Inaya.setMeta({ title: "Programs | " + s.academy_name, description: "Three structured programs, three levels each.", image: s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/programs" });
-});
-</script>
+<script src="/js/page.js"></script>
 </body>
 </html>

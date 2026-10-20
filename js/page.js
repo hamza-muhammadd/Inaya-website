@@ -6,7 +6,8 @@ Inaya.boot(async function (s) {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) slug = "";
   var r = await Promise.all([Inaya.loadPage(slug), Inaya.loadPrograms(), Inaya.loadFaqs()]);
   var page = r[0], ctx = { settings: s, programs: r[1], faqs: r[2] };
-  if (!slug || (page.hidden && slug !== "home")) {
+  var BUILTIN = InayaSections.META[slug];   // built-in pages fall back to their default layout when no row exists yet
+  if (!slug || (page.hidden && !(slug === "home" || BUILTIN))) {
     main.innerHTML = '<section class="section"><div class="container center"><h1>Page not found</h1><p class="lead" style="margin:0 auto 1.4rem">This page does not exist or is not published right now.</p><a class="btn" href="/">Go to home</a></div></section>';
     var m = document.createElement("meta"); m.name = "robots"; m.content = "noindex"; document.head.appendChild(m);
     return;
@@ -16,10 +17,15 @@ Inaya.boot(async function (s) {
   if (page.noindex) { var ni = document.createElement("meta"); ni.name = "robots"; ni.content = "noindex"; document.head.appendChild(ni); }
   else { var ex = document.querySelector('meta[name="robots"]'); if (ex && !page.hidden) ex.remove(); }
   main.innerHTML = InayaSections.render(sections, ctx);
+  var mounts = main.querySelectorAll("[data-mount]");
+  if (mounts.length) {
+    var go = function () { mounts.forEach(function (m) { InayaForms.mount(m, s); }); };
+    if (window.InayaForms) go(); else { var sc = document.createElement("script"); sc.src = "/js/forms.js"; sc.onload = go; document.head.appendChild(sc); await new Promise(function (r) { sc.onload = function () { go(); r(); }; sc.onerror = r; }); }
+  }
   var path = slug === "home" ? "/" : "/" + slug;
   Inaya.setMeta({
-    title: page.seo_title || (slug === "home" ? s.seo_title : (page.title || slug) + " | " + s.academy_name),
-    description: page.seo_description || s.seo_description,
+    title: page.seo_title || (slug === "home" ? s.seo_title : ((BUILTIN && BUILTIN.title) || page.title || slug) + " | " + s.academy_name),
+    description: page.seo_description || (BUILTIN && BUILTIN.description) || s.seo_description,
     image: page.og_image || s.og_image, siteUrl: s.site_url,
     canonical: s.site_url.replace(/\/+$/, "") + (path === "/" ? "/" : path)
   });

@@ -41,14 +41,14 @@
   function input(name, type, extra) { return '<input id="f_' + name + '" name="' + name + '" type="' + type + '" ' + (extra || "") + ">"; }
 
   /* ================= assessment ================= */
-  function assessment(s) {
-    var main = document.getElementById("main"), ff = s.form_fields || {};
+  function assessment(s, target) {
+    var main = target || document.getElementById("main"), embed = !!target, ff = s.form_fields || {};
     return I.loadPrograms().then(function (programs) {
       var titles = programs.map(function (p) { return p.title; });
       var wa = I.waLink(s);
       var notConf = !I.configured;
-      var h = '<section class="page-hero"><div class="container"><div class="eyebrow">Free assessment</div><h1>Book a free Quran reading assessment</h1>' +
-        '<p class="lead">Tell us a little about the learner. Our team will contact you to arrange a short reading assessment and recommend a starting level.</p></div></section>' +
+      var h = (embed ? "" : '<section class="page-hero"><div class="container"><div class="eyebrow">Free assessment</div><h1>Book a free Quran reading assessment</h1>' +
+        '<p class="lead">Tell us a little about the learner. Our team will contact you to arrange a short reading assessment and recommend a starting level.</p></div></section>') +
         '<section class="section"><div class="container"><div class="form-wrap" id="formwrap">' +
         (notConf ? '<div class="alert bad">This form is not connected yet. Please contact us' + (wa ? ' on <a class="js-wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>' : "") + ".</div>" : "") +
         '<form class="form-card" id="aform" novalidate><div id="aform-msg" aria-live="polite"></div>' +
@@ -107,8 +107,8 @@
   }
 
   /* ================= contact ================= */
-  function contact(s) {
-    var main = document.getElementById("main"), wa = I.waLink(s), notConf = !I.configured;
+  function contact(s, target) {
+    var main = target || document.getElementById("main"), embed = !!target, wa = I.waLink(s), notConf = !I.configured;
     var rows = "";
     if (s.contact_email) rows += '<li><span class="k">Email</span><a href="mailto:' + esc(s.contact_email) + '">' + esc(s.contact_email) + "</a></li>";
     if (wa) rows += '<li><span class="k">WhatsApp</span><a class="js-wa" href="' + esc(wa) + '" target="_blank" rel="noopener">Message us on WhatsApp</a></li>';
@@ -119,7 +119,7 @@
     if (s.response_time) rows += '<li><span class="k">Response</span><span>' + esc(s.response_time) + "</span></li>";
     if (!rows) rows = '<li class="muted">Our contact details will be added soon. Please use the message form.</li>';
 
-    main.innerHTML = '<section class="page-hero"><div class="container"><div class="eyebrow">Contact</div><h1>We\'d love to hear from you</h1><p class="lead">Questions about programs, the free assessment or enrollment? Send us a message.</p></div></section>' +
+    main.innerHTML = (embed ? "" : '<section class="page-hero"><div class="container"><div class="eyebrow">Contact</div><h1>We\'d love to hear from you</h1><p class="lead">Questions about programs, the free assessment or enrollment? Send us a message.</p></div></section>') +
       '<section class="section"><div class="container detail-grid"><div id="cwrap">' +
       (notConf ? '<div class="alert bad">This form is not connected yet. Please use the contact details on this page.</div>' : "") +
       '<form class="form-card" id="cform" novalidate><div id="cform-msg" aria-live="polite"></div>' +
@@ -153,5 +153,6 @@
     return Promise.resolve();
   }
 
-  window.InayaForms = { assessment: assessment, contact: contact };
+  function mount(el, s) { return el.getAttribute("data-mount") === "assessment" ? assessment(s, el) : contact(s, el); }
+  window.InayaForms = { assessment: assessment, contact: contact, mount: mount };
 })();

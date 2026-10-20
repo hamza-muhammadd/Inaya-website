@@ -17,7 +17,7 @@ const wait=(p,t=400)=>p.waitForTimeout(t);
   ok(await pg.locator('#nav a[data-v="builder"]').count()===1,'Website Builder is in the admin nav');
   await pg.click('#nav a[data-v="builder"]'); await wait(pg,700);
   ok(/Website Builder/.test(await pg.innerText('#view h1')),'Builder opens');
-  ok((await pg.locator('#bp-l tbody tr').count())===2,'existing pages listed (mock seeds 2)');
+  ok((await pg.locator('#bp-l tbody tr').count())===8,'8 built-in pages listed (2 saved + 6 default layouts)');
   ok(!(await pg.locator('#bp-mig').count()),'no migration warning when 007 applied');
   console.log('A2 create page');
   await pg.click('#bp-new'); await wait(pg);
@@ -70,7 +70,7 @@ const wait=(p,t=400)=>p.waitForTimeout(t);
   // ---- list actions
   console.log('A6 list actions');
   await pg.goto('http://localhost:4173/admin#builder'); await wait(pg,900);
-  ok((await pg.locator('#bp-l tbody tr').count())===3,'3 pages listed');
+  ok((await pg.locator('#bp-l tbody tr').count())===9,'9 pages listed');
   const rowOf=async t=>pg.locator('#bp-l tbody tr',{hasText:t}).first();
   await (await rowOf('Summer Camp')).locator('[data-dup]').click(); await wait(pg); 
   ok(await pg.inputValue('#cp-s')==='summer-camp-copy','duplicate proposes slug summer-camp-copy');
