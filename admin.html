@@ -233,6 +233,31 @@ input[type=text],input[type=email],input[type=password],input[type=search],input
 .soonbox ul{padding-left:20px;color:#3A463F}
 .tt{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
 .tt .panel{margin-bottom:0}
+
+/* ===== fixed-height app shell (desktop): sidebar, page and editor panes scroll independently =====
+   Root cause of the old behaviour: only the <body> scrolled, so the topbar, sidebar, editor list and
+   preview all moved together (the sidebar/preview were "sticky" hacks). Now the shell is exactly one
+   viewport tall; each region owns its own scrollbar. Mobile (<=1000px) keeps normal page scrolling. */
+@media(min-width:1001px){
+  body:has(#app:not(.hidden)){overflow:hidden}
+  #app.shell{height:100vh;height:100dvh;padding:18px;overflow:hidden;box-sizing:border-box}
+  .frame{height:100%;min-height:0;display:flex;flex-direction:column;padding:18px 24px 0;box-sizing:border-box;overflow:hidden}
+  .topbar{flex:none;margin-bottom:16px}
+  .body{flex:1;min-height:0;align-items:stretch}
+  .side{position:static;top:auto;max-height:none;height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin-bottom:18px}
+  .main{height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:0 6px 40px 0;scrollbar-gutter:stable}
+  /* editor: header fixed, section list and preview each scroll on their own */
+  .main.fill{display:flex;flex-direction:column;overflow:hidden;padding-bottom:18px}
+  .main.fill>.page-h{flex:none}
+  .main.fill .ed{flex:1;min-height:0;align-items:stretch}
+  .main.fill .ed>div:first-child{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 8px 24px 0}
+  .main.fill .pv{position:static;display:flex;flex-direction:column;min-height:0}
+  .main.fill .pv-frame{flex:1;min-height:0}
+  .main.fill .pv-frame iframe{height:100%;min-height:0}
+  .main.fill .pv>.hint{flex:none}
+}
+@media(max-width:1100px){.main.fill .ed>div:first-child{overflow:visible}}
+.side,.main,.ed>div:first-child{scrollbar-width:thin;scrollbar-color:#C9D3C7 transparent}
 </style>
 </head>
 <body>
@@ -455,7 +480,7 @@ function route() {
   if (!me) return;
   var parts = (location.hash.slice(1) || "overview").split("/"), name = VIEWS[parts[0]] ? parts[0] : "overview";
   $$("#nav a").forEach(function (a) { var key = a.getAttribute("data-v"); a.classList.toggle("on", key === name || key === parts.slice(0, 2).join("/")); });
-  $("#side").classList.remove("open"); view = $("#view"); view.innerHTML = '<div class="muted">Loading…</div>'; guard = null; window.scrollTo(0, 0);
+  $("#side").classList.remove("open"); view = $("#view"); view.classList.remove("fill"); view.innerHTML = '<div class="muted">Loading…</div>'; guard = null; window.scrollTo(0, 0); view.scrollTop = 0;
   Promise.resolve(VIEWS[name](view, parts.slice(1))).catch(function (e) { fail(e); view.innerHTML = '<div class="alert bad">Could not load this section: ' + h(e.message || e) + "</div>"; });
 }
 window.addEventListener("hashchange", function () {
@@ -1540,6 +1565,7 @@ async function pageEditor(el, slug) {
   }
   function renderList() { $("#sl").innerHTML = listHtml(); }
 
+  el.classList.add("fill");
   el.innerHTML = '<div class="page-h"><div><a href="#builder" class="small">← Website Builder / Pages</a><h1>Edit page: ' + h(row.title) + '</h1><div class="row"><span id="ed-status">' + badge(row.status) + '</span><span id="ed-dirty" class="badge b-draft hidden">unsaved changes</span><span id="ed-live"></span>' + (usingDefaults ? '<span class="badge b-New">built-in layout loaded — save to keep</span>' : "") + "</div></div>" +
     '<div class="row"><button class="btn ghost" id="b-prev" title="Open the draft in a new tab">Preview</button><button class="btn ghost wbtn" id="b-save">Save draft</button><button class="btn wbtn" id="b-pub">Publish</button><button class="btn ghost wbtn" id="b-more">More…</button></div></div>' +
     '<div class="ed"><div><div class="card"><div class="row sb"><b>Page settings</b><button class="ico" id="seo-tog">Edit settings</button></div><div id="seo" class="hidden"></div></div>' +
