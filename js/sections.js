@@ -33,7 +33,7 @@
     var D = {
       home: [
         sec("hero", { eyebrow: "Learn · Practice · Grow", heading: "Quran Learning <em>Made Simple</em>",
-          body: "Structured programs, caring teachers and a supportive learning journey — for every age and level.",
+          body: "Structured programs, caring teachers and a supportive learning journey for every age and level.",
           image: "assets/img/hero.jpg", image_alt: "A child reading the Quran beside a sunlit window",
           button_label: "Book a Free Assessment", button_href: "/assessment", button2_label: "Explore Our Programs", button2_href: "/programs", layout: "split" }),
         sec("program_cards", { eyebrow: "Our 3 Core Programs", heading: "A clear path, one level at a time",
@@ -64,14 +64,14 @@
         sec("page_head", { eyebrow: "About us", heading: "About Inaya Quran Academy",
           body: "Inaya (عناية) means care. We are an online Quran and Islamic learning academy built around structured programs and caring teaching." }),
         sec("text_image", { heading: "Our educational approach",
-          body: "Learning is organised into three programs, each with three clear levels:\n\n- **Quran Reading & Fluency**\n- **Quran Recitation, Tajweed & Sunnah**\n- **Islamic Foundations & Daily Living**\n\nEvery learner begins with a free reading assessment so we can recommend the right starting level.",
+          body: "Learning is organised into three programs, each with three clear levels:\n\n- Quran Reading & Fluency\n- Quran Recitation, Tajweed & Sunnah\n- Islamic Foundations & Daily Living\n\nEvery learner begins with a free reading assessment so we can recommend the right starting level.",
           image: "assets/img/flyer.jpg", image_alt: "Inaya Quran Academy programs" }),
         sec("benefits", { eyebrow: "Mission and values", heading: "What guides us", columns: 3, bg: "soft", items: [
           { title: "Better Quran, Better You", text: "Quran learning that shapes the learner as well as the reading." },
           { title: "Learn · Practice · Grow", text: "Understanding, steady practice and visible growth." },
           { title: "Care for every learner", text: "A safe, supportive environment for every age and level." }] }),
         sec("rich_text", { heading: "Teaching philosophy",
-          body: "We believe that clear structure, patient guidance and regular practice help learners build confidence. Assessments are used to understand where a learner is today — never to judge — and topics a learner has not yet been taught are simply noted as \"Not Yet Learned\"." }),
+          body: "We believe that clear structure, patient guidance and regular practice help learners build confidence. Assessments are used to understand where a learner is today, never to judge them, and topics a learner has not yet been taught are simply noted as \"Not Yet Learned\"." }),
         sec("cta", { heading: "Meet us through a free assessment", body: "A short, friendly session to understand the learner's current level.",
           button_label: "Book a Free Assessment", button_href: "/assessment" })
       ],
@@ -111,18 +111,20 @@
   }
   /* headings allow only <em> emphasis through *…* or the literal <em>…</em> typed by the owner */
   function inlineHead(t) {
-    return esc(t).replace(/&lt;em&gt;(.*?)&lt;\/em&gt;/g, "<em>$1</em>").replace(/\*([^*]+)\*/g, "<em>$1</em>");
+    return esc(t).replace(/&lt;em&gt;(.*?)&lt;\/em&gt;/g, "<em>$1</em>").replace(/\[\[([^\]]+)\]\]/g, "<em>$1</em>").replace(/\*([^*]+)\*/g, "<em>$1</em>");
   }
+  var ANIMS = { up: 1, fade: 1, zoom: 1, left: 1, right: 1, none: 1 };
+  function anim(a) { return ANIMS[a] ? a : "up"; }
   function wrap(x, inner, extraClass) {
     var bg = x.bg === "soft" ? " soft" : x.bg === "green" ? " green" : "";
     var al = x.align === "center" ? " center" : "";
-    return '<section class="section' + bg + al + (extraClass ? " " + extraClass : "") + '" data-sec="' + esc(x.id) + '"><div class="container">' + inner + "</div></section>";
+    return '<section class="section' + bg + al + (extraClass ? " " + extraClass : "") + '" data-sec="' + esc(x.id) + '" data-anim="' + anim(x.anim) + '"><div class="container">' + inner + "</div></section>";
   }
   function cols(n) { n = parseInt(n, 10); return n === 2 ? "c2" : n === 4 ? "c4" : "c3"; }
 
   var R = {
     page_head: function (x) {
-      return '<section class="page-hero" data-sec="' + esc(x.id) + '"><div class="container">' +
+      return '<section class="page-hero" data-sec="' + esc(x.id) + '" data-anim="' + anim(x.anim) + '"><div class="container">' +
         (x.eyebrow ? '<div class="eyebrow">' + esc(x.eyebrow) + "</div>" : "") +
         "<h1>" + inlineHead(x.heading) + "</h1>" + (x.body ? '<p class="lead">' + I.inline(x.body) + "</p>" : "") + "</div></section>";
     },
@@ -130,7 +132,7 @@
       var img = I.safeImg(x.image), center = x.layout === "center" || !img;
       var art = img ? '<div class="hero-art"><div class="arch"><img src="' + esc(img) + '" alt="' + esc(x.image_alt || "") + '" width="930" height="910" fetchpriority="high"></div>' +
         '<div class="hero-badge"><strong>3 programs · 3 levels each</strong>Online &amp; one-on-one options</div></div>' : "";
-      return '<section class="hero' + (center ? " center" : "") + '" data-sec="' + esc(x.id) + '"><div class="container hero-grid"><div>' +
+      return '<section class="hero' + (center ? " center" : "") + '" data-sec="' + esc(x.id) + '" data-anim="' + anim(x.anim) + '"><div class="container hero-grid"><div>' +
         (x.eyebrow ? '<div class="eyebrow">' + esc(x.eyebrow) + "</div>" : "") +
         "<h1>" + inlineHead(x.heading) + "</h1>" +
         (x.body ? '<p class="lead">' + I.inline(x.body) + "</p>" : "") + buttons(x, c.settings) + "</div>" + art + "</div></section>";
@@ -176,7 +178,7 @@
       return wrap(x, '<div class="sec-head">' + head(x) + "</div>" + faqHtml(list) + buttons(x, c.settings));
     },
     testimonials: function (x) {
-      var items = (x.items || []).map(function (it) { return '<figure class="card" style="margin:0"><blockquote class="quote" style="margin:0 0 12px">“' + esc(it.text) + "”</blockquote><figcaption class=\"muted\">— " + esc(it.name) + "</figcaption></figure>"; }).join("");
+      var items = (x.items || []).map(function (it) { return '<figure class="card" style="margin:0"><blockquote class="quote" style="margin:0 0 12px">“' + esc(it.text) + "”</blockquote><figcaption class=\"muted\">" + esc(it.name) + "</figcaption></figure>"; }).join("");
       return wrap(x, '<div class="sec-head">' + head(x, false) + '</div><div class="grid c3">' + items + "</div>");
     },
     teachers: function (x) {
@@ -249,7 +251,7 @@
       (p.curriculum_overview ? '<h2 style="margin-top:1.6em">Curriculum overview</h2><div class="rich">' + md(p.curriculum_overview) + "</div>" : "") +
       '</div><aside><div class="card aside-card">' +
       (p.student_profile ? "<h3>Suitable for</h3><p>" + esc(p.student_profile) + "</p>" : "") +
-      '<p class="muted" style="font-size:.9rem">Start with a free reading assessment — our assessor will recommend the right level.</p>' +
+      '<p class="muted" style="font-size:.9rem">Start with a free reading assessment. Our assessor will recommend the right level.</p>' +
       '<a class="btn" href="/assessment?program=' + encodeURIComponent(p.slug) + '">' + esc(ctaLabel) + "</a>" +
       (I.waLink(s) ? '<a class="btn ghost js-wa" style="margin-top:10px" href="' + esc(I.waLink(s)) + '" target="_blank" rel="noopener">Ask on WhatsApp</a>' : "") +
       "</div></aside></div></section>";

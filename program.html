@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Program — Inaya Quran Academy</title>
+<title>Program | Inaya Quran Academy</title>
 <meta name="description" content="Program details, levels and curriculum overview at Inaya Quran Academy.">
 
 <link rel="canonical" href="https://inayaquran.com/programs">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Inaya Quran Academy">
-<meta property="og:title" content="Program — Inaya Quran Academy">
+<meta property="og:title" content="Program | Inaya Quran Academy">
 <meta property="og:description" content="Program details, levels and curriculum overview at Inaya Quran Academy.">
 <meta property="og:url" content="https://inayaquran.com/programs">
 <meta property="og:image" content="https://inayaquran.com/assets/img/og-default.jpg">
@@ -42,12 +42,12 @@ Inaya.boot(async function (s) {
   var main = document.getElementById("main");
   if (!p) {
     main.innerHTML = '<section class="section"><div class="container center"><h1>Program not found</h1><p class="lead" style="margin:0 auto 1.4rem">This program may have moved or is not published yet.</p><a class="btn" href="/programs">See all programs</a></div></section>';
-    document.title = "Program not found — " + s.academy_name;
+    document.title = "Program not found | " + s.academy_name;
     var m = document.createElement("meta"); m.name = "robots"; m.content = "noindex"; document.head.appendChild(m);
     return;
   }
   main.innerHTML = InayaSections.programDetail(p, { settings: s });
-  Inaya.setMeta({ title: p.title + " — " + s.academy_name, description: p.short_description || p.description.slice(0, 155), image: p.image_url || s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/programs/" + p.slug });
+  Inaya.setMeta({ title: p.title + " | " + s.academy_name, description: p.short_description || p.description.slice(0, 155), image: p.image_url || s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/programs/" + p.slug });
 });
 </script>
 </body>

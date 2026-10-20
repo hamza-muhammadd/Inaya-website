@@ -1,5 +1,5 @@
 /* Assessment inquiry + contact forms.
-   Client-side validation is for convenience only — the same rules are
+   Client-side validation is for convenience only. the same rules are
    enforced again inside the database functions submit_lead / submit_contact. */
 (function () {
   "use strict";
@@ -35,7 +35,7 @@
     return o;
   }
   function field(name, label, control, hint, required) {
-    return '<div class="field"><label for="f_' + name + '">' + esc(label) + (required ? ' <span class="req" aria-hidden="true">*</span>' : "") + "</label>" + control +
+    return '<div class="field"><label for="f_' + name + '">' + esc(label) + (required ? ' <span class="req">(required)</span>' : "") + "</label>" + control +
       (hint ? '<div class="hint">' + esc(hint) + "</div>" : "") + '<div class="err" data-err="' + name + '" role="alert"></div></div>';
   }
   function input(name, type, extra) { return '<input id="f_' + name + '" name="' + name + '" type="' + type + '" ' + (extra || "") + ">"; }
@@ -60,7 +60,7 @@
         (ff.age_group !== false ? field("age_group", "Learner's age group", '<select id="f_age_group" name="age_group">' + opts(["Under 6", "6–8", "9–12", "13–17", "Adult (18+)"], "Select age group") + "</select>") : "") +
         (ff.country !== false ? field("country", "Country / time zone", input("country", "text", 'maxlength="80" placeholder="e.g. UK, GMT"')) : "") + "</div>" +
         field("program_interest", "Program of interest", '<select id="f_program_interest" name="program_interest">' + opts(titles.concat(["Not sure yet"]), "Select a program") + "</select>") +
-        (ff.reading_level !== false ? field("reading_level", "Current Quran reading level", '<select id="f_reading_level" name="reading_level">' + opts(["Beginner — not yet reading Arabic letters", "Reads letters, but slowly", "Reads with some mistakes", "Reads fluently — wants Tajweed / recitation help", "Not sure"], "Select the closest option") + "</select>", "A rough idea is fine — the assessor will check the real level.") : "") +
+        (ff.reading_level !== false ? field("reading_level", "Current Quran reading level", '<select id="f_reading_level" name="reading_level">' + opts(["Beginner (not yet reading Arabic letters)", "Reads letters, but slowly", "Reads with some mistakes", "Reads fluently - wants Tajweed / recitation help", "Not sure"], "Select the closest option") + "</select>", "A rough idea is fine - the assessor will check the real level.") : "") +
         field("goal", "Learning goals / main difficulty", '<textarea id="f_goal" name="goal" maxlength="1500" placeholder="What would you like the learner to achieve?"></textarea>') +
         '<div class="row2">' + field("contact_method", "Preferred contact method", '<select id="f_contact_method" name="contact_method">' + opts(["WhatsApp", "Email"], "No preference") + "</select>") +
         (ff.preferred_time !== false ? field("preferred_time", "Preferred time to be contacted", input("preferred_time", "text", 'maxlength="120" placeholder="e.g. evenings, weekends")')) : "") + "</div>" +

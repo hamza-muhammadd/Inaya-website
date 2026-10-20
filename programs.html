@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Programs — Inaya Quran Academy</title>
+<title>Programs | Inaya Quran Academy</title>
 <meta name="description" content="Three structured programs, three levels each: Quran Reading & Fluency; Quran Recitation, Tajweed & Sunnah; Islamic Foundations & Daily Living.">
 
 <link rel="canonical" href="https://inayaquran.com/programs">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Inaya Quran Academy">
-<meta property="og:title" content="Programs — Inaya Quran Academy">
+<meta property="og:title" content="Programs | Inaya Quran Academy">
 <meta property="og:description" content="Three structured programs, three levels each: Quran Reading & Fluency; Quran Recitation, Tajweed & Sunnah; Islamic Foundations & Daily Living.">
 <meta property="og:url" content="https://inayaquran.com/programs">
 <meta property="og:image" content="https://inayaquran.com/assets/img/og-default.jpg">
@@ -41,11 +41,11 @@ Inaya.boot(async function (s) {
   var S = InayaSections;
   document.getElementById("main").innerHTML =
     S.render([S.newSection("page_head", { eyebrow: "Our 3 Core Programs", heading: "Programs & levels",
-      body: "Structured programs for every age and level. Each program has three clear levels — begin with a free assessment and we will recommend the right starting point." })], ctx) +
+      body: "Structured programs for every age and level. Each program has three clear levels. Begin with a free assessment and we will recommend the right starting point." })], ctx) +
     S.programsOverview(ctx) +
     S.render([S.newSection("cta", { heading: "Not sure where to start?", body: "A free reading assessment helps us recommend the right program and level.",
       button_label: s.cta_primary_label, button_href: s.cta_primary_href, button2_label: "Chat on WhatsApp", button2_href: "{whatsapp}", bg: "green" })], ctx);
-  Inaya.setMeta({ title: "Programs — " + s.academy_name, description: "Three structured programs, three levels each.", image: s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/programs" });
+  Inaya.setMeta({ title: "Programs | " + s.academy_name, description: "Three structured programs, three levels each.", image: s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/programs" });
 });
 </script>
 </body>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Admin — Inaya Quran Academy</title>
+<title>Admin - Inaya Quran Academy</title>
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,600&display=swap">
 <style>
@@ -55,7 +55,7 @@ input.bad,select.bad,textarea.bad{border-color:var(--bad)}
 .chk{display:flex;gap:8px;align-items:center;font-size:.9rem}.chk input{width:17px;height:17px;accent-color:var(--g)}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
 @media(max-width:700px){.g2,.g3{grid-template-columns:1fr}}
-/* shell (v2 — rounded sage look) */
+/* shell (v2 - rounded sage look) */
 :root{--bg:#8C9A8E;--page:#ECF0EA;--sage1:#E1E9DF;--sage2:#E6E8DA;--sage3:#F0E8D6;--sage4:#EBDFD9;--r:20px;--f:"Plus Jakarta Sans","Inter",system-ui,-apple-system,"Segoe UI","Hind Siliguri",sans-serif}
 body{background:var(--bg);font-family:var(--f)}
 h1,h2,h3{font-family:var(--f);font-weight:700;letter-spacing:-.01em}
@@ -337,8 +337,8 @@ function toast(msg, bad) {
 }
 function fail(e) { console.error(e); toast((e && e.message) ? e.message : "Something went wrong", true); }
 async function q(p) { var r = await p; if (r.error) throw r.error; return r; }
-function fmtDT(t) { return t ? new Date(t).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "—"; }
-function fmtD(t) { return t ? new Date(t.length === 10 ? t + "T00:00:00" : t).toLocaleDateString([], { dateStyle: "medium" }) : "—"; }
+function fmtDT(t) { return t ? new Date(t).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "-"; }
+function fmtD(t) { return t ? new Date(t.length === 10 ? t + "T00:00:00" : t).toLocaleDateString([], { dateStyle: "medium" }) : "-"; }
 function todayISO() { var d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
 function slugify(s) { return String(s).toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); }
 function badge(v) { return '<span class="badge b-' + h(String(v).replace(/\s+/g, "-")) + '">' + h(v) + "</span>"; }
@@ -587,7 +587,7 @@ var STATUSES = ["New", "Contacted", "Assessment Scheduled", "Assessment Complete
 var DAY = 864e5;
 function isoLocal(d) { return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
 function trendChip(cur, prev) {
-  if (!prev) return cur ? '<span class="chip2 flat">new</span>' : '<span class="chip2 flat">—</span>';
+  if (!prev) return cur ? '<span class="chip2 flat">new</span>' : '<span class="chip2 flat">-</span>';
   var p = Math.round((cur - prev) / prev * 100);
   return '<span class="chip2 ' + (p > 0 ? "up" : p < 0 ? "down" : "flat") + '">' + (p > 0 ? "▲ +" : p < 0 ? "▼ " : "") + p + "%</span>";
 }
@@ -662,7 +662,7 @@ VIEWS.overview = async function (el) {
       (overdue ? '<div class="alert bad" style="margin-top:8px"><b>' + overdue + "</b> follow-up" + (overdue > 1 ? "s are" : " is") + " overdue. Oldest: " + h(fu[0].name) + " (" + fmtD(fu[0].follow_up_date) + ").</div>" : "") + "</div>" +
       '<div class="panel"><h3 style="margin:0 0 10px">Quick actions</h3><div class="qa"><a class="btn" href="#leads">Open leads</a><a class="btn ghost" href="#builder">Website Builder</a><a class="btn ghost" href="#media">Media</a><a class="btn ghost" href="/" target="_blank">View site ↗</a></div></div>' +
       '<div class="panel"><h3 style="margin:0 0 8px">Recent activity</h3>' +
-      (ev.length ? '<ul class="tl">' + ev.map(function (e) { return "<li><b>" + h(e.leads ? e.leads.name : "Lead") + "</b> — " + (e.event_type === "created" ? "inquiry received" : "status " + h(e.from_status) + " → " + h(e.to_status)) + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty">No activity yet.</div>') + "</div>" +
+      (ev.length ? '<ul class="tl">' + ev.map(function (e) { return "<li><b>" + h(e.leads ? e.leads.name : "Lead") + "</b> - " + (e.event_type === "created" ? "inquiry received" : "status " + h(e.from_status) + " → " + h(e.to_status)) + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty">No activity yet.</div>') + "</div>" +
       '<div class="panel"><h3 style="margin:0 0 8px">Website analytics</h3>' + (((settings.analytics || {}).provider === "ga4" || (settings.analytics || {}).provider === "plausible") ?
         '<p class="muted" style="margin:0">Provider connected. Open its own dashboard for visitor numbers. Click counts: <a href="#analytics">Analytics</a>.</p>' :
         '<p class="muted" style="margin:0"><b>Not connected.</b> Visitor numbers need an analytics service (Settings → Analytics). Button clicks and form submissions are counted on the <a href="#analytics">Analytics</a> page.</p>') + "</div>" +
@@ -681,7 +681,7 @@ VIEWS.overview = async function (el) {
 var SSTAT = ["Active", "On Hold", "Completed", "Withdrawn"];
 var SS = { q: "", status: "", archived: false };
 function sbadge(v) { return '<span class="badge b-' + (v === "Active" ? "Enrollment-Confirmed" : v === "Withdrawn" ? "Not-Proceeding" : "Follow-up-Required") + '">' + h(v) + "</span>"; }
-function progName(progs, id) { var p = progs.filter(function (x) { return x.id === id; })[0]; return p ? p.title : "—"; }
+function progName(progs, id) { var p = progs.filter(function (x) { return x.id === id; })[0]; return p ? p.title : "-"; }
 
 VIEWS.students = async function (el, args) {
   if (args[0]) return studentDetail(el, args[0]);
@@ -696,7 +696,7 @@ VIEWS.students = async function (el, args) {
     var t = SS.q.toLowerCase();
     var r = rows.filter(function (s) { return (SS.archived ? !!s.deleted_at : !s.deleted_at) && (!SS.status || s.status === SS.status) && (!t || (s.full_name + " " + s.student_code).toLowerCase().indexOf(t) > -1); });
     $("#st-list").innerHTML = r.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Student</th><th>Program</th><th>Status</th><th>Country</th><th>Added</th></tr></thead><tbody>' +
-      r.map(function (s) { return '<tr class="click" data-id="' + s.id + '"><td><b>' + h(s.full_name) + '</b><br><span class="muted small">' + h(s.student_code) + "</span></td><td>" + h(progName(progs, s.program_id)) + "</td><td>" + sbadge(s.status) + "</td><td>" + h(s.country || "—") + "</td><td>" + fmtD(s.created_at) + "</td></tr>"; }).join("") + "</tbody></table></div>" :
+      r.map(function (s) { return '<tr class="click" data-id="' + s.id + '"><td><b>' + h(s.full_name) + '</b><br><span class="muted small">' + h(s.student_code) + "</span></td><td>" + h(progName(progs, s.program_id)) + "</td><td>" + sbadge(s.status) + "</td><td>" + h(s.country || "-") + "</td><td>" + fmtD(s.created_at) + "</td></tr>"; }).join("") + "</tbody></table></div>" :
       '<div class="empty">' + (rows.length ? "No students match." : "No students yet. Convert a confirmed inquiry or add one manually.") + "</div>";
     $$("tr[data-id]", $("#st-list")).forEach(function (tr) { tr.onclick = function () { location.hash = "#students/" + tr.getAttribute("data-id"); }; });
   }
@@ -722,7 +722,7 @@ VIEWS.students = async function (el, args) {
     var ls = ((await q(sb.from("leads").select("id,lead_code,name,student_name").eq("status", "Enrollment Confirmed").order("created_at", { ascending: false }).limit(300))).data || []).filter(function (l) { return !have[l.id]; });
     if (!ls.length) { modal({ title: "Convert from inquiry", body: '<p>No inquiries are waiting. Only inquiries with status <b>Enrollment Confirmed</b> can be converted. Change the status in <a href="#leads">Leads</a> first.</p>', ok: false, cancelLabel: "Close" }); return; }
     modal({ title: "Convert from inquiry", okLabel: "Create student",
-      body: F("c-lead", "Confirmed inquiry", "", { type: "select", options: ls.map(function (l) { return [l.id, l.name + (l.student_name ? " — student: " + l.student_name : "") + " (" + l.lead_code + ")"]; }) }) +
+      body: F("c-lead", "Confirmed inquiry", "", { type: "select", options: ls.map(function (l) { return [l.id, l.name + (l.student_name ? " - student: " + l.student_name : "") + " (" + l.lead_code + ")"]; }) }) +
         '<div class="hint">Copies the student name, country, program and the contact as primary guardian. You can edit everything afterwards. The inquiry itself stays unchanged.</div>',
       onOk: async function () { var r = await q(sb.rpc("convert_lead_to_student", { p_lead_id: val("c-lead") })); location.hash = "#students/" + r.data; } });
   };
@@ -779,7 +779,7 @@ async function studentDetail(el, id) {
   }
   function drawN() {
     $("#nt-list").innerHTML = notes.length ? '<ul class="tl">' + notes.map(function (n) { return "<li>" + h(n.body).replace(/\n/g, "<br>") + '<br><span class="muted small">' + h(n.author_email || "staff") + " · " + fmtDT(n.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty" style="padding:8px 0">No notes yet.</div>';
-    $("#ev-list").innerHTML = evs.length ? '<ul class="tl">' + evs.map(function (e) { return "<li>" + (e.event_type === "status_change" ? "Status " + h(e.from_status) + " → " + h(e.to_status) : e.event_type === "created" ? "Created — " + h(e.note || "") : h(e.event_type)) + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty" style="padding:8px 0">No history yet.</div>';
+    $("#ev-list").innerHTML = evs.length ? '<ul class="tl">' + evs.map(function (e) { return "<li>" + (e.event_type === "status_change" ? "Status " + h(e.from_status) + " → " + h(e.to_status) : e.event_type === "created" ? "Created - " + h(e.note || "") : h(e.event_type)) + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty" style="padding:8px 0">No history yet.</div>';
   }
   async function reloadEv() { evs = (await q(sb.from("student_events").select("*").eq("student_id", id).order("created_at", { ascending: false }).limit(50))).data || []; drawN(); }
   drawG(); drawN();
@@ -828,7 +828,7 @@ async function teacherClashes(teacherId, classId, slots) {
   cl = cl.filter(function (c) { return c.id !== classId && !c.deleted_at && (c.status === "Planned" || c.status === "Active"); });
   if (!cl.length) return [];
   var all = (await q(sb.from("class_slots").select("*").limit(5000))).data || [], out = [];
-  cl.forEach(function (c) { all.filter(function (s) { return s.class_id === c.id; }).forEach(function (s) { slots.forEach(function (m) { if (slotsClash(m, s)) out.push(c.name + " — " + WD[s.weekday] + " " + hhmm(s.start_time) + "–" + endTime(s.start_time, s.duration_minutes)); }); }); });
+  cl.forEach(function (c) { all.filter(function (s) { return s.class_id === c.id; }).forEach(function (s) { slots.forEach(function (m) { if (slotsClash(m, s)) out.push(c.name + " - " + WD[s.weekday] + " " + hhmm(s.start_time) + "–" + endTime(s.start_time, s.duration_minutes)); }); }); });
   return out;
 }
 
@@ -844,7 +844,7 @@ VIEWS.teachers = async function (el, args) {
     var r = rows.filter(function (x) { return (TS.archived ? !!x.deleted_at : !x.deleted_at) && (!TS.status || x.status === TS.status) && (!t || (x.full_name + " " + x.teacher_code).toLowerCase().indexOf(t) > -1); });
     $("#t-list").innerHTML = r.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Teacher</th><th>Status</th><th>Contact</th><th>Active classes</th></tr></thead><tbody>' + r.map(function (x) {
       var n = cls.filter(function (c) { return c.teacher_id === x.id && !c.deleted_at && c.status === "Active"; }).length;
-      return '<tr class="click" data-id="' + x.id + '"><td><b>' + h(x.full_name) + '</b><br><span class="muted small">' + h(x.teacher_code) + "</span></td><td>" + pbadge(x.status) + "</td><td>" + h([x.whatsapp, x.email].filter(Boolean).join(" · ") || "—") + "</td><td>" + n + "</td></tr>"; }).join("") + "</tbody></table></div>" :
+      return '<tr class="click" data-id="' + x.id + '"><td><b>' + h(x.full_name) + '</b><br><span class="muted small">' + h(x.teacher_code) + "</span></td><td>" + pbadge(x.status) + "</td><td>" + h([x.whatsapp, x.email].filter(Boolean).join(" · ") || "-") + "</td><td>" + n + "</td></tr>"; }).join("") + "</tbody></table></div>" :
       '<div class="empty">' + (rows.length ? "No teachers match." : "No teachers yet. Add the first one.") + "</div>";
     $$("tr[data-id]", $("#t-list")).forEach(function (tr) { tr.onclick = function () { location.hash = "#teachers/" + tr.getAttribute("data-id"); }; });
   }
@@ -947,7 +947,7 @@ async function classDetail(el, id) {
     $("#ro-n").textContent = "(" + activeN() + (c.capacity ? " / " + c.capacity : "") + ")";
     var cur = roster.filter(function (r) { return !r.left_on; }), past = roster.filter(function (r) { return r.left_on; });
     $("#ro-list").innerHTML = (cur.length ? cur.map(function (r) { var s = sname(r.student_id); return '<div class="rl" style="cursor:default"><span class="t"><a href="#students/' + r.student_id + '"><b>' + h(s.full_name) + "</b></a><small>" + h(s.student_code) + " · joined " + fmtD(r.joined_on) + '</small></span><button class="btn ghost wbtn" data-rm="' + r.id + '">Remove</button></div>'; }).join("") : '<div class="empty">No students in this class.</div>') +
-      (past.length ? '<p class="muted small" style="margin:12px 0 4px">Left this class</p>' + past.map(function (r) { return '<div class="muted small">' + h(sname(r.student_id).full_name) + " — left " + fmtD(r.left_on) + "</div>"; }).join("") : "");
+      (past.length ? '<p class="muted small" style="margin:12px 0 4px">Left this class</p>' + past.map(function (r) { return '<div class="muted small">' + h(sname(r.student_id).full_name) + " - left " + fmtD(r.left_on) + "</div>"; }).join("") : "");
     $$("[data-rm]", $("#ro-list")).forEach(function (b) { b.onclick = async function () { if (!needWrite()) return; if (!await confirmBox("Remove this student from the class? Their record stays; the date they left is kept.", { okLabel: "Remove" })) return; var d = todayISO(); await q(sb.from("class_students").update({ left_on: d }).eq("id", b.getAttribute("data-rm"))); roster.forEach(function (r) { if (r.id === b.getAttribute("data-rm")) r.left_on = d; }); drawR(); }; });
   }
   drawS(); drawR();
@@ -957,7 +957,7 @@ async function classDetail(el, id) {
     if (!d || d > todayISO()) { el2.innerHTML = '<div class="empty">Pick today or an earlier date.</div>'; return; }
     var inClass = roster.filter(function (r) { return r.joined_on <= d && (!r.left_on || r.left_on >= d); });
     var ex = (await q(sb.from("attendance").select("*").eq("class_id", id).eq("session_date", d))).data || []; attRows = {}; ex.forEach(function (a) { attRows[a.student_id] = a; });
-    el2.innerHTML = inClass.length ? inClass.map(function (r) { var cur = attRows[r.student_id] ? attRows[r.student_id].status : ""; return '<div class="rl" style="cursor:default"><span class="t"><b>' + h(sname(r.student_id).full_name) + '</b></span><select data-at="' + r.student_id + '" style="width:auto"><option value="">—</option>' + ATT.map(function (x) { return "<option" + (x === cur ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></div>"; }).join("") : '<div class="empty">No students were in this class on that date.</div>';
+    el2.innerHTML = inClass.length ? inClass.map(function (r) { var cur = attRows[r.student_id] ? attRows[r.student_id].status : ""; return '<div class="rl" style="cursor:default"><span class="t"><b>' + h(sname(r.student_id).full_name) + '</b></span><select data-at="' + r.student_id + '" style="width:auto"><option value="">-</option>' + ATT.map(function (x) { return "<option" + (x === cur ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></div>"; }).join("") : '<div class="empty">No students were in this class on that date.</div>';
   }
   $("#at-d").onchange = drawA; drawA();
   $("#at-all").onclick = function () { $$("[data-at]", $("#at-list")).forEach(function (x) { x.value = "Present"; }); };
@@ -1023,7 +1023,7 @@ async function timetable(el) {
   }
   el.insertAdjacentHTML("beforeend", html + "</div>");
 }
-/* ================= FINANCE (Phase 4) — manual records only ================= */
+/* ================= FINANCE (Phase 4) - manual records only ================= */
 var CURR = ["USD", "GBP", "EUR", "CAD", "AUD", "BDT", "SAR", "AED"], METHODS = ["Cash", "Bank transfer", "Mobile wallet", "Other"], PERIODS = ["Monthly", "Term", "One-time"];
 var FS = { tab: "overview", q: "", status: "" };
 function money(n, c) { try { return new Intl.NumberFormat([], { style: "currency", currency: c }).format(+n || 0); } catch (e) { return (+n || 0).toFixed(2) + " " + c; } }
@@ -1082,7 +1082,7 @@ VIEWS.finance = async function (el, args) {
       if (!needWrite()) return; var act = students.filter(function (s) { return !s.deleted_at && s.status === "Active"; });
       if (!act.length) { modal({ title: "New invoice", body: '<p>There are no active students. Add or activate a student first in <a href="#students">Students</a>.</p>', ok: false, cancelLabel: "Close" }); return; }
       var m = modal({ title: "New invoice", okLabel: "Create invoice", body: F("v-st", "Student", "", { type: "select", options: act.map(function (s) { return [s.id, s.full_name + " (" + s.student_code + ")"]; }) }) +
-        F("v-plan", "Fee plan (optional — fills the fields below)", "", { type: "select", options: [["", "No plan"]].concat(plans.filter(function (p) { return p.active; }).map(function (p) { return [p.id, p.name + " — " + money(p.amount, p.currency)]; })) }) + F("v-desc", "Description", "", { max: 200 }) +
+        F("v-plan", "Fee plan (optional - fills the fields below)", "", { type: "select", options: [["", "No plan"]].concat(plans.filter(function (p) { return p.active; }).map(function (p) { return [p.id, p.name + " - " + money(p.amount, p.currency)]; })) }) + F("v-desc", "Description", "", { max: 200 }) +
         '<div class="g2">' + F("v-amt", "Amount", "", { type: "number", attrs: 'min="0.01" step="0.01"', req: 1 }) + F("v-cur", "Currency", "USD", { type: "select", options: CURR }) + "</div>" + F("v-due", "Due date", today, { type: "date", req: 1 }),
         onOk: async function () {
           var a = r2(val("v-amt")), due = val("v-due"); mark("v-amt", null, !(a > 0)); mark("v-due", null, !due); if (!(a > 0) || !due) { toast("Enter an amount above zero and a due date.", true); return false; }
@@ -1166,8 +1166,8 @@ VIEWS.reminders = async function (el) {
   var noC = studs.filter(function (s) { return !inCls[s.id]; });
   var R = [
     ["New inquiries waiting more than 2 days", waiting.map(function (l) { return [l.name + " (" + l.lead_code + ")", "#leads/" + l.id]; }), "#leads"],
-    ["Follow-ups that are overdue", over.map(function (l) { return [l.name + " — due " + fmtD(l.follow_up_date), "#leads/" + l.id]; }), "#leads"],
-    ["Unhandled contact messages", msgs.map(function (m) { return [m.name + " — " + fmtD(m.created_at), "#leads/messages"]; }), "#leads/messages"],
+    ["Follow-ups that are overdue", over.map(function (l) { return [l.name + " - due " + fmtD(l.follow_up_date), "#leads/" + l.id]; }), "#leads"],
+    ["Unhandled contact messages", msgs.map(function (m) { return [m.name + " - " + fmtD(m.created_at), "#leads/messages"]; }), "#leads/messages"],
     ["Active classes with no teacher", noT.map(function (c) { return [c.name, "#classes/" + c.id]; }), "#classes"],
     ["Active classes with no weekly time", noS.map(function (c) { return [c.name, "#classes/" + c.id]; }), "#classes"],
     ["Active students not in any class", noC.map(function (s) { return [s.full_name + " (" + s.student_code + ")", "#students/" + s.id]; }), "#students"]
@@ -1177,7 +1177,7 @@ VIEWS.reminders = async function (el) {
     var pays = (await q(sb.from("payments").select("invoice_id,amount,voided_at").limit(10000))).data || [], paid = {};
     pays.forEach(function (p) { if (!p.voided_at) paid[p.invoice_id] = (paid[p.invoice_id] || 0) + +p.amount; });
     var od = invs.filter(function (i) { return !i.voided_at && (paid[i.id] || 0) < i.amount - 0.001; });
-    R.push(["Overdue invoices", od.map(function (i) { return [i.invoice_no + " — due " + fmtD(i.due_date), "#finance/invoices"]; }), "#finance/invoices"]);
+    R.push(["Overdue invoices", od.map(function (i) { return [i.invoice_no + " - due " + fmtD(i.due_date), "#finance/invoices"]; }), "#finance/invoices"]);
   }
   var total = R.reduce(function (a, r) { return a + r[1].length; }, 0);
   $("#rm").innerHTML = (total ? "" : '<div class="alert ok">Nothing needs attention right now.</div>') + R.map(function (r) {
@@ -1217,14 +1217,14 @@ VIEWS.reports = async function (el) {
 
 VIEWS.users = async function (el) {
   if (role !== "owner") { el.innerHTML = pageHead("Users & Access", "") + '<div class="alert warn">Only the owner can manage users.</div>'; return; }
-  var RL = [["owner", "Owner — everything"], ["administrator", "Administrator — everything except managing users"], ["assessor", "Assessor — edit content, leads, students, classes; no finance"], ["teacher", "Teacher — read only (for now)"], ["readonly", "Read-only"]];
+  var RL = [["owner", "Owner - everything"], ["administrator", "Administrator: everything except managing users"], ["assessor", "Assessor - edit content, leads, students, classes; no finance"], ["teacher", "Teacher: read only (for now)"], ["readonly", "Read-only"]];
   el.innerHTML = pageHead("Users & Access", "Who can sign in to this admin panel and what they can do.", '<button class="btn" id="u-add">+ Grant access</button>') +
     '<div class="alert warn">A person must first have a login in Supabase → Authentication → Users. This page only gives that login a role. Passwords are never handled here.</div><div class="panel"><div id="u-list" class="muted">Loading…</div></div>';
   async function load() {
     var r = (await q(sb.rpc("list_admins"))).data || [];
     $("#u-list").innerHTML = '<div class="tw"><table class="tbl"><thead><tr><th>User</th><th>Role</th><th></th></tr></thead><tbody>' + r.map(function (u) { var self = u.user_id === me.id;
       return "<tr><td><b>" + h(u.email) + "</b>" + (self ? ' <span class="badge b-published">you</span>' : "") + "</td><td>" + (self ? h(u.role) : '<select data-ur="' + u.user_id + '" style="width:auto">' + RL.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === u.role ? " selected" : "") + ">" + h(o[0]) + "</option>"; }).join("") + "</select>") + "</td><td>" + (self ? "" : '<button class="btn ghost sm danger" data-urm="' + u.user_id + '" data-em="' + h(u.email) + '">Remove access</button>') + "</td></tr>"; }).join("") + "</tbody></table></div>" +
-      '<ul class="muted small" style="margin-top:12px">' + RL.map(function (o) { return "<li><b>" + o[0] + "</b>: " + h(o[1].split("— ")[1]) + "</li>"; }).join("") + "</ul>";
+      '<ul class="muted small" style="margin-top:12px">' + RL.map(function (o) { return "<li><b>" + o[0] + "</b>: " + h(o[1].split(": ")[1]) + "</li>"; }).join("") + "</ul>";
     $$("[data-ur]", $("#u-list")).forEach(function (s) { s.onchange = async function () { try { await q(sb.rpc("set_admin_role", { p_user_id: s.getAttribute("data-ur"), p_role: s.value })); toast("Role updated."); } catch (e) { fail(e); load(); } }; });
     $$("[data-urm]", $("#u-list")).forEach(function (b) { b.onclick = async function () { if (!await confirmBox("Remove admin access for <b>" + h(b.getAttribute("data-em")) + "</b>? Their login stays in Supabase but they can no longer open this panel.", { danger: true, okLabel: "Remove access" })) return; try { await q(sb.rpc("remove_admin", { p_user_id: b.getAttribute("data-urm") })); toast("Access removed."); load(); } catch (e) { fail(e); } }; });
   }
@@ -1241,9 +1241,9 @@ VIEWS.activity = async function (el) {
   var studs = (await q(sb.from("students").select("id,full_name,student_code").limit(3000))).data || [];
   var b = (await q(sb.from("student_events").select("*").order("created_at", { ascending: false }).limit(60))).data || [];
   var rows = a.map(function (e) { return { t: e.created_at, who: e.leads ? e.leads.name + " (" + e.leads.lead_code + ")" : "Inquiry", link: e.leads ? "#leads/" + e.leads.id : "#leads", txt: e.event_type === "created" ? "Inquiry received" : "Status " + e.from_status + " → " + e.to_status, k: "Inquiry" }; })
-    .concat(b.map(function (e) { var s = studs.filter(function (x) { return x.id === e.student_id; })[0]; return { t: e.created_at, who: s ? s.full_name + " (" + s.student_code + ")" : "Student", link: "#students/" + e.student_id, txt: e.event_type === "status_change" ? "Status " + e.from_status + " → " + e.to_status : e.event_type === "created" ? "Student created" + (e.note ? " — " + e.note : "") : "Student " + e.event_type, k: "Student" }; }))
+    .concat(b.map(function (e) { var s = studs.filter(function (x) { return x.id === e.student_id; })[0]; return { t: e.created_at, who: s ? s.full_name + " (" + s.student_code + ")" : "Student", link: "#students/" + e.student_id, txt: e.event_type === "status_change" ? "Status " + e.from_status + " → " + e.to_status : e.event_type === "created" ? "Student created" + (e.note ? " - " + e.note : "") : "Student " + e.event_type, k: "Student" }; }))
     .sort(function (x, y) { return x.t < y.t ? 1 : -1; }).slice(0, 80);
-  $("#ac").innerHTML = rows.length ? '<ul class="tl">' + rows.map(function (r) { return '<li><span class="badge b-draft">' + r.k + '</span> <a href="' + r.link + '"><b>' + h(r.who) + "</b></a> — " + h(r.txt) + '<br><span class="muted small">' + fmtDT(r.t) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty">No activity yet.</div>';
+  $("#ac").innerHTML = rows.length ? '<ul class="tl">' + rows.map(function (r) { return '<li><span class="badge b-draft">' + r.k + '</span> <a href="' + r.link + '"><b>' + h(r.who) + "</b></a> - " + h(r.txt) + '<br><span class="muted small">' + fmtDT(r.t) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty">No activity yet.</div>';
 };
 /* ================= WEBSITE CONTENT (page editor + FAQ) ================= */
 function deep(o) { return JSON.parse(JSON.stringify(o)); }
@@ -1261,7 +1261,7 @@ VIEWS.content = async function (el, args) {
     '<div class="tabs"><button data-t="pages" class="' + (tab === "pages" ? "on" : "") + '">Pages</button><button data-t="faq" class="' + (tab === "faq" ? "on" : "") + '">FAQ</button></div><div id="ct"></div>';
   $$(".tabs button", el).forEach(function (b) { b.onclick = function () { location.hash = "#content/" + (b.getAttribute("data-t") === "faq" ? "faq" : ""); }; });
   if (tab === "faq") return faqTab($("#ct"));
-  $("#ct").innerHTML = '<div class="card"><b>Pages now live in the Website Builder</b><p class="muted" style="margin:6px 0 12px">Create new pages, edit sections, pick images, preview, save drafts and publish — all in one place. Your existing pages (Home, About, Privacy, Terms) are there too.</p><a class="btn" href="#builder">Open Website Builder</a></div>';
+  $("#ct").innerHTML = '<div class="card"><b>Pages now live in the Website Builder</b><p class="muted" style="margin:6px 0 12px">Create new pages, edit sections, pick images, preview, save drafts and publish, all in one place. Your existing pages (Home, About, Privacy, Terms) are there too.</p><a class="btn" href="#builder">Open Website Builder</a></div>';
 };
 
 /* ---------- FAQ ---------- */
@@ -1531,8 +1531,8 @@ async function pageEditor(el, slug) {
     var T = S.TYPES[x.type], out = "", has = function (f) { return T.fields.indexOf(f) > -1; };
     if (T.note) out += '<div class="alert info" style="margin:10px 0 0">' + h(T.note) + "</div>";
     if (has("eyebrow")) out += fld("eyebrow", "Small label above heading", x.eyebrow, { max: 80 });
-    if (has("heading")) out += fld("heading", "Heading", x.heading, { max: 200, hint: x.type === "hero" || x.type === "page_head" ? "Tip: wrap words in *stars* to colour them, e.g. Made *Simple*." : "" });
-    if (has("body")) out += fld("body", x.type === "rich_text" ? "Text" : "Body text", x.body, { type: "textarea", rows: x.type === "rich_text" ? 10 : 4, hint: "Blank line = new paragraph · “- ” bullets · “## ” sub-heading · **bold** · [link text](https://…)" });
+    if (has("heading")) out += fld("heading", "Heading", x.heading, { max: 200, hint: x.type === "hero" || x.type === "page_head" ? "Tip: wrap words in double square brackets to colour them, e.g. Made [[Simple]]." : "" });
+    if (has("body")) out += fld("body", x.type === "rich_text" ? "Text" : "Body text", x.body, { type: "textarea", rows: x.type === "rich_text" ? 10 : 4, hint: "Blank line = new paragraph · “- ” bullets · “## ” sub-heading · [link text](https://…)" });
     if (has("image")) out += '<label class="l">Image</label>' + thumb(x.image) + '<div class="row"><input type="text" data-f="image" value="' + h(x.image || "") + '" placeholder="Choose or paste an image URL" class="grow" style="flex:1"><button type="button" class="btn sm ghost" data-pick="image">' + (x.image ? "Replace" : "Choose / upload") + "</button>" + (x.image ? '<button type="button" class="btn sm ghost" data-clear="image">Remove</button>' : "") + '</div>' + fld("image_alt", "Image description (alt text)", x.image_alt, { max: 200, hint: "Describe the picture for screen readers." });
     if (has("layout")) out += fld("layout", "Layout", x.layout || "split", { type: "select", options: [["split", "Text + image"], ["center", "Centered text only"]] });
     if (has("reverse")) out += '<label class="chk" style="margin-top:12px"><input type="checkbox" data-f="reverse"' + (x.reverse ? " checked" : "") + "> Show image on the left</label>";
@@ -1550,6 +1550,7 @@ async function pageEditor(el, slug) {
           }).join("") + "</div>";
       }).join("") + '<button class="btn sm ghost" data-iadd="1">+ Add item</button></div>';
     }
+    out += fld("anim", "Animation when this section appears", x.anim || "up", { type: "select", options: [["up", "Rise up (default)"], ["fade", "Fade in"], ["zoom", "Zoom in softly"], ["left", "Slide in from the left"], ["right", "Slide in from the right"], ["none", "No animation"]] });
     out += '<div class="g2">' + fld("align", "Text alignment", x.align || "left", { type: "select", options: [["left", "Left"], ["center", "Centered"]] }) + fld("bg", "Background", x.bg || "", { type: "select", options: BG_OPTS }) + "</div>";
     return out;
   }
@@ -1566,7 +1567,7 @@ async function pageEditor(el, slug) {
   function renderList() { $("#sl").innerHTML = listHtml(); }
 
   el.classList.add("fill");
-  el.innerHTML = '<div class="page-h"><div><a href="#builder" class="small">← Website Builder / Pages</a><h1>Edit page: ' + h(row.title) + '</h1><div class="row"><span id="ed-status">' + badge(row.status) + '</span><span id="ed-dirty" class="badge b-draft hidden">unsaved changes</span><span id="ed-live"></span>' + (usingDefaults ? '<span class="badge b-New">built-in layout loaded — save to keep</span>' : "") + "</div></div>" +
+  el.innerHTML = '<div class="page-h"><div><a href="#builder" class="small">← Website Builder / Pages</a><h1>Edit page: ' + h(row.title) + '</h1><div class="row"><span id="ed-status">' + badge(row.status) + '</span><span id="ed-dirty" class="badge b-draft hidden">unsaved changes</span><span id="ed-live"></span>' + (usingDefaults ? '<span class="badge b-New">built-in layout loaded, save to keep</span>' : "") + "</div></div>" +
     '<div class="row"><button class="btn ghost" id="b-prev" title="Open the draft in a new tab">Preview</button><button class="btn ghost wbtn" id="b-save">Save draft</button><button class="btn wbtn" id="b-pub">Publish</button><button class="btn ghost wbtn" id="b-more">More…</button></div></div>' +
     '<div class="ed"><div><div class="card"><div class="row sb"><b>Page settings</b><button class="ico" id="seo-tog">Edit settings</button></div><div id="seo" class="hidden"></div></div>' +
     '<div style="margin-top:14px"><div id="sl"></div></div><div class="card wbtn row" style="margin-top:10px"><select id="add-type" style="flex:1;min-width:160px">' + Object.keys(S.TYPES).map(function (k) { return '<option value="' + k + '">' + h(S.TYPES[k].label) + "</option>"; }).join("") + '</select><button class="btn" id="add-sec">+ Add section</button></div></div>' +
@@ -1672,7 +1673,7 @@ async function pageEditor(el, slug) {
       draft_sections: draft, published_sections: draft, has_unpublished: false, status: "published", published_at: now, updated_at: now };
     if (feat) { pub.noindex = !!meta.noindex; pub.draft_meta = null; if (!isSys) { pub.show_in_nav = !!meta.show_in_nav; pub.nav_label = (meta.nav_label || "").trim() || null; pub.nav_order = meta.nav_order; } }
     var r = await q(sb.from("pages").update(pub).eq("slug", slug).select().single());
-    row = r.data; setDirty(false); toast("Published ✓" + (slug === "home" ? "" : " — live at /" + slug)); $("#ed-status").innerHTML = badge(row.status); liveLink();
+    row = r.data; setDirty(false); toast("Published ✓" + (slug === "home" ? "" : ". Live at /" + slug)); $("#ed-status").innerHTML = badge(row.status); liveLink();
   }
   $("#b-save").onclick = function () { saveDraft().catch(fail); };
   $("#b-pub").onclick = function () { publish().catch(fail); };
@@ -1689,7 +1690,7 @@ async function pageEditor(el, slug) {
     var x5 = $("[data-x5]", m.el); if (x5) x5.onclick = function () { m.close(); if (!needWrite()) return;
       modal({ title: "Save as template", body: F("tp-n", "Template name", meta.title, { req: true, max: 80 }) + F("tp-d", "Description (optional)", "", { max: 200 }) + '<p class="hint">Saves the current sections (text and image links, not image files). Use it when you create a page.</p>', okLabel: "Save template",
         onOk: async function (mm) { var n = val("tp-n"); if (!n) { toast("Enter a template name.", true); mark("tp-n", mm.el, true); return false; }
-          await q(sb.from("page_templates").insert({ name: n, description: val("tp-d"), sections: freshIds(draft) })); toast("Template saved — pick it under Create page."); } }); };
+          await q(sb.from("page_templates").insert({ name: n, description: val("tp-d"), sections: freshIds(draft) })); toast("Template saved - pick it under Create page."); } }); };
     var x4 = $("[data-x4]", m.el); if (x4) x4.onclick = async function () { m.close(); if (!needWrite()) return; var on = row.status === "published";
       if (!(await confirmBox(on ? "Hide this page from the live website?" : "Make this page visible on the live website?", { danger: on, okLabel: on ? "Unpublish" : "Publish" }))) return;
       try { var r = await q(sb.from("pages").update({ status: on ? "draft" : "published", published_at: on ? row.published_at : new Date().toISOString() }).eq("slug", slug).select().single()); row = r.data; $("#ed-status").innerHTML = badge(row.status); toast(on ? "Page unpublished" : "Page published"); } catch (e) { fail(e); } };
@@ -1721,7 +1722,7 @@ async function programEditor(el, id) {
   var dirty = false; guard = function () { return dirty; };
   el.innerHTML = '<a href="#programs" class="small">← All programs</a>' + pageHead(id ? h(p.title) : "New program", id ? '<span class="muted">Public URL: /programs/' + h(p.slug) + "</span>" : "", id ? '<a class="btn ghost sm" target="_blank" href="/programs/' + h(p.slug) + '">View on website ↗</a>' : "") +
     '<div class="card"><h2>Public details</h2><p class="muted small" style="margin-top:0">What visitors see on the Programs page.</p><div id="pf">' +
-    F("pe-title", "Program title", p.title, { req: true, max: 120, hint: id ? "Official name — change only if the academy renames the program." : "" }) +
+    F("pe-title", "Program title", p.title, { req: true, max: 120, hint: id ? "Official name. Change only if the academy renames the program." : "" }) +
     (id ? "" : F("pe-slug", "URL name (slug)", p.slug, { max: 60, hint: "Letters, numbers and dashes. Auto-filled from the title. Cannot be changed later." })) +
     F("pe-short", "Short description", p.short_description, { max: 160, hint: "One line shown on cards." }) +
     F("pe-desc", "Description", p.description, { type: "textarea", rows: 5, hint: "Blank line = new paragraph." }) +
@@ -1764,7 +1765,7 @@ async function programEditor(el, id) {
     }).join("") + "</tbody></table></div>" : '<div class="empty">No levels yet.</div>';
     $$("[data-lm]", $("#lv")).forEach(function (b) { b.onclick = async function () { var a = b.getAttribute("data-lm").split(":"); try { await moveItem("program_levels", levels, +a[0], +a[1]); drawLevels(); } catch (e) { fail(e); } }; });
     $$("[data-le]", $("#lv")).forEach(function (b) { b.onclick = function () { editLevel(levels[+b.getAttribute("data-le")]); }; });
-    $$("[data-ld]", $("#lv")).forEach(function (b) { b.onclick = async function () { var l = levels[+b.getAttribute("data-ld")]; if (!needWrite()) return; if (await confirmBox("Delete <b>Level " + l.level_number + " — " + h(l.title) + "</b> and its curriculum modules?", { danger: true, okLabel: "Delete level" })) { try { await q(sb.from("program_levels").delete().eq("id", l.id)); levels.splice(levels.indexOf(l), 1); drawLevels(); toast("Level deleted"); } catch (e) { fail(e); } } }; });
+    $$("[data-ld]", $("#lv")).forEach(function (b) { b.onclick = async function () { var l = levels[+b.getAttribute("data-ld")]; if (!needWrite()) return; if (await confirmBox("Delete <b>Level " + l.level_number + ": " + h(l.title) + "</b> and its curriculum modules?", { danger: true, okLabel: "Delete level" })) { try { await q(sb.from("program_levels").delete().eq("id", l.id)); levels.splice(levels.indexOf(l), 1); drawLevels(); toast("Level deleted"); } catch (e) { fail(e); } } }; });
   }
   function editLevel(l) {
     if (!needWrite()) return;
@@ -1788,11 +1789,11 @@ async function modulesView(el, pid, lid) {
   var lvl = (await q(sb.from("program_levels").select("*, programs(title)").eq("id", lid).single())).data;
   var mods = (await q(sb.from("curriculum_modules").select("*").eq("level_id", lid).order("sort_order"))).data;
   function draw() {
-    el.innerHTML = '<a href="#programs/' + pid + '" class="small">← Back to ' + h(lvl.programs.title) + "</a>" + pageHead("Curriculum — Level " + lvl.level_number + ": " + h(lvl.title), "Private academic content. It is never shown on the public website.", '<button class="btn wbtn" id="m-add">+ Add module</button>') +
+    el.innerHTML = '<a href="#programs/' + pid + '" class="small">← Back to ' + h(lvl.programs.title) + "</a>" + pageHead("Curriculum - Level " + lvl.level_number + ": " + h(lvl.title), "Private academic content. It is never shown on the public website.", '<button class="btn wbtn" id="m-add">+ Add module</button>') +
       (mods.length ? mods.map(function (m, i) {
         var ls = m.lessons || [];
         return '<div class="card"><div class="row sb"><div><b>' + (i + 1) + ". " + h(m.title) + "</b> " + badge(m.status) + '<div class="muted small">' + h(m.description) + '</div></div><div class="row nowrap"><button class="ico wbtn" data-mm="' + i + ':-1"' + (i === 0 ? " disabled" : "") + '>↑</button><button class="ico wbtn" data-mm="' + i + ':1"' + (i === mods.length - 1 ? " disabled" : "") + '>↓</button><button class="btn sm ghost wbtn" data-me="' + i + '">Edit</button><button class="btn sm danger wbtn" data-md="' + i + '">Delete</button></div></div>' +
-          (ls.length ? '<ol style="margin:10px 0 0;padding-left:20px">' + ls.map(function (x) { return "<li><b>" + h(x.title) + "</b>" + (x.description ? " — " + h(x.description) : "") + "</li>"; }).join("") + "</ol>" : "") +
+          (ls.length ? '<ol style="margin:10px 0 0;padding-left:20px">' + ls.map(function (x) { return "<li><b>" + h(x.title) + "</b>" + (x.description ? " - " + h(x.description) : "") + "</li>"; }).join("") + "</ol>" : "") +
           (m.assessment_criteria ? '<p class="small" style="margin:10px 0 0"><b>Assessment criteria:</b> ' + h(m.assessment_criteria) + "</p>" : "") + "</div>";
       }).join("") : '<div class="empty">No curriculum modules yet. You can launch the website without them and add them later.</div>');
     $("#m-add").onclick = function () { edit(null); };
@@ -1852,7 +1853,7 @@ VIEWS.leads = async function (el, args) {
     if (LS.page > 0 && !rows.length) { LS.page = 0; return load(); }
     $("#l-list").innerHTML = rows.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Lead</th><th>Contact</th><th>Program</th><th>Status</th><th>Source</th><th>Created</th><th>Follow-up</th></tr></thead><tbody>' + rows.map(function (l) {
       var overdue = l.follow_up_date && l.follow_up_date <= todayISO() && ["Enrollment Confirmed", "Not Proceeding"].indexOf(l.status) < 0;
-      return '<tr class="click" data-id="' + l.id + '"><td><b>' + h(l.name) + '</b><div class="muted small">' + h(l.lead_code) + (l.student_name ? " · student: " + h(l.student_name) : "") + "</div></td><td class=\"small\">" + h(l.whatsapp || "") + (l.whatsapp && l.email ? "<br>" : "") + h(l.email || "") + "</td><td class=\"small\">" + h(l.program_interest || "—") + "</td><td>" + badge(l.status) + '</td><td class="small">' + h(l.utm_campaign || l.source || "—") + '</td><td class="small nowrap">' + fmtDT(l.created_at) + '</td><td class="small nowrap"' + (overdue ? ' style="color:var(--bad);font-weight:600"' : "") + ">" + (l.follow_up_date ? fmtD(l.follow_up_date) : "—") + "</td></tr>";
+      return '<tr class="click" data-id="' + l.id + '"><td><b>' + h(l.name) + '</b><div class="muted small">' + h(l.lead_code) + (l.student_name ? " · student: " + h(l.student_name) : "") + "</div></td><td class=\"small\">" + h(l.whatsapp || "") + (l.whatsapp && l.email ? "<br>" : "") + h(l.email || "") + "</td><td class=\"small\">" + h(l.program_interest || "-") + "</td><td>" + badge(l.status) + '</td><td class="small">' + h(l.utm_campaign || l.source || "-") + '</td><td class="small nowrap">' + fmtDT(l.created_at) + '</td><td class="small nowrap"' + (overdue ? ' style="color:var(--bad);font-weight:600"' : "") + ">" + (l.follow_up_date ? fmtD(l.follow_up_date) : "-") + "</td></tr>";
     }).join("") + '</tbody></table></div><div class="pager"><span class="muted small">' + total + " lead" + (total === 1 ? "" : "s") + " · page " + (LS.page + 1) + " of " + pages + '</span><span class="row"><button class="btn sm ghost" id="pg-p"' + (LS.page === 0 ? " disabled" : "") + '>← Previous</button><button class="btn sm ghost" id="pg-n"' + (LS.page + 1 >= pages ? " disabled" : "") + ">Next →</button></span></div>"
       : '<div class="empty">' + (LS.q || LS.status ? "No leads match these filters." : "No inquiries yet. They will appear here as soon as someone submits the free assessment form.") + "</div>";
     $$("tr[data-id]", $("#l-list")).forEach(function (r) { r.onclick = function () { openLead(r.getAttribute("data-id"), load); }; });
@@ -1885,12 +1886,12 @@ async function openLead(id, onChange) {
     var html = '<div class="row sb"><div><h2 style="margin:0">' + h(l.name) + '</h2><div class="muted small">' + h(l.lead_code) + " · received " + fmtDT(l.created_at) + '</div></div><button class="ico" id="d-x">✕</button></div>' +
       '<div class="row" style="margin:14px 0">' + (wa ? '<a class="btn sm" target="_blank" rel="noopener" href="' + h(wa) + '">WhatsApp</a>' : "") + (l.email ? '<a class="btn sm ghost" href="mailto:' + h(l.email) + '">Email</a>' : "") + "</div>" +
       '<label class="l">Status</label><select id="d-st" class="wbtn">' + STATUSES.map(function (s) { return "<option" + (s === l.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select><span class="ro-only">' + badge(l.status) + "</span>" +
-      '<dl class="kv" style="margin-top:16px"><dt>Student</dt><dd>' + h(l.student_name || "—") + "</dd><dt>WhatsApp</dt><dd>" + h(l.whatsapp || "—") + "</dd><dt>Email</dt><dd>" + h(l.email || "—") + "</dd><dt>Age group</dt><dd>" + h(l.age_group || "—") + "</dd><dt>Country / zone</dt><dd>" + h(l.country || "—") + "</dd><dt>Interested in</dt><dd>" + h(l.program_interest || "—") + "</dd><dt>Reading level (self-reported)</dt><dd>" + h(l.reading_level || "—") + "</dd><dt>Goal</dt><dd>" + h(l.goal || "—") + "</dd><dt>Preferred contact</dt><dd>" + h(l.contact_method || "—") + "</dd><dt>Preferred time</dt><dd>" + h(l.preferred_time || "—") + "</dd><dt>Consent to contact</dt><dd>" + (l.consent ? "Yes" : "No") + "</dd><dt>Last contacted</dt><dd>" + fmtDT(l.last_contacted_at) + "</dd></dl>" +
+      '<dl class="kv" style="margin-top:16px"><dt>Student</dt><dd>' + h(l.student_name || "-") + "</dd><dt>WhatsApp</dt><dd>" + h(l.whatsapp || "-") + "</dd><dt>Email</dt><dd>" + h(l.email || "-") + "</dd><dt>Age group</dt><dd>" + h(l.age_group || "-") + "</dd><dt>Country / zone</dt><dd>" + h(l.country || "-") + "</dd><dt>Interested in</dt><dd>" + h(l.program_interest || "-") + "</dd><dt>Reading level (self-reported)</dt><dd>" + h(l.reading_level || "-") + "</dd><dt>Goal</dt><dd>" + h(l.goal || "-") + "</dd><dt>Preferred contact</dt><dd>" + h(l.contact_method || "-") + "</dd><dt>Preferred time</dt><dd>" + h(l.preferred_time || "-") + "</dd><dt>Consent to contact</dt><dd>" + (l.consent ? "Yes" : "No") + "</dd><dt>Last contacted</dt><dd>" + fmtDT(l.last_contacted_at) + "</dd></dl>" +
       '<h3 style="margin-top:20px">Follow-up</h3><div class="row"><input id="d-fu" type="date" value="' + h(l.follow_up_date || "") + '" style="width:auto"><button class="btn sm wbtn" id="d-fu-s">Save date</button>' + (l.follow_up_date ? '<button class="btn sm ghost wbtn" id="d-fu-c">Clear</button>' : "") + "</div>" +
       '<div class="row" style="margin-top:10px"><span class="muted small">Assigned to: ' + (l.assigned_to ? (l.assigned_to === me.id ? "<b>me</b>" : "another staff member") : "nobody") + '</span>' + (l.assigned_to === me.id ? '<button class="btn sm ghost wbtn" id="d-un">Unassign</button>' : '<button class="btn sm ghost wbtn" id="d-as">Assign to me</button>') + "</div>" +
       '<h3 style="margin-top:20px">Internal notes <span class="muted small">(private)</span></h3><pre style="white-space:pre-wrap;font:inherit;background:#FAF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;margin:0 0 8px;max-height:220px;overflow:auto">' + h(l.internal_notes || "No notes yet.") + '</pre><div class="row wbtn"><input id="d-note" type="text" placeholder="Add a note…" style="flex:1" maxlength="1000"><button class="btn sm" id="d-note-s">Add note</button></div>' +
       '<h3 style="margin-top:20px">Assessment &amp; enrollment</h3><div class="stack small"><div>' + (as.length ? as.length + " assessment record(s): " + as.map(function (a) { return '<a href="#assessments/' + a.id + '">' + fmtD(a.assessed_on) + "</a>"; }).join(", ") : "No assessment recorded yet.") + '</div><div>' + (en.length ? en.map(function (e) { return '<a href="#enrollments/' + e.id + '">Enrollment</a> ' + badge(e.status); }).join(" ") : "No enrollment record yet.") + '</div><div class="row wbtn"><a class="btn sm ghost" href="#assessments/new/' + id + '">+ Assessment record</a><a class="btn sm ghost" href="#enrollments/new/' + id + '">+ Enrollment record</a></div></div>' +
-      '<h3 style="margin-top:20px">Where they came from</h3><dl class="kv"><dt>Source</dt><dd>' + h(l.source || "—") + "</dd><dt>Campaign</dt><dd>" + h(l.utm_campaign || "—") + "</dd><dt>UTM source / medium</dt><dd>" + h((l.utm_source || "—") + " / " + (l.utm_medium || "—")) + "</dd><dt>UTM content</dt><dd>" + h(l.utm_content || "—") + "</dd><dt>Landing page</dt><dd>" + h(l.landing_page || "—") + "</dd></dl>" +
+      '<h3 style="margin-top:20px">Where they came from</h3><dl class="kv"><dt>Source</dt><dd>' + h(l.source || "-") + "</dd><dt>Campaign</dt><dd>" + h(l.utm_campaign || "-") + "</dd><dt>UTM source / medium</dt><dd>" + h((l.utm_source || "-") + " / " + (l.utm_medium || "-")) + "</dd><dt>UTM content</dt><dd>" + h(l.utm_content || "-") + "</dd><dt>Landing page</dt><dd>" + h(l.landing_page || "-") + "</dd></dl>" +
       '<h3 style="margin-top:20px">History</h3><ul class="tl">' + ev.map(function (e) { return "<li>" + (e.event_type === "created" ? "Inquiry received" : "Status: " + h(e.from_status) + " → <b>" + h(e.to_status) + "</b>") + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" +
       (canAdmin ? '<div style="margin-top:24px;border-top:1px solid var(--bd);padding-top:16px"><button class="btn danger sm" id="d-del">Delete this lead (data deletion request)…</button></div>' : "");
     if (!d) d = drawer(html, function () { if (location.hash.indexOf("#leads/") === 0 && location.hash !== "#leads/messages") history.replaceState(null, "", "#leads"); }); else d.el.innerHTML = html;
@@ -1950,7 +1951,7 @@ function leadPickerInit(root, pre, selectedId) {
   async function find() {
     var t = s.value.replace(/[%,()*\\"']/g, " ").trim(), qy = sb.from("leads").select("id,lead_code,name,student_name,status").order("created_at", { ascending: false }).limit(15);
     if (t) qy = qy.or(["name", "student_name", "lead_code", "email", "whatsapp"].map(function (c) { return c + ".ilike.%" + t + "%"; }).join(","));
-    var r = await qy; sel.innerHTML = (r.data || []).map(function (l) { return '<option value="' + l.id + '">' + h(l.lead_code + " — " + l.name + (l.student_name ? " (" + l.student_name + ")" : "") + " · " + l.status) + "</option>"; }).join("") || "<option disabled>No matching leads</option>";
+    var r = await qy; sel.innerHTML = (r.data || []).map(function (l) { return '<option value="' + l.id + '">' + h(l.lead_code + " - " + l.name + (l.student_name ? " (" + l.student_name + ")" : "") + " · " + l.status) + "</option>"; }).join("") || "<option disabled>No matching leads</option>";
   }
   s.oninput = debounce(find, 250); find();
 }
@@ -1959,14 +1960,14 @@ async function oneLead(id) { return (await q(sb.from("leads").select("id,lead_co
 /* ---------------- ASSESSMENTS ---------------- */
 VIEWS.assessments = async function (el, args) {
   var levelsRaw = (await q(sb.from("program_levels").select("level_number,title,programs(title,sort_order)").order("sort_order"))).data;
-  var levelOpts = levelsRaw.sort(function (a, b) { return a.programs.sort_order - b.programs.sort_order || a.level_number - b.level_number; }).map(function (l) { return l.programs.title + " — Level " + l.level_number + ": " + l.title; });
+  var levelOpts = levelsRaw.sort(function (a, b) { return a.programs.sort_order - b.programs.sort_order || a.level_number - b.level_number; }).map(function (l) { return l.programs.title + " - Level " + l.level_number + ": " + l.title; });
   var rowsRes = await q(sb.from("assessments").select("*, leads(id,lead_code,name,student_name,status)", { count: "exact" }).order("assessed_on", { ascending: false }).order("created_at", { ascending: false }).range(AP.page * AP.size, AP.page * AP.size + AP.size - 1));
   var rows = rowsRes.data, total = rowsRes.count || 0, pages = Math.max(1, Math.ceil(total / AP.size));
 
   el.innerHTML = pageHead("Assessments", "The assessor's private reading evaluation. It is separate from the website form the parent filled in.", '<button class="btn wbtn" id="a-new">+ New assessment</button>') +
     (rows.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Date</th><th>Learner</th><th>Skills recorded</th><th>Recommended start</th><th></th></tr></thead><tbody>' + rows.map(function (a) {
       var sk = a.skills || {};
-      return '<tr class="click" data-id="' + a.id + '"><td class="nowrap">' + fmtD(a.assessed_on) + "</td><td><b>" + h(a.leads ? a.leads.name : "—") + '</b><div class="muted small">' + h(a.leads ? a.leads.lead_code : "") + (a.leads && a.leads.student_name ? " · " + h(a.leads.student_name) : "") + "</div></td><td>" + (Object.keys(sk).filter(function (k) { return sk[k]; }).map(function (k) { return badge(sk[k]).replace(">" + h(sk[k]) + "<", ' title="' + h((SKILLS.filter(function (s) { return s[0] === k; })[0] || [0, k])[1]) + '">' + h((SKILLS.filter(function (s) { return s[0] === k; })[0] || [0, k])[1].split(" ")[0]) + ": " + h(sk[k]) + "<"); }).join(" ") || '<span class="muted">—</span>') + '</td><td class="small">' + h(a.recommended_level || "—") + '</td><td class="right"><button class="btn sm ghost">Open</button></td></tr>';
+      return '<tr class="click" data-id="' + a.id + '"><td class="nowrap">' + fmtD(a.assessed_on) + "</td><td><b>" + h(a.leads ? a.leads.name : "-") + '</b><div class="muted small">' + h(a.leads ? a.leads.lead_code : "") + (a.leads && a.leads.student_name ? " · " + h(a.leads.student_name) : "") + "</div></td><td>" + (Object.keys(sk).filter(function (k) { return sk[k]; }).map(function (k) { return badge(sk[k]).replace(">" + h(sk[k]) + "<", ' title="' + h((SKILLS.filter(function (s) { return s[0] === k; })[0] || [0, k])[1]) + '">' + h((SKILLS.filter(function (s) { return s[0] === k; })[0] || [0, k])[1].split(" ")[0]) + ": " + h(sk[k]) + "<"); }).join(" ") || '<span class="muted">-</span>') + '</td><td class="small">' + h(a.recommended_level || "-") + '</td><td class="right"><button class="btn sm ghost">Open</button></td></tr>';
     }).join("") + '</tbody></table></div><div class="pager"><span class="muted small">' + total + " record" + (total === 1 ? "" : "s") + " · page " + (AP.page + 1) + " of " + pages + '</span><span class="row"><button class="btn sm ghost" id="ap-p"' + (AP.page === 0 ? " disabled" : "") + '>← Previous</button><button class="btn sm ghost" id="ap-n"' + (AP.page + 1 >= pages ? " disabled" : "") + ">Next →</button></span></div>" : '<div class="empty">No assessments recorded yet. Open a lead and choose “+ Assessment record”, or use the button above.</div>');
   $("#a-new", el).onclick = function () { if (needWrite()) openAssessment(null, null); };
   $$("tr[data-id]", el).forEach(function (r) { r.onclick = function () { openAssessment(rows.filter(function (a) { return a.id === r.getAttribute("data-id"); })[0]); }; });
@@ -1977,10 +1978,10 @@ VIEWS.assessments = async function (el, args) {
     var canMark = !a && (!lead || ["New", "Contacted", "Assessment Scheduled", "Follow-up Required"].indexOf(lead.status) > -1);
     modal({ title: a ? "Assessment record" : "New assessment", wide: true, okLabel: "Save assessment",
       body: leadPickerHtml("as", lead) + '<div class="g2">' + F("as-by", "Assessor", a ? a.assessor_name : me.email, { max: 120 }) + F("as-on", "Assessment date", a ? a.assessed_on : todayISO(), { type: "date", req: true }) + "</div>" +
-        '<label class="l" style="margin-top:16px">Reading skills</label><p class="hint" style="margin-top:0">“Not Yet Learned” simply means the topic has not been taught yet — it is not a mistake. Leave blank if not assessed.</p><div class="g2">' +
-        SKILLS.map(function (s) { return F("sk-" + s[0], s[1], sk[s[0]] || "", { type: "select", options: [["", "— not recorded —"]].concat(SKILL_VALUES) }); }).join("") + "</div>" +
+        '<label class="l" style="margin-top:16px">Reading skills</label><p class="hint" style="margin-top:0">“Not Yet Learned” simply means the topic has not been taught yet. It is not a mistake. Leave blank if not assessed.</p><div class="g2">' +
+        SKILLS.map(function (s) { return F("sk-" + s[0], s[1], sk[s[0]] || "", { type: "select", options: [["", "Not recorded"]].concat(SKILL_VALUES) }); }).join("") + "</div>" +
         F("as-obs", "Quran reading observations", a ? a.observations : "", { type: "textarea", rows: 3 }) + F("as-dif", "Main difficulties", a ? a.difficulties : "", { type: "textarea", rows: 2 }) +
-        F("as-lvl", "Recommended starting level", a ? a.recommended_level : "", { type: "select", options: [["", "— not decided yet —"]].concat(levelOpts).concat(a && a.recommended_level && levelOpts.indexOf(a.recommended_level) < 0 ? [a.recommended_level] : []) }) +
+        F("as-lvl", "Recommended starting level", a ? a.recommended_level : "", { type: "select", options: [["", "Not decided yet"]].concat(levelOpts).concat(a && a.recommended_level && levelOpts.indexOf(a.recommended_level) < 0 ? [a.recommended_level] : []) }) +
         F("as-goal", "Next learning goal", a ? a.next_goal : "", { type: "textarea", rows: 2 }) + F("as-notes", "Private notes", a ? a.notes : "", { type: "textarea", rows: 3, hint: "Never shown publicly." }) +
         (canMark ? '<label class="chk" style="margin-top:12px"><input type="checkbox" id="as-mark" checked> Also set the lead’s status to “Assessment Completed”</label>' : ""),
       onOpen: function (m) { if (!a && !lead) leadPickerInit(m.el, "as"); if (!canWrite) $(".acts [data-ok]", m.el).classList.add("hidden"); },
@@ -2010,7 +2011,7 @@ VIEWS.enrollments = async function (el, args) {
   el.innerHTML = pageHead("Enrollments", "Enrollment Confirmed → Payment Pending → Payment Received → Teacher Assignment → Class Scheduling → ACTIVE", '<button class="btn wbtn" id="e-new">+ New enrollment</button>') +
     '<div class="alert info">An <b>inquiry</b> is not an enrollment, and an enrollment is not a payment. Mark “Payment Received” only after you have verified the payment yourself. Never record card details here.</div>' +
     (rows.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Learner</th><th>Program / level</th><th>Progress</th><th>Teacher</th><th></th></tr></thead><tbody>' + rows.map(function (e) {
-      return '<tr><td><b>' + h(e.leads ? e.leads.name : "—") + '</b><div class="muted small">' + h(e.leads ? e.leads.lead_code : "") + '</div></td><td class="small">' + h(e.programs ? e.programs.title : "—") + (e.program_levels ? "<br>Level " + e.program_levels.level_number + ": " + h(e.program_levels.title) : "") + "</td><td>" + stepper(e.status) + '</td><td class="small">' + h(e.teacher_name || "—") + '</td><td class="right"><button class="btn sm ghost" data-id="' + e.id + '">Open</button></td></tr>';
+      return '<tr><td><b>' + h(e.leads ? e.leads.name : "-") + '</b><div class="muted small">' + h(e.leads ? e.leads.lead_code : "") + '</div></td><td class="small">' + h(e.programs ? e.programs.title : "-") + (e.program_levels ? "<br>Level " + e.program_levels.level_number + ": " + h(e.program_levels.title) : "") + "</td><td>" + stepper(e.status) + '</td><td class="small">' + h(e.teacher_name || "-") + '</td><td class="right"><button class="btn sm ghost" data-id="' + e.id + '">Open</button></td></tr>';
     }).join("") + '</tbody></table></div><div class="pager"><span class="muted small">' + total + " enrollment" + (total === 1 ? "" : "s") + " · page " + (EP.page + 1) + " of " + pages + '</span><span class="row"><button class="btn sm ghost" id="ep-p"' + (EP.page === 0 ? " disabled" : "") + '>← Previous</button><button class="btn sm ghost" id="ep-n"' + (EP.page + 1 >= pages ? " disabled" : "") + ">Next →</button></span></div>" : '<div class="empty">No enrollments yet. Create one from a lead once the family confirms.</div>');
   $("#e-new", el).onclick = function () { if (needWrite()) openEnrollment(null, null); };
   $$("[data-id]", el).forEach(function (b) { b.onclick = function () { openEnrollment(rows.filter(function (e) { return e.id === b.getAttribute("data-id"); })[0]); }; });
@@ -2020,7 +2021,7 @@ VIEWS.enrollments = async function (el, args) {
     var lead = e ? e.leads : (leadId ? await oneLead(leadId) : null);
     var canMark = !e && (!lead || ["Enrollment Confirmed"].indexOf(lead.status) < 0);
     var m = modal({ title: e ? "Enrollment" : "New enrollment", wide: true, okLabel: "Save enrollment",
-      body: leadPickerHtml("en", lead) + '<div class="g2">' + F("en-p", "Program", e ? e.program_id || "" : "", { type: "select", options: [["", "— select —"]].concat(progs.map(function (p) { return [p.id, p.title]; })) }) + F("en-l", "Level", "", { type: "select", options: [["", "— select —"]] }) + "</div>" +
+      body: leadPickerHtml("en", lead) + '<div class="g2">' + F("en-p", "Program", e ? e.program_id || "" : "", { type: "select", options: [["", "Select"]].concat(progs.map(function (p) { return [p.id, p.title]; })) }) + F("en-l", "Level", "", { type: "select", options: [["", "Select"]] }) + "</div>" +
         F("en-s", "Status", e ? e.status : "Enrollment Confirmed", { type: "select", options: ENR_FLOW }) + '<div id="en-step"></div>' +
         F("en-pay", "Payment note (manual verification)", e ? e.payment_note : "", { type: "textarea", rows: 2, hint: "Required for “Payment Received”: how and when you verified it (e.g. “Bank transfer seen on statement, 12 Oct, by Ali”). No card numbers." }) +
         '<div class="g2">' + F("en-t", "Teacher", e ? e.teacher_name : "", { max: 120, hint: "Required from “Class Scheduling”." }) + F("en-sch", "Class schedule", e ? e.schedule_note : "", { max: 300, hint: "Required for “ACTIVE”, e.g. Sun & Tue 5pm GMT." }) + "</div>" +
@@ -2028,7 +2029,7 @@ VIEWS.enrollments = async function (el, args) {
       onOpen: function (mm) {
         if (!e && !lead) leadPickerInit(mm.el, "en");
         var ps = $("#en-p", mm.el), ls = $("#en-l", mm.el);
-        function fillLevels() { var p = progs.filter(function (x) { return x.id === ps.value; })[0]; ls.innerHTML = '<option value="">— select —</option>' + (p ? p.program_levels.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (l) { return '<option value="' + l.id + '">Level ' + l.level_number + ": " + h(l.title) + "</option>"; }).join("") : ""); if (e && e.level_id) ls.value = e.level_id; }
+        function fillLevels() { var p = progs.filter(function (x) { return x.id === ps.value; })[0]; ls.innerHTML = '<option value="">Select</option>' + (p ? p.program_levels.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (l) { return '<option value="' + l.id + '">Level ' + l.level_number + ": " + h(l.title) + "</option>"; }).join("") : ""); if (e && e.level_id) ls.value = e.level_id; }
         ps.onchange = function () { if (e) e.level_id = null; fillLevels(); }; fillLevels();
         function step() { $("#en-step", mm.el).innerHTML = stepper($("#en-s", mm.el).value); } $("#en-s", mm.el).onchange = step; step();
         if (!canWrite) $(".acts [data-ok]", mm.el).classList.add("hidden");
@@ -2109,7 +2110,7 @@ VIEWS.media = async function (el) {
   $("#md-up", el).onclick = async function () {
     if (!needWrite()) return; var fs = await pickFiles(true); if (!fs.length) return; var ok = 0;
     for (var i = 0; i < fs.length; i++) { try { await uploadMedia(fs[i]); ok++; } catch (e) { fail(e); } }
-    if (ok) { toast(ok + " image" + (ok > 1 ? "s" : "") + " uploaded — add alt text to each."); route(); }
+    if (ok) { toast(ok + " image" + (ok > 1 ? "s" : "") + " uploaded - add alt text to each."); route(); }
   };
   $$("[data-c]", el).forEach(function (b) { b.onclick = function () { var u = rows[+b.getAttribute("data-c")].url; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function () { toast("URL copied"); }, function () { prompt("Copy this URL:", u); }); }; });
   $$("[data-e]", el).forEach(function (b) { b.onclick = function () {
@@ -2149,7 +2150,7 @@ VIEWS.analytics = async function (el) {
   var as = (await q(sb.from("assessments").select("lead_id").limit(10000))).data, en = (await q(sb.from("enrollments").select("lead_id").limit(10000))).data;
   function inSet(rows) { var s = {}; rows.forEach(function (r) { s[r.lead_id] = 1; }); return leadIds.filter(function (i) { return s[i]; }).length; }
   var nLeads = leadIds.length, nAs = inSet(as), nEn = inSet(en);
-  function pct(a, b) { return b ? (Math.round(a / b * 1000) / 10) + "%" : "—"; }
+  function pct(a, b) { return b ? (Math.round(a / b * 1000) / 10) + "%" : "-"; }
   var provider = an.provider === "ga4" ? "Google Analytics 4 (" + h(an.ga4_id || "no ID") + ")" : an.provider === "plausible" ? "Plausible (" + h(an.plausible_domain || "no domain") + ")" : "";
   $("#an-b").innerHTML = (provider ? '<div class="alert ok"><b>External analytics connected:</b> ' + provider + ". Visitors, sessions and traffic sources are in that service’s own dashboard.</div>" :
       '<div class="alert warn"><b>Analytics not connected.</b> Without an analytics service, the site cannot report visitors or sessions. The counts below are simple, first-party event counts (no cookies, no personal data). Connect Google Analytics 4 or Plausible in <a href="#settings">Settings → Analytics</a>.</div>') +
@@ -2158,7 +2159,7 @@ VIEWS.analytics = async function (el) {
     [["1 · Page views", ev.page_view, "Every page load counted once (not people)."], ["2 · CTA clicks", ev.assessment_cta_click, "Clicked a button leading to the assessment form."], ["3 · Form starts", ev.assessment_form_start, "Focused any field of the form."], ["4 · Submitted leads", nLeads, "Leads saved in the database (period = lead created date)."], ["5 · Assessed", nAs, "Of those leads, how many have at least one assessment record."], ["6 · Enrollment records", nEn, "Of those leads, how many have an enrollment record."]].map(function (r) { return "<tr><td><b>" + h(r[0]) + "</b></td><td>" + (r[1] || 0) + '</td><td class="muted small">' + h(r[2]) + "</td></tr>"; }).join("") + "</tbody></table></div></div>" +
     '<div class="card"><h3>Rates and formulas</h3><div class="tw"><table class="tbl"><tbody>' +
     [["Form completion rate", pct(ev.assessment_submitted || 0, ev.assessment_form_start || 0), "forms submitted ÷ forms started"], ["CTA → lead rate", pct(nLeads, ev.assessment_cta_click || 0), "leads saved ÷ assessment button clicks (approximate: some leads arrive from direct links)"], ["Lead → assessed", pct(nAs, nLeads), "leads with an assessment record ÷ leads saved"], ["Lead → enrollment record", pct(nEn, nLeads), "leads with an enrollment record ÷ leads saved"]].map(function (r) { return "<tr><td><b>" + h(r[0]) + "</b></td><td>" + r[1] + '</td><td class="muted small">' + h(r[2]) + "</td></tr>"; }).join("") + "</tbody></table></div></div>" +
-    '<div class="card"><h3>Campaigns (UTM)</h3>' + ((sum.campaigns || []).length ? '<div class="tw"><table class="tbl"><thead><tr><th>Campaign</th><th>Source / medium</th><th>Page views</th><th>CTA clicks</th><th>WhatsApp clicks</th><th>Forms submitted</th><th>Leads saved</th></tr></thead><tbody>' + sum.campaigns.map(function (c) { return "<tr><td><b>" + h(c.campaign || "(none)") + "</b></td><td>" + h((c.source || "—") + " / " + (c.medium || "—")) + "</td><td>" + c.page_views + "</td><td>" + c.cta_clicks + "</td><td>" + c.whatsapp_clicks + "</td><td>" + c.submissions + "</td><td>" + (c.leads || 0) + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">No campaign traffic yet. Use links like <code>https://inayaquran.com/?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=facebook_program_launch</code> in your posts.</div>') + "</div>" +
+    '<div class="card"><h3>Campaigns (UTM)</h3>' + ((sum.campaigns || []).length ? '<div class="tw"><table class="tbl"><thead><tr><th>Campaign</th><th>Source / medium</th><th>Page views</th><th>CTA clicks</th><th>WhatsApp clicks</th><th>Forms submitted</th><th>Leads saved</th></tr></thead><tbody>' + sum.campaigns.map(function (c) { return "<tr><td><b>" + h(c.campaign || "(none)") + "</b></td><td>" + h((c.source || "-") + " / " + (c.medium || "-")) + "</td><td>" + c.page_views + "</td><td>" + c.cta_clicks + "</td><td>" + c.whatsapp_clicks + "</td><td>" + c.submissions + "</td><td>" + (c.leads || 0) + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">No campaign traffic yet. Use links like <code>https://inayaquran.com/?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=facebook_program_launch</code> in your posts.</div>') + "</div>" +
     '<div class="card"><h3>Event totals</h3>' + (Object.keys(ev).length ? '<div class="tw"><table class="tbl"><tbody>' + Object.keys(EVENT_LABELS).map(function (k) { return "<tr><td>" + h(EVENT_LABELS[k]) + "</td><td>" + (ev[k] || 0) + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">No events recorded in this period.</div>') + '<p class="muted small" style="margin-bottom:0">Visitors who enable “Do Not Track” are not counted. No names, emails or phone numbers are ever stored with events.</p></div>';
 };
 
@@ -2190,7 +2191,7 @@ VIEWS.settings = async function (el) {
     F("st-foot", "Footer text", s.footer_text, { type: "textarea", rows: 2, max: 200 }) + F("st-copy", "Copyright text", s.copyright, { max: 160 }) + "</div>" +
     '<div class="card"><h2>SEO &amp; sharing defaults</h2>' + F("st-seot", "Default title", s.seo_title, { max: 70 }) + F("st-seod", "Default description", s.seo_description, { type: "textarea", rows: 2, max: 200 }) + imgField("st-og", "Default sharing image", s.og_image, "1200×630 works best (WhatsApp / Facebook previews).") + F("st-url", "Website address", s.site_url, { type: "url", hint: "Used for canonical links, e.g. https://inayaquran.com" }) +
     '<div class="alert info" style="margin-top:12px">Social previews (WhatsApp, Facebook) read each page’s built-in tags. To change the default preview image site-wide, replace <code>assets/img/og-default.jpg</code> in the project and redeploy.</div></div>' +
-    '<div class="card"><h2>Forms</h2>' + F("st-as", "Assessment form — success message", s.assessment_success, { type: "textarea", rows: 2, max: 300 }) + F("st-cs", "Contact form — success message", s.contact_success, { type: "textarea", rows: 2, max: 300 }) +
+    '<div class="card"><h2>Forms</h2>' + F("st-as", "Assessment form success message", s.assessment_success, { type: "textarea", rows: 2, max: 300 }) + F("st-cs", "Contact form success message", s.contact_success, { type: "textarea", rows: 2, max: 300 }) +
     '<label class="l">Optional assessment-form fields to show</label><div class="row">' + [["student_name", "Student name"], ["age_group", "Age group"], ["country", "Country"], ["reading_level", "Reading level"], ["preferred_time", "Preferred time"]].map(function (f) { return '<label class="chk"><input type="checkbox" id="st-f-' + f[0] + '"' + (ff[f[0]] !== false ? " checked" : "") + "> " + f[1] + "</label>"; }).join("") + '</div><div class="hint">Name, contact (email or WhatsApp) and consent are always required, and are enforced by the server.</div></div>' +
     '<div class="card"><h2>Analytics</h2>' + F("st-an", "Provider", an.provider || "none", { type: "select", options: [["none", "None (first-party click counts only)"], ["ga4", "Google Analytics 4 (asks visitors for consent)"], ["plausible", "Plausible (cookie-free)"]] }) + '<div class="g2">' + F("st-ga", "GA4 Measurement ID", an.ga4_id, { max: 20, attrs: 'placeholder="G-XXXXXXXXXX"' }) + F("st-pl", "Plausible domain", an.plausible_domain, { max: 100, attrs: 'placeholder="inayaquran.com"' }) + '</div><div class="hint">No names, emails or phone numbers are ever sent to analytics.</div></div>' +
     '<div class="card"><h2>My account</h2><p class="muted">Signed in as <b>' + h(me.email) + "</b> · role <b>" + h(role) + '</b>. Sessions end after 60 minutes of inactivity.</p><button class="btn ghost" id="st-pw">Change my password</button></div>';
@@ -2211,7 +2212,7 @@ VIEWS.settings = async function (el) {
   function upd() {
     var lh = Math.min(160, Math.max(20, parseInt(val("st-lh"), 10) || 44)), fh = Math.min(160, Math.max(20, parseInt(val("st-flh"), 10) || 44)), fl = I.safeImg(val("st-flogo")) || I.safeImg(val("st-logo"));
     $("#st-flogo-pv").innerHTML = fl ? '<img src="' + h(fl) + '" alt="Footer logo preview" style="height:' + fh + 'px;width:auto;display:block;' + (val("st-fmode") === "white" ? "filter:brightness(0) invert(1)" : "") + '">' : '<span class="small" style="color:#fff">No logo</span>';
-    var l = I.safeImg(val("st-logo")); $("#st-logo-pv").innerHTML = l ? '<img src="' + h(l) + '" alt="Logo preview" style="height:' + lh + 'px;width:auto;display:block">' : '<span class="muted small">No logo — the academy name is shown instead.</span>';
+    var l = I.safeImg(val("st-logo")); $("#st-logo-pv").innerHTML = l ? '<img src="' + h(l) + '" alt="Logo preview" style="height:' + lh + 'px;width:auto;display:block">' : '<span class="muted small">No logo set. The academy name is shown instead.</span>';
     var k = colors(), ok = Object.keys(k).every(function (x) { return /^#[0-9a-fA-F]{6}$/.test(k[x]); }), w = [];
     if (ok) { if (ratio(k.text, k.background) < 4.5) w.push("Body text on the page background is hard to read (contrast " + ratio(k.text, k.background).toFixed(1) + ":1, aim for 4.5+)."); if (ratio("#ffffff", k.primary) < 4.5) w.push("White text on the primary colour is hard to read (" + ratio("#ffffff", k.primary).toFixed(1) + ":1)."); if (ratio(k.primary, k.background) < 4.5) w.push("Headings in the primary colour on the background are low contrast (" + ratio(k.primary, k.background).toFixed(1) + ":1)."); }
     $("#st-contrast").innerHTML = !ok ? '<div class="alert bad">Colours must look like #0F4C3A.</div>' : w.length ? '<div class="alert warn"><b>Readability warning</b><ul style="margin:6px 0 0">' + w.map(function (x) { return "<li>" + h(x) + "</li>"; }).join("") + "</ul></div>" : '<div class="alert ok">Contrast looks good.</div>';
@@ -2246,7 +2247,7 @@ VIEWS.settings = async function (el) {
       form_fields: { student_name: val("st-f-student_name"), age_group: val("st-f-age_group"), country: val("st-f-country"), reading_level: val("st-f-reading_level"), preferred_time: val("st-f-preferred_time") },
       analytics: { provider: prov, ga4_id: val("st-ga"), plausible_domain: val("st-pl") }
     });
-    this.disabled = true; try { await saveSettings(data); dirty = false; $("#st-dirty").classList.add("hidden"); toast("Settings saved — the website is updated."); } catch (e) { fail(e); } this.disabled = false;
+    this.disabled = true; try { await saveSettings(data); dirty = false; $("#st-dirty").classList.add("hidden"); toast("Settings saved. The website is updated."); } catch (e) { fail(e); } this.disabled = false;
   };
   $("#st-pw").onclick = function () {
     modal({ title: "Change password", okLabel: "Update password", body: F("pw1", "New password (10+ characters)", "", { type: "password", attrs: 'autocomplete="new-password"' }) + F("pw2", "Repeat new password", "", { type: "password", attrs: 'autocomplete="new-password"' }),

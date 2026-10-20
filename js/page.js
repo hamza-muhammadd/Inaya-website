@@ -18,7 +18,7 @@ Inaya.boot(async function (s) {
   main.innerHTML = InayaSections.render(sections, ctx);
   var path = slug === "home" ? "/" : "/" + slug;
   Inaya.setMeta({
-    title: page.seo_title || (slug === "home" ? s.seo_title : (page.title || slug) + " — " + s.academy_name),
+    title: page.seo_title || (slug === "home" ? s.seo_title : (page.title || slug) + " | " + s.academy_name),
     description: page.seo_description || s.seo_description,
     image: page.og_image || s.og_image, siteUrl: s.site_url,
     canonical: s.site_url.replace(/\/+$/, "") + (path === "/" ? "/" : path)

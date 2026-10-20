@@ -35,7 +35,7 @@
     cta_secondary_label: "Explore Our Programs", cta_secondary_href: "/programs",
     footer_text: "Structured Quran learning with care, for every age and level.",
     copyright: "© Inaya Quran Academy. All rights reserved.",
-    seo_title: "Inaya Quran Academy — Online Quran Learning",
+    seo_title: "Inaya Quran Academy | Online Quran Learning",
     seo_description: "Structured online Quran programs: reading & fluency, Tajweed & recitation, and Islamic foundations. Book a free assessment.",
     og_image: "assets/img/og-default.jpg",
     site_url: "https://inayaquran.com",
@@ -347,7 +347,7 @@
     { slug: "quran-reading-fluency", title: "Quran Reading & Fluency", short_description: "From letters to fluency, one step at a time.",
       description: "A structured path that takes a learner from the Arabic letters to confident, fluent Quran reading, one clear level at a time.",
       objectives: ["Recognise and read the Arabic letters and their vowel marks", "Read connected words and verses with growing accuracy", "Build steady, fluent reading"],
-      student_profile: "Beginners and learners who want to strengthen their Quran reading — children and adults.",
+      student_profile: "Beginners and learners who want to strengthen their Quran reading, for children and adults.",
       curriculum_overview: "Three levels: Reading Foundations, Connected Quran Reading and Reading Fluency. Detailed curriculum is being finalised by the academy.",
       cta_label: "Book a Free Assessment", image_url: "",
       levels: [{ level_number: 1, title: "Reading Foundations", description: "" }, { level_number: 2, title: "Connected Quran Reading", description: "" }, { level_number: 3, title: "Reading Fluency", description: "" }] },
@@ -395,6 +395,41 @@
   }
 
   /* ---------- boot ---------- */
+
+  /* ---------- motion: reveal on scroll, staggered cards, count-up numbers ---------- */
+  function initMotion() {
+    var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var header = document.getElementById("site-header");
+    if (header && !header.getAttribute("data-mo")) {
+      header.setAttribute("data-mo", "1");
+      var tick = false;
+      window.addEventListener("scroll", function () { if (tick) return; tick = true; requestAnimationFrame(function () { header.classList.toggle("scrolled", window.scrollY > 8); tick = false; }); }, { passive: true });
+    }
+    if (reduce || !("IntersectionObserver" in window)) return;
+    var main = document.getElementById("main"); if (!main) return;
+    var CH = ".grid > *, .steps > *, .levels > *, .split > *, .detail-grid > *, .hero-grid > *, .faq-cat, .faq-item, details";
+    main.querySelectorAll("[data-anim]").forEach(function (sec) {
+      var kids = sec.querySelectorAll(CH), n = 0;
+      kids.forEach(function (k) { if (!k.hasAttribute("data-st") && !k.closest("[data-st]")) { k.setAttribute("data-st", ""); k.style.setProperty("--d", Math.min(n, 8) * 0.07 + "s"); n++; } });
+    });
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return; io.unobserve(e.target); e.target.classList.add("in");
+        e.target.querySelectorAll(".stat b").forEach(countUp);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+    document.documentElement.classList.add("mo");
+    main.querySelectorAll("[data-anim], [data-st]").forEach(function (el) { io.observe(el); });
+  }
+  function countUp(el) {
+    var m = /^(\D*)(\d[\d,]*)(\D*)$/.exec((el.textContent || "").trim()); if (!m) return;
+    var end = parseInt(m[2].replace(/,/g, ""), 10); if (!(end > 0) || end > 1e7) return;
+    var t0 = null, dur = 1100, fmt = m[2].indexOf(",") > -1;
+    function step(ts) { if (t0 === null) t0 = ts; var p = Math.min(1, (ts - t0) / dur), v = Math.round(end * (1 - Math.pow(1 - p, 3)));
+      el.textContent = m[1] + (fmt ? v.toLocaleString("en-US") : v) + m[3]; if (p < 1) requestAnimationFrame(step); }
+    requestAnimationFrame(step);
+  }
+
   function boot(cb) {
     var run = function () {
       attr = captureAttribution();
@@ -407,7 +442,7 @@
         var p = location.pathname.replace(/\/+$/, "") || "/";
         track("page_view");
         if (/^\/programs\/[^/]+$/.test(p)) track("program_view");
-        Promise.resolve(cb && cb(s)).catch(function (e) { console.error(e); });
+        Promise.resolve(cb && cb(s)).catch(function (e) { console.error(e); }).then(initMotion);
       });
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run); else run();
