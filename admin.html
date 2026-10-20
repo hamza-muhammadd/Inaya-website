@@ -1305,6 +1305,8 @@ async function probe007(force) {
   var r = await sb.from("pages").select("slug" + FEAT_COLS).limit(1);
   FEAT7 = !r.error; return FEAT7;
 }
+/* One place decides a page's public address: Home is the site root, every other page is /<slug>. */
+function livePath(slug) { return slug === "home" ? "/" : "/" + slug; }
 function slugify(t) { return String(t || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); }
 function slugError(s, existing) {
   if (!s) return "Enter a URL name.";
@@ -1381,12 +1383,12 @@ async function pagesTab(el, feat) {
   }
   el.innerHTML = '<div class="row sb" style="margin-bottom:12px;gap:10px"><div class="row" id="bp-f">' +
     [["all", "All"], ["published", "Published"], ["draft", "Drafts"]].concat(feat ? [["archived", "Archived"]] : []).map(function (f) { return '<button class="chip' + (BS.f === f[0] ? " on" : "") + '" data-f="' + f[0] + '">' + f[1] + " · " + (counts[f[0]] || 0) + "</button>"; }).join("") +
-    '</div><div class="row"><input type="search" id="bp-s" placeholder="Search pages…" value="' + h(BS.s) + '" style="width:220px"><button class="btn ghost sm" id="bp-sm" title="Download sitemap.xml for the published pages">Sitemap</button></div></div><div id="bp-l"></div>' +
+    '</div><div class="row"><input type="search" id="bp-s" placeholder="Search pages…" value="' + h(BS.s) + '" style="width:220px"><button class="btn ghost sm" id="bp-chk" title="Check that every page opens at its own address and that Home is the site root">Check routing</button><button class="btn ghost sm" id="bp-sm" title="Download sitemap.xml for the published pages">Sitemap</button></div></div><div id="bp-l"></div>' +
     '<p class="muted small" style="margin-top:12px">Programs and curriculum: <a href="#programs">Programs &amp; Curriculum</a> · FAQ: <a href="#content/faq">Website Content</a> · Logo, colours, menu, footer: <a href="#settings">Settings</a>.</p>';
   function draw() {
     var list = filtered();
     $("#bp-l").innerHTML = list.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Page</th><th>URL</th><th>Status</th><th>Last edited</th><th></th></tr></thead><tbody>' + list.map(function (p, i) {
-      var url = p.slug === "home" ? "/" : "/" + p.slug, live = p.status === "published" && !p.arch, hasPub = p.published_sections && p.published_sections.length;
+      var url = livePath(p.slug), live = p.status === "published" && !p.arch, hasPub = p.published_sections && p.published_sections.length;
       var acts = '<a class="btn sm" href="#builder/page/' + h(p.slug) + '">Edit</a> ';
       if (canWrite && !p.arch) {
         acts += '<button class="btn sm ghost" data-dup="' + i + '">Duplicate</button> ';
@@ -1418,6 +1420,7 @@ async function pagesTab(el, feat) {
   }
   $$("#bp-f .chip", el).forEach(function (b) { b.onclick = function () { BS.f = b.getAttribute("data-f"); $$("#bp-f .chip", el).forEach(function (c) { c.classList.toggle("on", c === b); }); draw(); }; });
   $("#bp-s", el).oninput = function () { BS.s = this.value; draw(); };
+  $("#bp-chk", el).onclick = function () { routingCheck(rows).catch(fail); };
   $("#bp-sm", el).onclick = function () {
     var base = (settings.site_url || "").replace(/\/+$/, ""), fixed = ["", "/programs", "/faq", "/assessment", "/contact", "/about", "/privacy", "/terms"];
     var urls = fixed.concat(rows.filter(function (p) { return p.status === "published" && !p.arch && !SYSTEM_SLUGS[p.slug] && !(feat && p.noindex); }).map(function (p) { return "/" + p.slug; }));
@@ -1426,6 +1429,46 @@ async function pagesTab(el, feat) {
     download("sitemap.xml", xml, "application/xml"); toast("sitemap.xml downloaded. Replace the file in your project to publish it.");
   };
   draw();
+}
+
+/* Routing check: compares what the database says with what visitors are actually served, and offers a safe repair. */
+async function routingCheck(rows) {
+  var out = [], fixes = [];
+  function add(level, msg, fix) { out.push({ level: level, msg: msg }); if (fix) fixes.push(fix); }
+  var home = rows.filter(function (r) { return r.slug === "home"; })[0];
+  var pub = await I.get("public_pages?slug=eq.home&select=slug,title,sections");
+  var types = pub && pub[0] ? (pub[0].sections || []).map(function (x) { return x.type; }) : [];
+  if (pub === null) add("warn", "Could not reach the public site data, so the live Home could not be compared.");
+  else if (!pub[0]) add("ok", "Home has no published sections yet, so visitors see the built-in Home layout at / (this is fine).");
+  else add("ok", "Home is published and serves " + types.length + " section(s) at /: " + types.map(function (t) { return (S.TYPES[t] || { label: t }).label; }).join(", ") + ".");
+  if (home && (home.status !== "published" || home.arch)) add("bad", "The Home record is not published. It must stay published.");
+  var other = {};
+  ["programs", "faq", "contact", "assessment"].forEach(function (sl) { var d = S.defaults(sl); if (d[0] && d[0].heading) other[d[0].heading] = sl; });
+  var stray = [];
+  if (pub && pub[0]) (pub[0].sections || []).forEach(function (x) {
+    if (x.type === "assessment_form" || x.type === "contact_form") stray.push((S.TYPES[x.type] || {}).label);
+    else if (x.heading && other[x.heading]) stray.push("a copy of the " + other[x.heading] + " page heading");
+  });
+  if (stray.length) add("bad", "The published Home contains content that belongs to other pages: " + stray.join("; ") + ". This is why / can look like another page. Use the repair button to put the Home layout back.", "home");
+  var cur = (await q(sb.from("site_settings").select("data").eq("id", 1).maybeSingle())).data, nav = (cur && cur.data && cur.data.nav) || [];
+  var badNav = nav.filter(function (n) { return /^home$/i.test((n.label || "").trim()) && n.href !== "/"; });
+  if (badNav.length) add("bad", "The menu item “Home” points to " + badNav.map(function (n) { return n.href; }).join(", ") + " instead of /. Repair sets it to /.", "nav");
+  else add("ok", "The menu item Home points to /.");
+  var dupNav = nav.filter(function (n) { return n.href === "/assessment"; });
+  if (dupNav.length > 1) add("warn", "More than one menu item points to /assessment.");
+  var su = (cur && cur.data && cur.data.site_url) || "";
+  try { var a = new URL(su).host.replace(/^www\./, ""), b = location.host.replace(/^www\./, ""); if (a !== b) add("warn", "Site address in Settings (" + su + ") is a different domain from the one you are on (" + location.host + ")."); else if (new URL(su).host !== location.host) add("warn", "Settings site address is " + new URL(su).host + " but you are on " + location.host + ". Pick one in Vercel → Domains and use the same one in Settings & Brand."); else add("ok", "The site address in Settings matches this domain."); } catch (e) { add("warn", "Site address in Settings is empty or invalid."); }
+  rows.filter(function (r) { return !SYSTEM_SLUGS[r.slug] && RESERVED_SLUGS.indexOf(r.slug) > -1; }).forEach(function (r) { add("bad", "Custom page /" + r.slug + " uses a reserved name."); });
+  add("ok", "Fixed addresses: / is Home, /assessment is the free assessment form, /contact the contact form, /programs, /faq, /about, /privacy, /terms. Every other page lives at /<its URL name>.");
+  var colour = { ok: "#2E7D4F", warn: "#B7791F", bad: "#A12B2B" }, mark = { ok: "OK", warn: "Check", bad: "Problem" };
+  var m = modal({ title: "Routing check", wide: true, ok: !!fixes.length, okLabel: "Repair now", cancelLabel: "Close",
+    body: out.map(function (o) { return '<div style="display:flex;gap:10px;margin:0 0 10px"><b style="flex:none;min-width:62px;color:' + colour[o.level] + '">' + mark[o.level] + "</b><span>" + h(o.msg) + "</span></div>"; }).join("") +
+      (fixes.length ? '<p class="hint">Repair never deletes anything. It resets the published Home to the built-in Home layout (your other pages are not touched) and/or points the Home menu item to /.</p>' : ""),
+    onOk: async function () {
+      if (!needWrite()) return false;
+      if (fixes.indexOf("home") > -1) { var d = S.defaults("home"), now = new Date().toISOString(); await q(sb.from("pages").update({ draft_sections: d, published_sections: d, has_unpublished: false, status: "published", published_at: now, updated_at: now }).eq("slug", "home")); }
+      if (fixes.indexOf("nav") > -1) { var nn = nav.map(function (n) { return /^home$/i.test((n.label || "").trim()) ? { label: n.label, href: "/" } : n; }); await q(sb.from("site_settings").update({ data: Object.assign({}, cur.data, { nav: nn }) }).eq("id", 1)); settings.nav = nn; }
+      toast("Repaired. Open the home page and refresh to confirm."); route(); } });
 }
 
 /* Create a new page, or duplicate one */
@@ -1613,7 +1656,7 @@ async function pageEditor(el, slug) {
         var n = val("cu-s"), e = slugError(n, taken); if (n === slug) return true; if (e) { toast(e, true); mark("cu-s", m.el, true); return false; }
         await q(sb.from("pages").update({ slug: n }).eq("slug", slug)); dirty = false; guard = null; toast("URL changed to /" + n); location.hash = "#builder/page/" + n; } });
   }
-  function liveLink() { var on = row.status === "published" && !row.archived; $("#ed-live").innerHTML = on ? '<a class="small" target="_blank" rel="noopener" href="' + h(slug === "home" ? "/" : "/" + slug) + '">View live page ↗</a>' : ""; }
+  function liveLink() { var on = row.status === "published" && !row.archived, u = livePath(slug); $("#ed-live").innerHTML = on ? '<a class="small" target="_blank" rel="noopener" href="' + h(u) + '" title="' + h(location.origin + u) + '">View live page ↗</a>' : ""; }
   seoHtml(); renderList(); refreshPreview(); liveLink();
   $("#b-prev").onclick = function () { var w = window.open(URL.createObjectURL(new Blob([previewDoc().replace("<head>", '<head><base href="' + location.origin + '/" target="_blank">')], { type: "text/html" })), "_blank"); if (!w) toast("Allow pop-ups to open the preview.", true); };
   $("#seo-tog").onclick = function () { $("#seo").classList.toggle("hidden"); this.textContent = $("#seo").classList.contains("hidden") ? "Edit settings" : "Hide settings"; };
