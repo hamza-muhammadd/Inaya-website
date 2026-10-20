@@ -215,3 +215,19 @@ Supabase → **SQL Editor** → **New query**-তে নিচের ফাই�
 - প্রতিটি ফাইল দুইবার চালালেও আগের ডেটা নষ্ট হয় না।
 - নতুন কাউকে অ্যাক্সেস দিতে হলে আগে Supabase → **Authentication → Users**-এ তার লগইন বানান, তারপর অ্যাডমিন প্যানেলের **Users & Access** পেজে ইমেইল দিয়ে role দিন।
 - Finance-এ কার্ড নম্বর বা পাসওয়ার্ড কখনো লিখবেন না। শুধু টাকা পাওয়ার পর রেকর্ড করবেন।
+
+---
+
+## Website Builder (নতুন) — ব্যবহার
+
+**Admin → Website Builder → Pages → Create page → Add section → Choose/upload image → Preview → Save draft → Publish**
+
+1. আগে একবার Supabase → SQL Editor-এ `sql/007_website_builder.sql` চালান (staging-এ আগে পরীক্ষা করুন)। না চালালেও পেজ তৈরি/এডিট/পাবলিশ চলবে; মেনু, আর্কাইভ, টেমপ্লেট ও ড্রাফট-সেটিংস ৭নং মাইগ্রেশনের পর চালু হবে।
+2. **Create page**: নাম ও URL (যেমন `summer-camp`) দিন, টেমপ্লেট বাছুন → Create and edit।
+3. **Add section**: নিচের তালিকা থেকে ধরন বেছে **+ Add section**। ↑ ↓ দিয়ে সাজান, ⧉ ডুপ্লিকেট, Hide/🗑 দিয়ে লুকান/মুছুন।
+4. **ছবি**: Section-এ **Choose / upload** → Media Library থেকে বাছুন বা নতুন আপলোড করুন; **Replace / Remove** আছে।
+5. **Preview**: ডানের লাইভ প্রিভিউ (Desktop/Mobile) বা উপরের **Preview** বাটনে নতুন ট্যাবে।
+6. **Save draft** (সাইটে দেখা যায় না) → **Publish** (লাইভ)।
+7. **Page settings**: শিরোনাম, URL পরিবর্তন, SEO, শেয়ার-ছবি, ওয়েবসাইট মেনুতে দেখানো।
+8. **More… → Save as template** দিয়ে লেআউট সেভ করুন; পরে Create page-এ ব্যবহার করুন।
+9. নতুন পেজ Vercel-এ লাইভ দেখাতে নতুন কোড (`page.html`, `vercel.json`, `js/`, `css/`, `admin.html`) ডিপ্লয় করতে হবে।

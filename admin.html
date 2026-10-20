@@ -17,6 +17,13 @@ h1,h2,h3{margin:0 0 .4em;color:var(--g);font-family:"Newsreader",Georgia,serif;f
 h1{font-size:1.6rem}h2{font-size:1.25rem}h3{font-size:1.05rem}
 a{color:var(--g)}
 button{font:inherit;cursor:pointer}
+
+/* website builder */
+.imgprev{margin:6px 0;border:1px solid var(--bd);border-radius:10px;background:repeating-conic-gradient(#f3efe3 0 25%,#fff 0 50%) 0 0/14px 14px;height:110px;display:grid;place-items:center;overflow:hidden}
+.imgprev img{max-width:100%;max-height:100%;object-fit:contain}.imgprev.broken::after{content:"Image not found";color:var(--mu);font-size:.8rem}.imgprev.broken img{display:none}
+.chip.on{background:var(--g);color:#fff;border-color:var(--g)}
+select{appearance:none;-webkit-appearance:none;padding-right:34px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7a6f' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center}
+.ph2 select{background-color:transparent}
 .hidden{display:none!important}
 .muted{color:var(--mu)}.small{font-size:.84rem}.right{text-align:right}.nowrap{white-space:nowrap}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row.sb{justify-content:space-between}
@@ -479,7 +486,7 @@ function ico(n) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke
 /* soon:true = planned module, NOT built yet. It opens an honest "not built" page. */
 var NAV = [
   ["Main", [["overview", "Dashboard", "grid"], ["leads", "Leads & Inquiries", "mail"], ["assessments", "Assessments", "check"], ["enrollments", "Enrollments", "users"], ["students", "Students", "user"]]],
-  ["Website", [["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
+  ["Website", [["builder", "Website Builder", "brush"], ["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
   ["Academy", [["classes", "Classes & Timetable", "cal"], ["teachers", "Teachers", "users"], ["finance", "Finance", "cash"], ["reminders", "Reminders", "bolt"]]],
   ["System", [["reports", "Reports", "chart"], ["activity", "Activity log", "check"], ["users", "Users & Access", "users"], ["settings", "Settings & Brand", "gear"]]]
 ];
@@ -628,7 +635,7 @@ VIEWS.overview = async function (el) {
       '<div class="muted small" style="margin-bottom:8px">Follow-ups on ' + h(fmtD(selIso)) + "</div>" +
       (dayEv.length ? dayEv.map(function (l) { return '<button class="ev ' + (l.follow_up_date < today ? "over" : l.follow_up_date > today ? "fut" : "") + '" data-lead="' + l.id + '"><small>' + h(l.lead_code) + "</small><b>" + h(l.name) + "</b><small>" + h(l.status) + "</small></button>"; }).join("") : '<div class="empty" style="padding:14px 0">No follow-ups on this day.</div>') +
       (overdue ? '<div class="alert bad" style="margin-top:8px"><b>' + overdue + "</b> follow-up" + (overdue > 1 ? "s are" : " is") + " overdue. Oldest: " + h(fu[0].name) + " (" + fmtD(fu[0].follow_up_date) + ").</div>" : "") + "</div>" +
-      '<div class="panel"><h3 style="margin:0 0 10px">Quick actions</h3><div class="qa"><a class="btn" href="#leads">Open leads</a><a class="btn ghost" href="#content">Edit website</a><a class="btn ghost" href="#media">Media</a><a class="btn ghost" href="/" target="_blank">View site ↗</a></div></div>' +
+      '<div class="panel"><h3 style="margin:0 0 10px">Quick actions</h3><div class="qa"><a class="btn" href="#leads">Open leads</a><a class="btn ghost" href="#builder">Website Builder</a><a class="btn ghost" href="#media">Media</a><a class="btn ghost" href="/" target="_blank">View site ↗</a></div></div>' +
       '<div class="panel"><h3 style="margin:0 0 8px">Recent activity</h3>' +
       (ev.length ? '<ul class="tl">' + ev.map(function (e) { return "<li><b>" + h(e.leads ? e.leads.name : "Lead") + "</b> — " + (e.event_type === "created" ? "inquiry received" : "status " + h(e.from_status) + " → " + h(e.to_status)) + '<br><span class="muted small">' + fmtDT(e.created_at) + "</span></li>"; }).join("") + "</ul>" : '<div class="empty">No activity yet.</div>') + "</div>" +
       '<div class="panel"><h3 style="margin:0 0 8px">Website analytics</h3>' + (((settings.analytics || {}).provider === "ga4" || (settings.analytics || {}).provider === "plausible") ?
@@ -1223,19 +1230,13 @@ async function moveItem(table, list, idx, dir) {
 function validHref(v) { return !v || /^(\/(?!\/)|#|https?:\/\/|mailto:|tel:|\{whatsapp\})/.test(v); }
 
 VIEWS.content = async function (el, args) {
-  if (args[0] === "page" && args[1]) return pageEditor(el, args[1]);
+  if (args[0] === "page" && args[1]) { location.replace("#builder/page/" + args[1]); return; }
   var tab = args[0] === "faq" ? "faq" : "pages";
-  el.innerHTML = pageHead("Website Content", "Edit what visitors read. Changes stay in draft until you publish.") +
+  el.innerHTML = pageHead("Website Content", "Edit what visitors read. Pages are built in the Website Builder; FAQ questions live here.") +
     '<div class="tabs"><button data-t="pages" class="' + (tab === "pages" ? "on" : "") + '">Pages</button><button data-t="faq" class="' + (tab === "faq" ? "on" : "") + '">FAQ</button></div><div id="ct"></div>';
   $$(".tabs button", el).forEach(function (b) { b.onclick = function () { location.hash = "#content/" + (b.getAttribute("data-t") === "faq" ? "faq" : ""); }; });
   if (tab === "faq") return faqTab($("#ct"));
-  var pages = (await q(sb.from("pages").select("slug,title,status,has_unpublished,updated_at,published_at").order("slug"))).data;
-  $("#ct").innerHTML = '<div class="tw"><table class="tbl"><thead><tr><th>Page</th><th>URL</th><th>Status</th><th>Last edited</th><th></th></tr></thead><tbody>' +
-    pages.map(function (p) {
-      var url = p.slug === "home" ? "/" : "/" + p.slug;
-      return "<tr><td><b>" + h(p.title) + "</b></td><td><a href=\"" + h(url) + '" target="_blank">' + h(url) + "</a></td><td>" + badge(p.status) + (p.has_unpublished ? ' <span class="badge b-draft">unpublished changes</span>' : "") + "</td><td>" + fmtDT(p.updated_at) + '</td><td class="right"><a class="btn sm" href="#content/page/' + h(p.slug) + '">Edit sections</a></td></tr>';
-    }).join("") + "</tbody></table></div>" +
-    '<p class="muted small" style="margin-top:12px">Programs, levels and curriculum are edited under <a href="#programs">Programs &amp; Curriculum</a>. Logo, colours, menu and footer are in <a href="#settings">Settings</a>. The Assessment and Contact pages use your form settings.</p>';
+  $("#ct").innerHTML = '<div class="card"><b>Pages now live in the Website Builder</b><p class="muted" style="margin:6px 0 12px">Create new pages, edit sections, pick images, preview, save drafts and publish — all in one place. Your existing pages (Home, About, Privacy, Terms) are there too.</p><a class="btn" href="#builder">Open Website Builder</a></div>';
 };
 
 /* ---------- FAQ ---------- */
@@ -1265,6 +1266,187 @@ async function faqTab(el) {
   $$("[data-mv]", el).forEach(function (b) { b.onclick = async function () { var p = b.getAttribute("data-mv").split(":"); try { await moveItem("faqs", list, +p[0], +p[1]); faqTab(el); } catch (e) { fail(e); } }; });
 }
 
+/* ================= WEBSITE BUILDER ================= */
+/* Pages · Templates. The editor itself (pageEditor) is shared; Website Content → FAQ stays where it was. */
+var RESERVED_SLUGS = ["home", "about", "privacy", "terms", "programs", "program", "faq", "assessment", "contact", "admin", "page", "404", "assets", "css", "js", "sql", "docs", "config", "sitemap", "robots", "favicon", "index", "api", "login", "thank-you"];
+var SYSTEM_SLUGS = { home: 1, about: 1, privacy: 1, terms: 1 };
+var BS = { f: "all", s: "" };
+var BASE_URL_COLS = "slug,title,status,has_unpublished,updated_at,published_at,published_sections";
+var FEAT_COLS = ",archived,show_in_nav,nav_label,nav_order,noindex,is_system,draft_meta";
+var FEAT7 = null;     // null = unknown, true = migration 007 applied, false = not applied
+
+async function probe007(force) {
+  if (FEAT7 !== null && !force) return FEAT7;
+  var r = await sb.from("pages").select("slug" + FEAT_COLS).limit(1);
+  FEAT7 = !r.error; return FEAT7;
+}
+function slugify(t) { return String(t || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); }
+function slugError(s, existing) {
+  if (!s) return "Enter a URL name.";
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(s)) return "Use only lowercase English letters, numbers and single hyphens (e.g. summer-camp).";
+  if (s.length > 60) return "Keep it under 60 characters.";
+  if (RESERVED_SLUGS.indexOf(s) > -1) return "“" + s + "” is reserved by the website. Choose another name.";
+  if (existing && existing.indexOf(s) > -1) return "A page with this URL already exists.";
+  return "";
+}
+function freshIds(secs) { return deep(secs || []).map(function (x) { x.id = S.uid(); return x; }); }
+
+/* built-in starting layouts (code-defined, always available) */
+function builtinTemplates() {
+  var sc = S.newSection;
+  return [
+    { id: "b-blank", name: "Blank page", description: "Just a page heading. Add your own sections.", builtin: true, sections: [sc("page_head", { eyebrow: "", heading: "Page heading", body: "" })] },
+    { id: "b-info", name: "Information page", description: "Heading, text and a call-to-action. Good for policies, notices and guides.", builtin: true, sections: [
+      sc("page_head", { eyebrow: "Information", heading: "Page heading", body: "A short introduction." }),
+      sc("rich_text", { heading: "", body: "Write your content here.\n\n- Point one\n- Point two" }),
+      sc("cta", { heading: "Have a question?", body: "We are happy to help.", button_label: "Contact us", button_href: "/contact" })] },
+    { id: "b-landing", name: "Landing page", description: "Hero, benefits, steps, FAQ and a final call-to-action.", builtin: true, sections: [
+      sc("hero", { eyebrow: "", heading: "Your headline here", body: "One or two sentences that explain the offer.", button_label: "Book a Free Assessment", button_href: "/assessment", layout: "center" }),
+      sc("benefits", { eyebrow: "", heading: "Why choose us", columns: 3, items: [{ title: "Point one", text: "Explain it." }, { title: "Point two", text: "Explain it." }, { title: "Point three", text: "Explain it." }] }),
+      sc("process", { eyebrow: "", heading: "How it works", items: [{ title: "Step one", text: "Explain it." }, { title: "Step two", text: "Explain it." }] }),
+      sc("faq", { eyebrow: "FAQ", heading: "Questions", limit: 5 }),
+      sc("cta", { heading: "Ready to begin?", body: "Book a free assessment today.", button_label: "Book a Free Assessment", button_href: "/assessment" })] },
+    { id: "b-programs", name: "Programs page", description: "Heading, automatic program cards, FAQ and call-to-action.", builtin: true, sections: [
+      sc("page_head", { eyebrow: "Programs", heading: "Page heading", body: "" }),
+      sc("program_cards", { eyebrow: "", heading: "Our programs", body: "" }),
+      sc("faq", { eyebrow: "", heading: "Questions", limit: 5 }),
+      sc("cta", { heading: "Not sure where to start?", body: "Book a free assessment.", button_label: "Book a Free Assessment", button_href: "/assessment" })] },
+    { id: "b-story", name: "Text + image page", description: "Heading, a text-and-image block and a call-to-action.", builtin: true, sections: [
+      sc("page_head", { eyebrow: "", heading: "Page heading", body: "" }),
+      sc("text_image", { eyebrow: "", heading: "Section heading", body: "Write about this topic.", image: "", image_alt: "" }),
+      sc("cta", { heading: "Get in touch", body: "", button_label: "Contact us", button_href: "/contact" })] }
+  ];
+}
+async function loadTemplates() {
+  var all = builtinTemplates();
+  if (await probe007()) {
+    try { (await q(sb.from("page_templates").select("*").order("created_at", { ascending: false }))).data.forEach(function (t) { all.push({ id: t.id, name: t.name, description: t.description || "", sections: t.sections || [], builtin: false }); }); } catch (e) { fail(e); }
+  }
+  return all;
+}
+
+VIEWS.builder = async function (el, args) {
+  if (args[0] === "page" && args[1]) return pageEditor(el, args[1]);
+  var tab = args[0] === "templates" ? "templates" : "pages", feat = await probe007(true);
+  el.innerHTML = pageHead("Website Builder", "Create pages, add sections, choose images, preview, then publish.",
+    '<button class="btn wbtn" id="bp-new">+ Create page</button>') +
+    (feat ? "" : '<div class="alert warn" id="bp-mig"><b>One-time database update needed.</b> Pages, sections, images, preview and publish already work. Menu placement, archive, templates and draft settings switch on after you run <code>sql/007_website_builder.sql</code> in Supabase (SQL Editor). See the guide.</div>') +
+    '<div class="tabs"><button data-t="pages" class="' + (tab === "pages" ? "on" : "") + '">Pages</button><button data-t="templates" class="' + (tab === "templates" ? "on" : "") + '">Templates</button><button data-t="media">Media Library</button></div><div id="bt"></div>';
+  $$(".tabs button", el).forEach(function (b) { b.onclick = function () { var t = b.getAttribute("data-t"); location.hash = t === "media" ? "#media" : "#builder" + (t === "templates" ? "/templates" : ""); }; });
+  $("#bp-new").onclick = function () { if (needWrite()) createPageModal(null, feat); };
+  if (tab === "templates") return templatesTab($("#bt"), feat);
+  return pagesTab($("#bt"), feat);
+};
+
+async function pagesTab(el, feat) {
+  var rows = (await q(sb.from("pages").select(BASE_URL_COLS + (feat ? FEAT_COLS : "")).order("slug"))).data;
+  rows.forEach(function (p) { p.system = feat ? !!p.is_system : !!SYSTEM_SLUGS[p.slug]; p.arch = feat && !!p.archived; p.state = p.arch ? "archived" : p.status; });
+  var counts = { all: 0, published: 0, draft: 0, archived: 0 };
+  rows.forEach(function (p) { if (p.arch) counts.archived++; else { counts.all++; counts[p.status] = (counts[p.status] || 0) + 1; } });
+  function filtered() {
+    var s = BS.s.trim().toLowerCase();
+    return rows.filter(function (p) {
+      if (BS.f === "all" ? p.arch : p.state !== BS.f) return false;
+      return !s || (p.title + " " + p.slug).toLowerCase().indexOf(s) > -1;
+    });
+  }
+  el.innerHTML = '<div class="row sb" style="margin-bottom:12px;gap:10px"><div class="row" id="bp-f">' +
+    [["all", "All"], ["published", "Published"], ["draft", "Drafts"]].concat(feat ? [["archived", "Archived"]] : []).map(function (f) { return '<button class="chip' + (BS.f === f[0] ? " on" : "") + '" data-f="' + f[0] + '">' + f[1] + " · " + (counts[f[0]] || 0) + "</button>"; }).join("") +
+    '</div><div class="row"><input type="search" id="bp-s" placeholder="Search pages…" value="' + h(BS.s) + '" style="width:220px"><button class="btn ghost sm" id="bp-sm" title="Download sitemap.xml for the published pages">Sitemap</button></div></div><div id="bp-l"></div>' +
+    '<p class="muted small" style="margin-top:12px">Programs and curriculum: <a href="#programs">Programs &amp; Curriculum</a> · FAQ: <a href="#content/faq">Website Content</a> · Logo, colours, menu, footer: <a href="#settings">Settings</a>.</p>';
+  function draw() {
+    var list = filtered();
+    $("#bp-l").innerHTML = list.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Page</th><th>URL</th><th>Status</th><th>Last edited</th><th></th></tr></thead><tbody>' + list.map(function (p, i) {
+      var url = p.slug === "home" ? "/" : "/" + p.slug, live = p.status === "published" && !p.arch, hasPub = p.published_sections && p.published_sections.length;
+      var acts = '<a class="btn sm" href="#builder/page/' + h(p.slug) + '">Edit</a> ';
+      if (canWrite && !p.arch) {
+        acts += '<button class="btn sm ghost" data-dup="' + i + '">Duplicate</button> ';
+        if (!p.system) {
+          if (live) acts += '<button class="btn sm ghost" data-unp="' + i + '">Unpublish</button> ';
+          else if (hasPub) acts += '<button class="btn sm ghost" data-rep="' + i + '">Republish</button> ';
+          if (feat) acts += '<button class="btn sm ghost" data-arc="' + i + '">Archive</button>';
+        }
+      }
+      if (canWrite && p.arch) acts += '<button class="btn sm ghost" data-res="' + i + '">Restore</button>';
+      return '<tr><td><b>' + h(p.title) + "</b>" + (p.system ? ' <span class="badge b-draft">built-in</span>' : "") + "</td><td>" + (live ? '<a href="' + h(url) + '" target="_blank" rel="noopener">' + h(url) + "</a>" : '<span class="muted">' + h(url) + "</span>") + "</td><td>" + badge(p.state) +
+        (p.has_unpublished && !p.arch ? ' <span class="badge b-draft">unpublished changes</span>' : "") + (feat && p.show_in_nav && live ? ' <span class="badge b-New">in menu</span>' : "") + '</td><td class="nowrap">' + fmtDT(p.updated_at) + '</td><td class="nowrap">' + acts + "</td></tr>";
+    }).join("") + "</tbody></table></div>" : '<div class="empty">' + (BS.s ? "No pages match your search." : BS.f === "archived" ? "No archived pages." : "No pages here yet. Click “Create page”.") + "</div>";
+    $$("[data-dup]", el).forEach(function (b) { b.onclick = function () { if (needWrite()) createPageModal({ dup: list[+b.getAttribute("data-dup")] }, feat); }; });
+    $$("[data-unp]", el).forEach(function (b) { b.onclick = function () { setStatus(list[+b.getAttribute("data-unp")], "draft"); }; });
+    $$("[data-rep]", el).forEach(function (b) { b.onclick = function () { setStatus(list[+b.getAttribute("data-rep")], "published"); }; });
+    $$("[data-arc]", el).forEach(function (b) { b.onclick = function () { archive(list[+b.getAttribute("data-arc")], true); }; });
+    $$("[data-res]", el).forEach(function (b) { b.onclick = function () { archive(list[+b.getAttribute("data-res")], false); }; });
+  }
+  async function setStatus(p, st) {
+    if (!needWrite()) return; var on = st === "published";
+    if (!(await confirmBox(on ? "Make <b>" + h(p.title) + "</b> visible on the live website again?" : "Hide <b>" + h(p.title) + "</b> from the live website? (Nothing is deleted.)", { danger: !on, okLabel: on ? "Republish" : "Unpublish" }))) return;
+    try { await q(sb.from("pages").update({ status: st, published_at: on ? new Date().toISOString() : p.published_at }).eq("slug", p.slug)); toast(on ? "Page is live" : "Page unpublished"); route(); } catch (e) { fail(e); }
+  }
+  async function archive(p, on) {
+    if (!needWrite()) return;
+    if (!(await confirmBox(on ? "Archive <b>" + h(p.title) + "</b>? It disappears from the website and the menu but is kept here, and can be restored." : "Restore <b>" + h(p.title) + "</b> as a draft?", { danger: on, okLabel: on ? "Archive" : "Restore" }))) return;
+    try { await q(sb.from("pages").update(on ? { archived: true, status: "draft", show_in_nav: false } : { archived: false, status: "draft" }).eq("slug", p.slug)); toast(on ? "Page archived" : "Page restored as draft"); route(); } catch (e) { fail(e); }
+  }
+  $$("#bp-f .chip", el).forEach(function (b) { b.onclick = function () { BS.f = b.getAttribute("data-f"); $$("#bp-f .chip", el).forEach(function (c) { c.classList.toggle("on", c === b); }); draw(); }; });
+  $("#bp-s", el).oninput = function () { BS.s = this.value; draw(); };
+  $("#bp-sm", el).onclick = function () {
+    var base = (settings.site_url || "").replace(/\/+$/, ""), fixed = ["", "/programs", "/faq", "/assessment", "/contact", "/about", "/privacy", "/terms"];
+    var urls = fixed.concat(rows.filter(function (p) { return p.status === "published" && !p.arch && !SYSTEM_SLUGS[p.slug] && !(feat && p.noindex); }).map(function (p) { return "/" + p.slug; }));
+    urls = urls.filter(function (u, i) { return urls.indexOf(u) === i; });
+    var xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls.map(function (u) { return "  <url><loc>" + h(base + (u || "/")) + "</loc></url>"; }).join("\n") + "\n</urlset>\n";
+    download("sitemap.xml", xml, "application/xml"); toast("sitemap.xml downloaded. Replace the file in your project to publish it.");
+  };
+  draw();
+}
+
+/* Create a new page, or duplicate one */
+async function createPageModal(opt, feat) {
+  var dup = opt && opt.dup, tpls = dup ? [] : await loadTemplates(), taken = (await q(sb.from("pages").select("slug"))).data.map(function (r) { return r.slug; });
+  var t0 = dup ? dup.title + " (copy)" : "";
+  modal({ title: dup ? "Duplicate page" : "Create page", wide: false,
+    body: F("cp-t", "Page title", t0, { req: true, max: 80, hint: "Shown in the browser tab and the menu." }) +
+      F("cp-s", "URL name", dup ? slugify(dup.slug + "-copy") : "", { req: true, max: 60, hint: "Lowercase English letters, numbers and hyphens. The page will live at /<b id=\"cp-sv\"></b>" }) +
+      '<div id="cp-se" class="small" style="color:#A12B2B;min-height:1.2em"></div>' +
+      (dup ? '<p class="hint">Copies the sections of the current draft. The copy starts as a draft.</p>' : F("cp-tpl", "Start from", "b-blank", { type: "select", options: tpls.map(function (t) { return [t.id, t.name + (t.builtin ? "" : " (saved)")]; }), hint: "<span id=\"cp-td\"></span>" })) +
+      (feat ? '<label class="chk" style="margin-top:12px"><input type="checkbox" id="cp-nav"> Show in the website menu after publishing</label>' : ""),
+    okLabel: dup ? "Duplicate" : "Create and edit",
+    onOpen: function (m) {
+      var auto = true, s = $("#cp-s", m.el), t = $("#cp-t", m.el);
+      function chk() { var v = s.value.trim(); $("#cp-sv", m.el).textContent = v; var e = slugError(v, taken); $("#cp-se", m.el).textContent = v ? e : ""; s.classList.toggle("bad", !!(v && e)); return e; }
+      t.oninput = function () { if (auto && !dup) { s.value = slugify(t.value); } chk(); };
+      s.oninput = function () { auto = false; chk(); };
+      if (!dup) { var sel = $("#cp-tpl", m.el); var d = function () { var x = tpls.filter(function (z) { return z.id === sel.value; })[0]; $("#cp-td", m.el).textContent = x ? x.description : ""; }; sel.onchange = d; d(); }
+      chk();
+    },
+    onOk: async function (m) {
+      var title = val("cp-t").trim(), slug = val("cp-s").trim(), e = slugError(slug, taken);
+      mark("cp-t", m.el, !title); if (!title) { toast("Enter a page title.", true); return false; }
+      if (e) { toast(e, true); return false; }
+      var secs;
+      if (dup) { var src = (await q(sb.from("pages").select("draft_sections,published_sections").eq("slug", dup.slug).single())).data; secs = freshIds(src.draft_sections && src.draft_sections.length ? src.draft_sections : src.published_sections); }
+      else { var tp = tpls.filter(function (z) { return z.id === val("cp-tpl"); })[0]; secs = freshIds(tp ? tp.sections : []); }
+      var row = { slug: slug, title: title, status: "draft", draft_sections: secs, published_sections: [], has_unpublished: true, updated_at: new Date().toISOString() };
+      if (feat) { row.show_in_nav = !!$("#cp-nav", m.el).checked; row.nav_label = null; }
+      await q(sb.from("pages").insert(row));
+      toast("Page created as a draft"); location.hash = "#builder/page/" + slug;
+    } });
+}
+
+async function templatesTab(el, feat) {
+  var list = await loadTemplates();
+  el.innerHTML = '<p class="muted" style="margin-bottom:12px">Templates are starting layouts. Pick one when you create a page. To save your own, open any page → <b>More… → Save as template</b>.</p>' +
+    (feat ? "" : '<div class="alert info">Saving your own templates needs the one-time database update (migration 007). The built-in layouts below work now.</div>') +
+    '<div class="mgrid">' + list.map(function (t, i) {
+      return '<div class="card"><div class="row sb"><b>' + h(t.name) + "</b>" + (t.builtin ? '<span class="badge b-draft">built-in</span>' : '<span class="badge b-New">saved</span>') + '</div><p class="muted small" style="margin:6px 0">' + h(t.description || "") + '</p><p class="small">' +
+        (t.sections || []).map(function (x) { return h((S.TYPES[x.type] || { label: x.type }).label); }).join(" → ") + '</p><div class="row"><button class="btn sm wbtn" data-use="' + i + '">Use this template</button>' + (!t.builtin ? '<button class="btn sm ghost wbtn" data-tdel="' + i + '">Delete</button>' : "") + "</div></div>";
+    }).join("") + "</div>";
+  $$("[data-use]", el).forEach(function (b) { b.onclick = function () { if (needWrite()) createPageModal(null, feat); }; });
+  $$("[data-tdel]", el).forEach(function (b) { b.onclick = async function () {
+    var t = list[+b.getAttribute("data-tdel")]; if (!needWrite()) return;
+    if (!(await confirmBox("Delete template <b>" + h(t.name) + "</b>? Pages already created from it are not affected.", { danger: true, okLabel: "Delete" }))) return;
+    try { await q(sb.from("page_templates").delete().eq("id", t.id)); toast("Template deleted"); route(); } catch (e) { fail(e); } }; });
+}
+
 /* ---------- PAGE EDITOR ---------- */
 var ITEM_LABEL = { title: "Title", text: "Text", value: "Value (e.g. 120+)", label: "Label", name: "Name", role: "Role", image: "Image", alt: "Alt text" };
 var BG_OPTS = [["", "Default (cream)"], ["soft", "Soft sand"], ["green", "Deep green"]];
@@ -1274,7 +1456,11 @@ async function pageEditor(el, slug) {
   var pubEmpty = !(row.published_sections && row.published_sections.length);
   var draft = deep(row.draft_sections && row.draft_sections.length ? row.draft_sections : (!pubEmpty ? row.published_sections : S.defaults(slug)));
   var usingDefaults = pubEmpty && !(row.draft_sections && row.draft_sections.length);
-  var meta = { title: row.title || "", seo_title: row.seo_title || "", seo_description: row.seo_description || "", og_image: row.og_image || "" };
+  var feat = await probe007(), isSys = feat ? !!row.is_system : !!SYSTEM_SLUGS[slug], dm = (feat && row.draft_meta) || {};
+  function pk(k, fb) { return dm[k] !== undefined && dm[k] !== null ? dm[k] : fb; }
+  function liveMeta() { return { title: row.title || "", seo_title: row.seo_title || "", seo_description: row.seo_description || "", og_image: row.og_image || "", show_in_nav: !!row.show_in_nav, nav_label: row.nav_label || "", nav_order: row.nav_order == null ? 100 : row.nav_order, noindex: !!row.noindex }; }
+  var meta = (function () { var l = liveMeta(); Object.keys(l).forEach(function (k) { l[k] = pk(k, l[k]); }); return l; })();
+  if (row.archived) toast("This page is archived. Restore it from the Pages list to publish it.", true);
   var dirty = false, openId = null, mode = "desktop", ctxData = null;
   guard = function () { return dirty; };
   var previewCtx = { settings: settings, programs: await I.loadPrograms(), faqs: await I.loadFaqs() };
@@ -1284,13 +1470,14 @@ async function pageEditor(el, slug) {
     var c = settings.colors || {};
     return ":root{--primary:" + c.primary + ";--accent:" + c.accent + ";--bg:" + c.background + ";--text:" + c.text + ";--primary-ink:color-mix(in srgb," + c.primary + " 76%,#000);--accent-soft:color-mix(in srgb," + c.accent + " 17%," + c.background + ");--surface:color-mix(in srgb," + c.background + " 40%,#fff)}";
   }
-  function refreshPreview() {
+  function refreshPreview() { $("#pv").srcdoc = previewDoc(); }
+  function previewDoc() {
     var logo = I.safeImg(settings.logo_url);
     var doc = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base target="_blank">' +
       '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600&family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap"><link rel="stylesheet" href="/css/site.css"><style>' + themeCss() + "</style></head><body>" +
       '<header class="site-header"><div class="container header-in"><span class="brand">' + (logo ? '<img src="' + h(logo) + '" alt="" style="height:' + Math.min(160, Math.max(20, parseInt(settings.logo_height, 10) || 44)) + 'px;width:auto">' : "<b>" + h(settings.academy_name) + "</b>") + '</span><span class="muted" style="font-size:.8rem">Preview</span></div></header>' +
       "<main>" + S.render(draft, previewCtx) + "</main></body></html>";
-    $("#pv").srcdoc = doc;
+    return doc;
   }
   var refreshSoon = debounce(refreshPreview, 250);
 
@@ -1314,13 +1501,14 @@ async function pageEditor(el, slug) {
 
   /* --- form HTML for one section --- */
   function fld(f, label, v, o) { o = o || {}; o.attrs = (o.attrs || "") + ' data-f="' + f + '"'; return F("sf-" + f, label, v, o).replace('id="sf-' + f + '"', ""); }
+  function thumb(u) { var sf = u ? I.safeImg(u) : ""; return sf ? '<div class="imgprev"><img src="' + h(sf) + '" alt="" onerror="this.parentNode.classList.add(\'broken\')"></div>' : ""; }
   function secForm(x) {
     var T = S.TYPES[x.type], out = "", has = function (f) { return T.fields.indexOf(f) > -1; };
     if (T.note) out += '<div class="alert info" style="margin:10px 0 0">' + h(T.note) + "</div>";
     if (has("eyebrow")) out += fld("eyebrow", "Small label above heading", x.eyebrow, { max: 80 });
     if (has("heading")) out += fld("heading", "Heading", x.heading, { max: 200, hint: x.type === "hero" || x.type === "page_head" ? "Tip: wrap words in *stars* to colour them, e.g. Made *Simple*." : "" });
     if (has("body")) out += fld("body", x.type === "rich_text" ? "Text" : "Body text", x.body, { type: "textarea", rows: x.type === "rich_text" ? 10 : 4, hint: "Blank line = new paragraph · “- ” bullets · “## ” sub-heading · **bold** · [link text](https://…)" });
-    if (has("image")) out += '<label class="l">Image</label><div class="row"><input type="text" data-f="image" value="' + h(x.image || "") + '" placeholder="Choose or paste an image URL" class="grow" style="flex:1"><button type="button" class="btn sm ghost" data-pick="image">Choose / upload</button></div>' + fld("image_alt", "Image description (alt text)", x.image_alt, { max: 200, hint: "Describe the picture for screen readers." });
+    if (has("image")) out += '<label class="l">Image</label>' + thumb(x.image) + '<div class="row"><input type="text" data-f="image" value="' + h(x.image || "") + '" placeholder="Choose or paste an image URL" class="grow" style="flex:1"><button type="button" class="btn sm ghost" data-pick="image">' + (x.image ? "Replace" : "Choose / upload") + "</button>" + (x.image ? '<button type="button" class="btn sm ghost" data-clear="image">Remove</button>' : "") + '</div>' + fld("image_alt", "Image description (alt text)", x.image_alt, { max: 200, hint: "Describe the picture for screen readers." });
     if (has("layout")) out += fld("layout", "Layout", x.layout || "split", { type: "select", options: [["split", "Text + image"], ["center", "Centered text only"]] });
     if (has("reverse")) out += '<label class="chk" style="margin-top:12px"><input type="checkbox" data-f="reverse"' + (x.reverse ? " checked" : "") + "> Show image on the left</label>";
     if (has("columns")) out += fld("columns", "Columns", String(x.columns || 3), { type: "select", options: [["2", "2"], ["3", "3"], ["4", "4"]] });
@@ -1331,7 +1519,7 @@ async function pageEditor(el, slug) {
       out += '<label class="l">Items</label><div class="items">' + (x.items || []).map(function (it, k) {
         return '<div class="item" data-ik="' + k + '"><div class="row sb"><b class="small">Item ' + (k + 1) + '</b><span class="row"><button class="ico" data-im="' + k + ':-1"' + (k === 0 ? " disabled" : "") + '>↑</button><button class="ico" data-im="' + k + ':1"' + (k === (x.items.length - 1) ? " disabled" : "") + '>↓</button><button class="ico" data-idel="' + k + '">✕</button></span></div>' +
           T.itemFields.map(function (f) {
-            if (f === "image") return '<label class="l">Image</label><div class="row"><input type="text" data-if="image" value="' + h(it.image || "") + '" style="flex:1"><button type="button" class="btn sm ghost" data-pickitem="' + k + '">Choose</button></div>';
+            if (f === "image") return '<label class="l">Image</label>' + thumb(it.image) + '<div class="row"><input type="text" data-if="image" value="' + h(it.image || "") + '" style="flex:1"><button type="button" class="btn sm ghost" data-pickitem="' + k + '">' + (it.image ? "Replace" : "Choose") + "</button>" + (it.image ? '<button type="button" class="btn sm ghost" data-clearitem="' + k + '">Remove</button>' : "") + "</div>";
             if (f === "text") return '<label class="l">' + ITEM_LABEL[f] + '</label><textarea data-if="text" rows="2">' + h(it.text || "") + "</textarea>";
             return '<label class="l">' + ITEM_LABEL[f] + '</label><input type="text" data-if="' + f + '" value="' + h(it[f] || "") + '">';
           }).join("") + "</div>";
@@ -1346,30 +1534,50 @@ async function pageEditor(el, slug) {
       var T = S.TYPES[x.type], open = openId === x.id;
       return '<div class="sec' + (x.visible === false ? " hid" : "") + '" data-si="' + i + '"><div class="sec-h"><div class="t" data-tog="1"><b>' + (i + 1) + ". " + h(T.label) + (x.visible === false ? ' <span class="badge b-archived">hidden</span>' : "") + "</b><span>" + h(((x.heading || x.body || "").replace(/<[^>]+>|\*/g, "")).slice(0, 70) || "(no heading)") + "</span></div>" +
         '<button class="ico wbtn" data-a="up" title="Move up"' + (i === 0 ? " disabled" : "") + '>↑</button><button class="ico wbtn" data-a="down" title="Move down"' + (i === draft.length - 1 ? " disabled" : "") + '>↓</button>' +
-        '<button class="ico wbtn" data-a="dup" title="Duplicate">⧉</button><button class="ico wbtn" data-a="hide" title="' + (x.visible === false ? "Show" : "Hide") + '">' + (x.visible === false ? "Show" : "Hide") + '</button><button class="ico wbtn" data-a="del" title="Delete">🗑</button><button class="ico" data-a="tog">' + (open ? "▲" : "Edit ▼") + "</button></div>" +
+        '<button class="ico wbtn" data-a="dup" title="Duplicate">⧉</button><button class="ico wbtn" data-a="hide" title="' + (x.visible === false ? "Show" : "Hide") + '">' + (x.visible === false ? "Show" : "Hide") + '</button><button class="ico wbtn" data-a="del" title="Delete">🗑</button><button class="ico" data-a="tog">' + (open ? "Close" : "Edit") + " " + ico("chev") + "</button></div>" +
         (open ? '<div class="sec-b">' + secForm(x) + "</div>" : "") + "</div>";
     }).join("") || '<div class="empty">No sections yet. Add one below.</div>';
   }
   function renderList() { $("#sl").innerHTML = listHtml(); }
 
-  el.innerHTML = '<div class="page-h"><div><a href="#content" class="small">← All pages</a><h1>Edit page: ' + h(row.title) + '</h1><div class="row"><span id="ed-status">' + badge(row.status) + '</span><span id="ed-dirty" class="badge b-draft hidden">unsaved changes</span>' + (usingDefaults ? '<span class="badge b-New">built-in layout loaded — save to keep</span>' : "") + "</div></div>" +
-    '<div class="row"><button class="btn ghost wbtn" id="b-save">Save draft</button><button class="btn wbtn" id="b-pub">Publish</button><button class="btn ghost wbtn" id="b-more">More…</button></div></div>' +
-    '<div class="ed"><div><div class="card"><div class="row sb"><b>Search &amp; sharing (SEO)</b><button class="ico" id="seo-tog">Edit ▼</button></div><div id="seo" class="hidden"></div></div>' +
+  el.innerHTML = '<div class="page-h"><div><a href="#builder" class="small">← Website Builder / Pages</a><h1>Edit page: ' + h(row.title) + '</h1><div class="row"><span id="ed-status">' + badge(row.status) + '</span><span id="ed-dirty" class="badge b-draft hidden">unsaved changes</span><span id="ed-live"></span>' + (usingDefaults ? '<span class="badge b-New">built-in layout loaded — save to keep</span>' : "") + "</div></div>" +
+    '<div class="row"><button class="btn ghost" id="b-prev" title="Open the draft in a new tab">Preview</button><button class="btn ghost wbtn" id="b-save">Save draft</button><button class="btn wbtn" id="b-pub">Publish</button><button class="btn ghost wbtn" id="b-more">More…</button></div></div>' +
+    '<div class="ed"><div><div class="card"><div class="row sb"><b>Page settings</b><button class="ico" id="seo-tog">Edit settings</button></div><div id="seo" class="hidden"></div></div>' +
     '<div style="margin-top:14px"><div id="sl"></div></div><div class="card wbtn row" style="margin-top:10px"><select id="add-type" style="flex:1;min-width:160px">' + Object.keys(S.TYPES).map(function (k) { return '<option value="' + k + '">' + h(S.TYPES[k].label) + "</option>"; }).join("") + '</select><button class="btn" id="add-sec">+ Add section</button></div></div>' +
     '<div class="pv"><div class="pv-bar"><b class="grow">Live preview</b><button class="chip" data-m="desktop">Desktop</button><button class="chip" data-m="mobile">Mobile</button></div><div class="pv-frame" id="pvf"><iframe id="pv" title="Page preview" sandbox=""></iframe></div><p class="hint">Shows your unsaved draft. Visitors see it only after you publish.</p></div></div>';
 
   function seoHtml() {
-    $("#seo").innerHTML = F("m-title", "Page title (shown in menus)", meta.title, { max: 80 }) + F("m-seot", "Browser / Google title", meta.seo_title, { max: 70, hint: "Aim for under 60 characters." }) +
+    var live = slug === "home" ? "/" : "/" + slug, ogs = meta.og_image ? I.safeImg(meta.og_image) : "";
+    $("#seo").innerHTML = F("m-title", "Page title (shown in menus)", meta.title, { max: 80 }) +
+      '<label class="l">URL</label><div class="row"><input type="text" readonly value="' + h(live) + '" style="flex:1" id="m-url-v">' + (isSys ? "" : '<button class="btn sm ghost wbtn" id="m-url">Change URL</button>') + '</div>' + (isSys ? '<div class="hint">Built-in pages keep their URL.</div>' : "") +
+      F("m-seot", "Browser / Google title", meta.seo_title, { max: 70, hint: "Aim for under 60 characters." }) +
       F("m-seod", "Meta description", meta.seo_description, { type: "textarea", rows: 3, max: 200, hint: "One or two sentences shown on Google and when sharing. Under 160 characters is best." }) +
-      '<label class="l">Sharing image (Open Graph)</label><div class="row"><input id="m-og" type="text" value="' + h(meta.og_image) + '" style="flex:1" placeholder="Leave empty to use the site default"><button class="btn sm ghost" id="m-pick">Choose</button></div><div class="hint">SEO fields are applied when you click Publish.</div>';
-    $("#m-title").oninput = function () { meta.title = this.value; setDirty(true); };
-    $("#m-seot").oninput = function () { meta.seo_title = this.value; setDirty(true); };
-    $("#m-seod").oninput = function () { meta.seo_description = this.value; setDirty(true); };
-    $("#m-og").oninput = function () { meta.og_image = this.value; setDirty(true); };
-    $("#m-pick").onclick = function () { pickMedia(function (u) { $("#m-og").value = u; meta.og_image = u; setDirty(true); }); };
+      '<label class="l">Sharing image (Open Graph)</label>' + (ogs ? '<div class="imgprev"><img src="' + h(ogs) + '" alt=""></div>' : "") + '<div class="row"><input id="m-og" type="text" value="' + h(meta.og_image) + '" style="flex:1" placeholder="Leave empty to use the site default"><button class="btn sm ghost" id="m-pick">' + (meta.og_image ? "Replace" : "Choose") + '</button>' + (meta.og_image ? '<button class="btn sm ghost" id="m-ogx">Remove</button>' : "") + "</div>" +
+      (feat ? '<label class="chk" style="margin-top:12px"><input type="checkbox" id="m-noidx"' + (meta.noindex ? " checked" : "") + "> Ask search engines not to list this page (noindex)</label>" : "") +
+      (feat && !isSys ? '<div class="card" style="margin-top:12px;background:var(--sand-soft)"><label class="chk"><input type="checkbox" id="m-nav"' + (meta.show_in_nav ? " checked" : "") + "> Show this page in the website menu</label>" +
+        '<div class="g2">' + F("m-navl", "Menu text (optional)", meta.nav_label, { max: 30, hint: "Empty = page title." }) + F("m-navo", "Menu position", meta.nav_order, { type: "number", attrs: 'min="0" max="999"', hint: "Lower = earlier. Built-in menu items come first." }) + "</div></div>" : "") +
+      '<div class="hint">' + (feat ? "Settings are saved as part of the draft and go live when you click Publish." : "SEO fields are applied when you click Publish.") + "</div>";
+    function on(id, f, k, num) { var e = $("#" + id); if (!e) return; e.oninput = e.onchange = function () { meta[k] = f(e); setDirty(true); }; }
+    on("m-title", function (e) { return e.value; }, "title"); on("m-seot", function (e) { return e.value; }, "seo_title"); on("m-seod", function (e) { return e.value; }, "seo_description"); on("m-og", function (e) { return e.value; }, "og_image");
+    on("m-noidx", function (e) { return e.checked; }, "noindex"); on("m-nav", function (e) { return e.checked; }, "show_in_nav"); on("m-navl", function (e) { return e.value; }, "nav_label");
+    on("m-navo", function (e) { var n = parseInt(e.value, 10); return isNaN(n) ? 100 : Math.max(0, Math.min(999, n)); }, "nav_order");
+    $("#m-pick").onclick = function () { pickMedia(function (u) { meta.og_image = u; setDirty(true); keepOpen(); }); };
+    var ox = $("#m-ogx"); if (ox) ox.onclick = function () { meta.og_image = ""; setDirty(true); keepOpen(); };
+    var uu = $("#m-url"); if (uu) uu.onclick = changeUrl;
   }
-  seoHtml(); renderList(); refreshPreview();
-  $("#seo-tog").onclick = function () { $("#seo").classList.toggle("hidden"); this.textContent = $("#seo").classList.contains("hidden") ? "Edit ▼" : "Hide ▲"; };
+  function keepOpen() { seoHtml(); $("#seo").classList.remove("hidden"); }
+  async function changeUrl() {
+    if (!needWrite()) return; if (dirty) return toast("Save your draft first, then change the URL.", true);
+    var taken = (await q(sb.from("pages").select("slug"))).data.map(function (r) { return r.slug; }).filter(function (x) { return x !== slug; });
+    modal({ title: "Change page URL", body: '<div class="alert warn">Links to the old address (/' + h(slug) + ') will stop working. Update any menu items or links that point to it.</div>' + F("cu-s", "New URL name", slug, { req: true, max: 60, hint: "Lowercase letters, numbers, hyphens." }), okLabel: "Change URL",
+      onOk: async function (m) {
+        var n = val("cu-s"), e = slugError(n, taken); if (n === slug) return true; if (e) { toast(e, true); mark("cu-s", m.el, true); return false; }
+        await q(sb.from("pages").update({ slug: n }).eq("slug", slug)); dirty = false; guard = null; toast("URL changed to /" + n); location.hash = "#builder/page/" + n; } });
+  }
+  function liveLink() { var on = row.status === "published" && !row.archived; $("#ed-live").innerHTML = on ? '<a class="small" target="_blank" rel="noopener" href="' + h(slug === "home" ? "/" : "/" + slug) + '">View live page ↗</a>' : ""; }
+  seoHtml(); renderList(); refreshPreview(); liveLink();
+  $("#b-prev").onclick = function () { var w = window.open(URL.createObjectURL(new Blob([previewDoc().replace("<head>", '<head><base href="' + location.origin + '/" target="_blank">')], { type: "text/html" })), "_blank"); if (!w) toast("Allow pop-ups to open the preview.", true); };
+  $("#seo-tog").onclick = function () { $("#seo").classList.toggle("hidden"); this.textContent = $("#seo").classList.contains("hidden") ? "Edit settings" : "Hide settings"; };
   $$("[data-m]", el).forEach(function (b) { b.onclick = function () { $("#pvf").style.width = b.getAttribute("data-m") === "mobile" ? "390px" : "100%"; }; });
 
   /* section list events (delegated) */
@@ -1387,6 +1595,8 @@ async function pageEditor(el, slug) {
       setDirty(true); renderList(); refreshPreview(); return;
     }
     if (t.hasAttribute("data-pick")) { pickMedia(function (u) { x.image = u; setDirty(true); renderList(); refreshPreview(); }); }
+    if (t.hasAttribute("data-clear")) { if (!needWrite()) return; x.image = ""; setDirty(true); renderList(); refreshPreview(); }
+    if (t.hasAttribute("data-clearitem")) { if (!needWrite()) return; x.items[+t.getAttribute("data-clearitem")].image = ""; setDirty(true); renderList(); refreshPreview(); }
     if (t.hasAttribute("data-pickitem")) { var k = +t.getAttribute("data-pickitem"); pickMedia(function (u) { x.items[k].image = u; setDirty(true); renderList(); refreshPreview(); }); }
     if (t.hasAttribute("data-iadd")) { var T = S.TYPES[x.type], it = {}; T.itemFields.forEach(function (f) { it[f] = ""; }); (x.items = x.items || []).push(it); setDirty(true); renderList(); refreshPreview(); }
     if (t.hasAttribute("data-idel")) { x.items.splice(+t.getAttribute("data-idel"), 1); setDirty(true); renderList(); refreshPreview(); }
@@ -1420,8 +1630,10 @@ async function pageEditor(el, slug) {
   }
   async function saveDraft() {
     if (!needWrite()) return; var errs = errorsList(); if (errs.length) return showErrors(errs);
-    var changed = JSON.stringify(draft) !== JSON.stringify(row.published_sections || []);
-    var r = await q(sb.from("pages").update({ draft_sections: draft, has_unpublished: changed, updated_at: new Date().toISOString() }).eq("slug", slug).select().single());
+    var changed = JSON.stringify(draft) !== JSON.stringify(row.published_sections || []) || (feat && JSON.stringify(meta) !== JSON.stringify(liveMeta()));
+    var upd = { draft_sections: draft, has_unpublished: changed, updated_at: new Date().toISOString() };
+    if (feat) upd.draft_meta = deep(meta);
+    var r = await q(sb.from("pages").update(upd).eq("slug", slug).select().single());
     row = r.data; setDirty(false); toast("Draft saved. Visitors still see the published version.");
     $("#ed-status").innerHTML = badge(row.status);
   }
@@ -1429,9 +1641,12 @@ async function pageEditor(el, slug) {
     if (!needWrite()) return; var errs = errorsList(); if (errs.length) return showErrors(errs);
     if (!(await confirmBox("Publish this page to the live website now?", { okLabel: "Publish" }))) return;
     var now = new Date().toISOString();
-    var r = await q(sb.from("pages").update({ title: meta.title || row.title, seo_title: meta.seo_title || null, seo_description: meta.seo_description || null, og_image: meta.og_image || null,
-      draft_sections: draft, published_sections: draft, has_unpublished: false, status: "published", published_at: now, updated_at: now }).eq("slug", slug).select().single());
-    row = r.data; setDirty(false); toast("Published ✓"); $("#ed-status").innerHTML = badge(row.status);
+    if (row.archived) return toast("Restore this page from the Pages list before publishing.", true);
+    var pub = { title: meta.title || row.title, seo_title: meta.seo_title || null, seo_description: meta.seo_description || null, og_image: meta.og_image || null,
+      draft_sections: draft, published_sections: draft, has_unpublished: false, status: "published", published_at: now, updated_at: now };
+    if (feat) { pub.noindex = !!meta.noindex; pub.draft_meta = null; if (!isSys) { pub.show_in_nav = !!meta.show_in_nav; pub.nav_label = (meta.nav_label || "").trim() || null; pub.nav_order = meta.nav_order; } }
+    var r = await q(sb.from("pages").update(pub).eq("slug", slug).select().single());
+    row = r.data; setDirty(false); toast("Published ✓" + (slug === "home" ? "" : " — live at /" + slug)); $("#ed-status").innerHTML = badge(row.status); liveLink();
   }
   $("#b-save").onclick = function () { saveDraft().catch(fail); };
   $("#b-pub").onclick = function () { publish().catch(fail); };
@@ -1439,12 +1654,16 @@ async function pageEditor(el, slug) {
     var m = modal({ title: "More actions", ok: false, cancelLabel: "Close", body:
       '<div class="stack"><button class="btn ghost" data-x1>Discard unsaved changes (reload saved version)</button>' +
       '<button class="btn ghost wbtn" data-x2>Discard draft → go back to the published version</button>' +
-      '<button class="btn ghost wbtn" data-x3>Reset to the built-in default layout</button>' +
+      '<button class="btn ghost wbtn" data-x3>Reset to the built-in default layout</button>' + (feat ? '<button class="btn ghost wbtn" data-x5>Save this layout as a template</button>' : "") +
       (slug !== "home" ? '<button class="btn danger wbtn" data-x4>' + (row.status === "published" ? "Unpublish this page (hide from website)" : "Publish this page again") + "</button>" : '<p class="hint">The home page is always visible and cannot be unpublished.</p>') + "</div>" });
     $("[data-x1]", m.el).onclick = function () { setDirty(false); m.close(); route(); };
     $("[data-x2]", m.el).onclick = async function () { m.close(); if (!needWrite()) return; if (!(await confirmBox("Throw away the draft and return to the published version?", { danger: true, okLabel: "Discard draft" }))) return;
       try { var pub = row.published_sections && row.published_sections.length ? row.published_sections : S.defaults(slug); await q(sb.from("pages").update({ draft_sections: pub, has_unpublished: false }).eq("slug", slug)); setDirty(false); route(); toast("Draft discarded"); } catch (e) { fail(e); } };
     $("[data-x3]", m.el).onclick = async function () { m.close(); if (!needWrite()) return; if (!(await confirmBox("Replace the draft with the built-in default layout? (Nothing goes live until you publish.)", { danger: true, okLabel: "Reset draft" }))) return; draft = S.defaults(slug); openId = null; setDirty(true); renderList(); refreshPreview(); };
+    var x5 = $("[data-x5]", m.el); if (x5) x5.onclick = function () { m.close(); if (!needWrite()) return;
+      modal({ title: "Save as template", body: F("tp-n", "Template name", meta.title, { req: true, max: 80 }) + F("tp-d", "Description (optional)", "", { max: 200 }) + '<p class="hint">Saves the current sections (text and image links, not image files). Use it when you create a page.</p>', okLabel: "Save template",
+        onOk: async function (mm) { var n = val("tp-n"); if (!n) { toast("Enter a template name.", true); mark("tp-n", mm.el, true); return false; }
+          await q(sb.from("page_templates").insert({ name: n, description: val("tp-d"), sections: freshIds(draft) })); toast("Template saved — pick it under Create page."); } }); };
     var x4 = $("[data-x4]", m.el); if (x4) x4.onclick = async function () { m.close(); if (!needWrite()) return; var on = row.status === "published";
       if (!(await confirmBox(on ? "Hide this page from the live website?" : "Make this page visible on the live website?", { danger: on, okLabel: on ? "Unpublish" : "Publish" }))) return;
       try { var r = await q(sb.from("pages").update({ status: on ? "draft" : "published", published_at: on ? row.published_at : new Date().toISOString() }).eq("slug", slug).select().single()); row = r.data; $("#ed-status").innerHTML = badge(row.status); toast(on ? "Page unpublished" : "Page published"); } catch (e) { fail(e); } };

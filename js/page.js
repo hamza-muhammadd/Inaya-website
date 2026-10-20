@@ -2,14 +2,19 @@
    sections in the database, or from the built-in defaults when none are saved. */
 Inaya.boot(async function (s) {
   var main = document.getElementById("main"), slug = main.getAttribute("data-page");
+  if (!slug) { slug = decodeURIComponent(location.pathname).replace(/^\/+|\/+$/g, "").toLowerCase(); }   // generic page.html: slug comes from the URL
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) slug = "";
   var r = await Promise.all([Inaya.loadPage(slug), Inaya.loadPrograms(), Inaya.loadFaqs()]);
   var page = r[0], ctx = { settings: s, programs: r[1], faqs: r[2] };
-  if (page.hidden && slug !== "home") {
-    main.innerHTML = '<section class="section"><div class="container center"><h1>Page not available</h1><p class="lead" style="margin:0 auto 1.4rem">This page is not published right now.</p><a class="btn" href="/">Go to home</a></div></section>';
+  if (!slug || (page.hidden && slug !== "home")) {
+    main.innerHTML = '<section class="section"><div class="container center"><h1>Page not found</h1><p class="lead" style="margin:0 auto 1.4rem">This page does not exist or is not published right now.</p><a class="btn" href="/">Go to home</a></div></section>';
     var m = document.createElement("meta"); m.name = "robots"; m.content = "noindex"; document.head.appendChild(m);
     return;
   }
   var sections = (page.sections && page.sections.length) ? page.sections : InayaSections.defaults(slug);
+  if (!sections.length) sections = [InayaSections.newSection("page_head", { heading: page.title || slug })];
+  if (page.noindex) { var ni = document.createElement("meta"); ni.name = "robots"; ni.content = "noindex"; document.head.appendChild(ni); }
+  else { var ex = document.querySelector('meta[name="robots"]'); if (ex && !page.hidden) ex.remove(); }
   main.innerHTML = InayaSections.render(sections, ctx);
   var path = slug === "home" ? "/" : "/" + slug;
   Inaya.setMeta({

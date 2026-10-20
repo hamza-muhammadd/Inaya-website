@@ -11,6 +11,6 @@
    ⚠ NEVER put the "service_role" key here or anywhere in this project.
    ===================================================================== */
 window.INAYA_CONFIG = {
-  SUPABASE_URL: "https://qevdsxkkssphekpvayqd.supabase.co",       
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFldmRzeGtrc3NwaGVrcHZheXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyODA0NzcsImV4cCI6MjEwNzg1NjQ3N30.0vOet9wZUNN9Jai0VfvM3hQUDlnIf47zXU3r0KJ8_aU"   
+  SUPABASE_URL: "https://qevdsxkkssphekpvayqd.supabase.co",       // e.g. "https://abcdxyz.supabase.co"
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFldmRzeGtrc3NwaGVrcHZheXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyODA0NzcsImV4cCI6MjEwNzg1NjQ3N30.0vOet9wZUNN9Jai0VfvM3hQUDlnIf47zXU3r0KJ8_aU"   // e.g. "eyJhbGciOi..."  (the long "anon public" key)
 };

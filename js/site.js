@@ -131,10 +131,26 @@
     return o;
   }
 
+  /* Settings + Website-Builder pages that are "shown in menu". The result is cached in
+     localStorage so the next page view paints header, footer and colours instantly
+     (no blank header, no colour/logo flash) and is refreshed from the database in the background. */
+  var CACHE_KEY = "inaya_site_v1";
+  function cachedSettings() {
+    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); return c && c.academy_name ? c : null; } catch (e) { return null; }
+  }
   function loadSettings() {
-    return get("site_settings?id=eq.1&select=data").then(function (rows) {
-      var d = rows && rows[0] && rows[0].data;
-      return merge(DEFAULT_SETTINGS, d || {});
+    return Promise.all([
+      get("site_settings?id=eq.1&select=data"),
+      get("public_pages?show_in_nav=eq.true&select=slug,title,nav_label,nav_order&order=nav_order.asc,title.asc")
+    ]).then(function (r) {
+      var d = r[0] && r[0][0] && r[0][0].data, s = merge(DEFAULT_SETTINGS, d || {});
+      var have = (s.nav || []).map(function (n) { return safeHref(n.href); });
+      (r[1] || []).forEach(function (p) {
+        var href = "/" + p.slug;
+        if (have.indexOf(href) < 0 && /^[a-z0-9-]+$/.test(p.slug)) s.nav = (s.nav || []).concat([{ label: p.nav_label || p.title, href: href }]);
+      });
+      if (r[0]) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(s)); } catch (e) {} }
+      return s;
     });
   }
 
@@ -278,7 +294,11 @@
         '<nav id="nav" class="nav" aria-label="Main">' + links +
         '<a class="btn sm" href="' + esc(safeHref(s.cta_primary_href)) + '">' + esc(s.cta_primary_label) + "</a></nav></div>";
       var btn = header.querySelector(".menu-btn"), nav = header.querySelector(".nav");
-      btn.addEventListener("click", function () { var o = nav.classList.toggle("open"); btn.setAttribute("aria-expanded", o); });
+      function shut() { nav.classList.remove("open"); btn.setAttribute("aria-expanded", "false"); }
+      btn.addEventListener("click", function (e) { e.stopPropagation(); var o = nav.classList.toggle("open"); btn.setAttribute("aria-expanded", o); });
+      nav.addEventListener("click", function (e) { if (e.target.closest("a")) shut(); });
+      document.addEventListener("click", function (e) { if (!header.contains(e.target)) shut(); });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") shut(); });
       var img = header.querySelector(".brand img");
       if (img) img.addEventListener("error", function () { img.outerHTML = '<span class="brand-text">' + name + "</span>"; });
     }
@@ -378,8 +398,12 @@
   function boot(cb) {
     var run = function () {
       attr = captureAttribution();
+      var cached = cachedSettings(), shown = cached ? JSON.stringify(cached) : "";
+      if (cached) { settingsRef = cached; applyTheme(cached); renderChrome(cached); }   // instant paint, no flash
       loadSettings().then(function (s) {
-        settingsRef = s; applyTheme(s); renderChrome(s); initAnalytics(s);
+        settingsRef = s; applyTheme(s);
+        if (JSON.stringify(s) !== shown) renderChrome(s);
+        initAnalytics(s);
         var p = location.pathname.replace(/\/+$/, "") || "/";
         track("page_view");
         if (/^\/programs\/[^/]+$/.test(p)) track("program_view");
@@ -387,8 +411,6 @@
       });
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run); else run();
-    var mb = document.getElementById("main");
-    if (mb && !mb.innerHTML.trim()) mb.innerHTML = '<div class="container loading">Loading…</div>';
   }
 
   window.Inaya = {
