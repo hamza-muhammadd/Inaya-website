@@ -1,0 +1,13 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright'); let pass=0,fail=0; const ok=(c,m)=>{c?pass++:fail++;console.log(c?'  PASS':'  FAIL',m)};
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox','--host-resolver-rules=MAP www.inayaquran.com 127.0.0.1']});
+const ctx=await b.newContext({viewport:{width:1360,height:800}});
+await ctx.route('**/config.js',r=>r.fulfill({contentType:'text/javascript',body:'window.INAYA_CONFIG={SUPABASE_URL:"https://x.supabase.co",SUPABASE_ANON_KEY:"anon"};'}));
+await ctx.route(/fonts\.(googleapis|gstatic)/,r=>r.abort()); await ctx.route(/x\.supabase\.co\/rest\/v1\//,r=>r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'[]'}));
+const pg=await ctx.newPage();
+await pg.goto('http://localhost:4173/home'); await pg.waitForTimeout(1200); ok(new URL(pg.url()).pathname==='/','/home goes to /');
+await pg.goto('http://localhost:4173/assessment'); await pg.waitForTimeout(1200);
+ok(await pg.evaluate(()=>[...document.querySelectorAll('.nav-link[aria-current]')].map(a=>a.textContent).join()==='' ),'on /assessment no menu item is marked current (Home is not)');
+await pg.goto('http://www.inayaquran.com:4173/'); await pg.waitForTimeout(1200);
+ok(await pg.evaluate(()=>document.querySelector('.nav-link[aria-current]').textContent==='Home'),'on / only Home is current');
+ok(await pg.evaluate(()=>document.querySelector('link[rel=canonical]').href.startsWith(location.origin)),'canonical uses the real host: '+await pg.evaluate(()=>document.querySelector('link[rel=canonical]').href));
+await b.close(); console.log(`RESULT ${pass} passed, ${fail} failed`)})();

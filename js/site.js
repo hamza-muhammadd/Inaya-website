@@ -178,6 +178,15 @@
   }
 
   /* ---------- SEO ---------- */
+  /* If the saved site address differs from the address the visitor is really on only by "www.", use the real one,
+     so canonical links never point at a host that redirects somewhere else. */
+  function sameSite(u) {
+    try {
+      var a = new URL(u), strip = function (h) { return h.replace(/^www\./, ""); };
+      if (strip(a.hostname) === strip(location.hostname) && a.host !== location.host) return location.origin + a.pathname + a.search;
+    } catch (e) {}
+    return u;
+  }
   function setMeta(m) {
     function tag(sel, attr, val, create) {
       if (!val) return;
@@ -192,6 +201,7 @@
     var img = m.image ? absUrl(m.image, m.siteUrl) : "";
     tag('meta[property="og:image"]', "content", img, { tag: "meta", attrs: { property: "og:image" } });
     tag('meta[name="twitter:image"]', "content", img, { tag: "meta", attrs: { name: "twitter:image" } });
+    if (m.canonical) m.canonical = sameSite(m.canonical);
     if (m.canonical) tag('link[rel="canonical"]', "href", m.canonical, { tag: "link", attrs: { rel: "canonical" } });
     if (m.canonical) tag('meta[property="og:url"]', "content", m.canonical, { tag: "meta", attrs: { property: "og:url" } });
   }

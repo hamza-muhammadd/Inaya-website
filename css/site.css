@@ -51,7 +51,9 @@ main { min-height: 70vh; }
 .brand .brand-text { font-family: var(--font-head); font-size: 1.35rem; color: var(--primary); font-weight: 600; }
 .nav { display: flex; align-items: center; gap: 4px; }
 .nav a.nav-link { text-decoration: none; color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: .95rem; }
-.nav a.nav-link:hover, .nav a.nav-link[aria-current="page"] { color: var(--primary); background: var(--accent-soft); }
+.nav a.nav-link:hover { color: var(--primary); background: color-mix(in srgb, var(--accent-soft) 60%, transparent); }
+.nav a.nav-link[aria-current="page"] { color: var(--primary); font-weight: 600; background: var(--accent-soft); }
+.nav a.nav-link[aria-current="page"]::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 3px; height: 2px; border-radius: 2px; background: var(--accent); }
 .nav .btn { margin-left: 8px; }
 .menu-btn { display: none; align-items: center; gap: 8px; background: none; border: 1px solid var(--border); border-radius: 12px; padding: 8px 14px; font: inherit; font-weight: 500; color: var(--primary); cursor: pointer; }
 .menu-btn::before { content: ""; width: 16px; height: 2px; background: currentColor; box-shadow: 0 5px 0 currentColor, 0 -5px 0 currentColor; border-radius: 2px; }

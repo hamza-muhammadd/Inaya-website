@@ -4,6 +4,7 @@ Inaya.boot(async function (s) {
   var main = document.getElementById("main"), slug = main.getAttribute("data-page");
   if (!slug) { slug = decodeURIComponent(location.pathname).replace(/^\/+|\/+$/g, "").toLowerCase(); }   // generic page.html: slug comes from the URL
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) slug = "";
+  if (slug === "home" && location.pathname !== "/") { location.replace("/" + location.search + location.hash); return; }   // the home page lives at / only
   var r = await Promise.all([Inaya.loadPage(slug), Inaya.loadPrograms(), Inaya.loadFaqs()]);
   var page = r[0], ctx = { settings: s, programs: r[1], faqs: r[2] };
   var BUILTIN = InayaSections.META[slug];   // built-in pages fall back to their default layout when no row exists yet
