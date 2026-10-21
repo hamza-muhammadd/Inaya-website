@@ -31,6 +31,15 @@
 <main id="main"><section class="section"><div class="container center"><div class="eyebrow">404</div><h1>Page not found</h1><p class="lead" style="margin:0 auto 1.4rem">The page you are looking for may have moved. Let's get you back on track.</p><div class="btn-row"><a class="btn" href="/">Go to home</a><a class="btn ghost" href="/programs">View programs</a></div></div></section></main>
 <footer id="site-footer"></footer>
 <noscript><p style="padding:20px;text-align:center">Please enable JavaScript to view this page. / এই পেজ দেখতে JavaScript চালু করুন। / يرجى تفعيل جافا سكريبت.</p></noscript>
+<script>
+/* Safety net: if the host did not apply the rewrite rules in vercel.json, send known page addresses to the file that draws them. */
+(function () {
+  var p = location.pathname.replace(/\/+$/, ""), m = /^\/programs\/([a-z0-9-]+)$/i.exec(p);
+  if (m) { location.replace("/program.html?slug=" + m[1].toLowerCase() + location.hash); return; }
+  m = /^\/([a-z0-9-]+)$/i.exec(p);
+  if (m && !/^(admin|404|program|page|index)$/i.test(m[1])) location.replace("/page.html?slug=" + m[1].toLowerCase() + location.hash);
+})();
+</script>
 <script src="/config.js"></script>
 <script src="/js/i18n-dict.js"></script>
 <script src="/js/i18n.js"></script>

@@ -2,7 +2,11 @@
    sections in the database, or from the built-in defaults when none are saved. */
 Inaya.boot(async function (s) {
   var main = document.getElementById("main"), slug = main.getAttribute("data-page");
-  if (!slug) { slug = decodeURIComponent(location.pathname).replace(/^\/+|\/+$/g, "").toLowerCase(); }   // generic page.html: slug comes from the URL
+  if (!slug) {
+    slug = decodeURIComponent(location.pathname).replace(/^\/+|\/+$/g, "").toLowerCase();
+    var qslug = new URLSearchParams(location.search).get("slug");
+    if (qslug && /^(page|page\.html)$/.test(slug)) { slug = qslug.toLowerCase(); try { history.replaceState(null, "", "/" + encodeURIComponent(slug) + location.hash); } catch (e) {} }
+  }   // generic page.html: slug comes from the URL
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) slug = "";
   if (slug === "home" && location.pathname !== "/") { location.replace("/" + location.search + location.hash); return; }   // the home page lives at / only
   var r = await Promise.all([Inaya.loadPage(slug), Inaya.loadPrograms(), Inaya.loadFaqs()]);

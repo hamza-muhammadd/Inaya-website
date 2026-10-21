@@ -38,7 +38,9 @@
 <script src="/js/sections.js"></script>
 <script>
 Inaya.boot(async function (s) {
-  var slug = decodeURIComponent(location.pathname.replace(/\/+$/, "").split("/").pop() || "");
+  var qs = new URLSearchParams(location.search).get("slug"), last = decodeURIComponent(location.pathname.replace(/\/+$/, "").split("/").pop() || "");
+  var slug = (qs && /^(program|program\.html)$/.test(last)) ? qs : last;
+  if (qs && slug === qs) { try { history.replaceState(null, "", "/programs/" + encodeURIComponent(qs) + location.hash); } catch (e) {} }
   var programs = await Inaya.loadPrograms();
   var p = programs.filter(function (x) { return x.slug === slug; })[0];
   var main = document.getElementById("main");
