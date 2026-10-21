@@ -1,0 +1,30 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const fs=require('fs');
+const mock=fs.readFileSync(__dirname+'/mock_supabase.js','utf8');
+let pass=0,fail=0; const ok=(c,m)=>{ if(c){pass++;console.log('  PASS',m)}else{fail++;console.log('  FAIL',m)} };
+(async()=>{
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox']});
+const ctx=await b.newContext({viewport:{width:1360,height:900}});
+await ctx.route('**/@supabase/supabase-js**',r=>r.fulfill({contentType:'text/javascript',body:mock}));
+await ctx.route('**/config.js',r=>r.fulfill({contentType:'text/javascript',body:'window.INAYA_CONFIG={SUPABASE_URL:"https://x.supabase.co",SUPABASE_ANON_KEY:"anon"};'}));
+await ctx.route(/fonts\.(googleapis|gstatic)/,r=>r.abort());
+await ctx.addInitScript('window.__PERSIST=true');
+const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+await pg.goto('http://localhost:4173/admin#builder/page/about'); await pg.waitForTimeout(1400);
+await pg.click('#sl .sec .t'); await pg.waitForTimeout(300);
+ok(await pg.locator('details.trans').count()===1,'translations panel appears in the section editor');
+await pg.click('details.trans summary');
+await pg.fill('details.trans [data-tl="bn:heading"]','আমাদের গল্প'); await pg.waitForTimeout(200);
+await pg.click('#b-save'); await pg.waitForTimeout(500);
+const row=await pg.evaluate(()=>{const d=JSON.parse(sessionStorage.getItem('__mockdb')).pages;return d.find(p=>p.slug==='about')});
+const sec=(row.draft_sections||[])[0];
+ok(sec&&sec.i18n&&sec.i18n.bn&&sec.i18n.bn.heading==='আমাদের গল্প','saved i18n.bn.heading in the draft: '+JSON.stringify(sec&&sec.i18n));
+// public render uses override
+const pub=await ctx.newPage();
+await pub.route(/x\.supabase\.co\/rest\/v1\//,r=>r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'[]'}));
+await pub.route(/x\.supabase\.co\/rest\/v1\/public_pages/,r=>r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify([{slug:'about',title:'About',sections:row.draft_sections}])}));
+await pub.goto('http://localhost:4173/?lang=bn'); await pub.goto('http://localhost:4173/about'); await pub.waitForTimeout(1500);
+ok(/আমাদের গল্প/.test(await pub.innerText('main h1, main h2')),'visitor in Bangla sees the owner translation');
+await pub.goto('http://localhost:4173/?lang=en'); await pub.goto('http://localhost:4173/about'); await pub.waitForTimeout(1200);
+ok(!/আমাদের গল্প/.test(await pub.innerText('main')),'English visitor does not');
+ok(errs.length===0,'no page errors '+errs.join('|'));
+await b.close(); console.log(`RESULT ${pass} passed, ${fail} failed`)})();

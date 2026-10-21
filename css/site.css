@@ -279,3 +279,51 @@ html.mo .card[data-st].in:hover { transform: translateY(-5px); }
 
 /* keep the footer out of sight until the page body exists, so it cannot jump when content arrives */
 main:empty + footer { visibility: hidden; }
+
+/* ---------- Language switcher ---------- */
+.lang-switch { position: relative; margin-inline-start: auto; }
+.lang-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); border-radius: 999px; padding: 7px 12px; font: inherit; font-size: .86rem; font-weight: 600; color: var(--primary); cursor: pointer; }
+.lang-btn:hover { background: var(--accent-soft); }
+.lang-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 8px); min-width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 16px 40px rgba(15,60,45,.16); padding: 8px; z-index: 70; display: grid; gap: 2px; }
+.lang-menu[hidden] { display: none; }
+.lang-menu button { display: block; width: 100%; text-align: start; background: none; border: 0; border-radius: 8px; padding: 10px 12px; font: inherit; color: var(--text); cursor: pointer; }
+.lang-menu button:hover { background: var(--accent-soft); }
+.lang-menu button[aria-checked="true"] { color: var(--primary); font-weight: 600; background: var(--accent-soft); }
+.lang-menu .more { display: block; border-top: 1px solid var(--border); margin-top: 6px; padding: 10px 4px 2px; font-size: .78rem; color: var(--muted); }
+.lang-menu .more select { width: 100%; margin-top: 6px; font-size: .9rem; padding-top: 8px; padding-bottom: 8px; }
+.header-in .lang-switch + .nav { margin-inline-start: 0; }
+@media (min-width: 861px) { .header-in { gap: 12px; } .header-in .nav { order: 1; } .header-in .lang-switch { order: 2; margin-inline-start: 4px; } }
+@media (max-width: 860px) { .lang-switch { margin-inline-start: auto; } }
+
+/* Google Translate: hide its banner and widget chrome */
+.goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame, .skiptranslate iframe { display: none !important; }
+body { top: 0 !important; }
+.goog-text-highlight { background: none !important; box-shadow: none !important; }
+
+/* ---------- Bangla and Arabic typography ---------- */
+html.lang-bn body, html.lang-bn { font-family: "Hind Siliguri", var(--font-body); }
+html.lang-bn h1, html.lang-bn h2, html.lang-bn h3, html.lang-bn h4 { font-family: "Hind Siliguri", var(--font-head); letter-spacing: 0; line-height: 1.35; font-weight: 600; }
+html.lang-bn .eyebrow, html.lang-ar .eyebrow { letter-spacing: .04em; text-transform: none; }
+html.lang-ar body { font-family: "Noto Naskh Arabic", "Amiri", var(--font-body); line-height: 1.85; }
+html.lang-ar h1, html.lang-ar h2, html.lang-ar h3, html.lang-ar h4 { font-family: "Amiri", "Noto Naskh Arabic", serif; letter-spacing: 0; line-height: 1.5; font-weight: 700; }
+html.lang-ar .btn, html.lang-ar .nav-link, html.lang-ar .lang-btn { font-family: "Noto Naskh Arabic", var(--font-body); }
+
+/* ---------- Right-to-left ---------- */
+[dir="rtl"] .nav .btn { margin-left: 0; margin-right: 8px; }
+[dir="rtl"] .rich ul { padding-left: 0; padding-right: 1.2em; }
+[dir="rtl"] .checklist li { padding-left: 0; padding-right: 28px; }
+[dir="rtl"] .checklist li::before { left: auto; right: 4px; }
+[dir="rtl"] .hero-badge { left: auto; right: -18px; }
+[dir="rtl"] .hero::before { right: auto; left: -140px; }
+[dir="rtl"] .req { margin-left: 0; margin-right: 4px; }
+[dir="rtl"] .wa-float { right: auto; left: 18px; }
+[dir="rtl"] .center .faq { text-align: right; }
+html[dir="rtl"].mo [data-anim="left"] { transform: translateX(36px); }
+html[dir="rtl"].mo [data-anim="right"] { transform: translateX(-36px); }
+html[dir="rtl"].mo [data-anim="left"].in, html[dir="rtl"].mo [data-anim="right"].in { transform: none; }
+[dir="rtl"] select { background-position: left 12px center; padding-right: 14px; padding-left: 36px; }
+[dir="rtl"] .nav a.nav-link[aria-current="page"]::after { left: 14px; right: 14px; }
+@media (max-width: 860px) { [dir="rtl"] .hero-badge { right: 8px; } [dir="rtl"] .nav .btn { margin-right: 0; } }
+body { overflow-x: clip; }
+[dir="rtl"] .hp, [dir="rtl"] .skip:not(:focus) { left: auto; right: -5000px; }
+[dir="rtl"] .skip:focus { left: auto; right: 8px; }

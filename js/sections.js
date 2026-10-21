@@ -268,9 +268,22 @@
     return cats.map(function (k) { return '<h3 class="faq-cat">' + esc(k) + "</h3>" + faqHtml(map[k]); }).join("");
   }
 
+  /* Owner-written translations live in section.i18n = { bn: {heading: "..."}, ar: {...} }.
+     Text fields are replaced for the visitor's language; lists are matched by position. */
+  function overlay(x) {
+    var L = window.InayaI18n && window.InayaI18n.lang, o = x && x.i18n && L && x.i18n[L];
+    if (!o) return x;
+    var y = JSON.parse(JSON.stringify(x));
+    Object.keys(o).forEach(function (k) {
+      if (k === "items" && Array.isArray(o.items) && Array.isArray(y.items)) {
+        o.items.forEach(function (it, i) { if (it && y.items[i]) Object.keys(it).forEach(function (f) { if (it[f]) y.items[i][f] = it[f]; }); });
+      } else if (typeof o[k] === "string" && o[k].trim()) y[k] = o[k];
+    });
+    return y;
+  }
   function render(sections, ctx) {
     return (sections || []).filter(function (x) { return x && x.visible !== false && R[x.type]; })
-      .map(function (x) { try { return R[x.type](x, ctx); } catch (e) { console.error(e); return ""; } }).join("");
+      .map(overlay).map(function (x) { try { return R[x.type](x, ctx); } catch (e) { console.error(e); return ""; } }).join("");
   }
 
   /* ---------- program detail ---------- */

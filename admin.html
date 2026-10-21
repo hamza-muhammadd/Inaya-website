@@ -51,7 +51,7 @@ input[type=text],input[type=email],input[type=password],input[type=search],input
 textarea{min-height:90px;resize:vertical}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(15,76,58,.14)}
 input.bad,select.bad,textarea.bad{border-color:var(--bad)}
-.hint{font-size:.78rem;color:var(--mu);margin-top:3px}
+.hint{font-size:.78rem;color:var(--mu);margin-top:3px}details.trans{margin-top:14px;border:1px dashed var(--bd);border-radius:12px;padding:10px 12px}details.trans>summary{cursor:pointer;font-weight:600;color:var(--p,#0F4C3A)}
 .chk{display:flex;gap:8px;align-items:center;font-size:.9rem}.chk input{width:17px;height:17px;accent-color:var(--g)}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
 @media(max-width:700px){.g2,.g3{grid-template-columns:1fr}}
@@ -63,7 +63,7 @@ h1{font-size:1.5rem}h2{font-size:1.2rem}
 .shell{padding:28px}
 .frame{max-width:1640px;margin:0 auto;background:var(--page);border-radius:32px;padding:20px 28px 40px;min-height:calc(100vh - 56px)}
 .topbar{display:flex;align-items:center;gap:18px;margin-bottom:20px}
-.topbar .brand{display:flex;align-items:center;gap:8px;text-decoration:none;flex:none}.topbar .brand img{height:40px;width:auto;border-radius:8px}
+.topbar .brand{display:flex;align-items:center;gap:8px;text-decoration:none;flex:none}.topbar .brand img{height:40px;width:auto;border-radius:8px}.topbar .brand{position:relative;cursor:pointer}.topbar .brand .brand-edit{position:absolute;right:-6px;top:-6px;background:var(--p,#0F4C3A);color:#fff;border-radius:999px;font-size:.62rem;font-weight:600;padding:2px 7px;opacity:0;transform:translateY(2px);transition:.15s;pointer-events:none}.topbar .brand:hover .brand-edit,.topbar .brand:focus-visible .brand-edit{opacity:1;transform:none}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 .search{position:relative;flex:0 1 400px}
 .search input{padding:10px 14px 10px 42px;border-radius:14px;background:var(--sage1);border:1px solid var(--bd)}
@@ -294,7 +294,7 @@ input[type=text],input[type=email],input[type=password],input[type=search],input
  <div class="frame">
   <header class="topbar">
     <button id="menu" class="ibtn" aria-label="Open menu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-    <a class="brand" href="#overview"><img src="/assets/img/logo.png" alt="Inaya Quran Academy"></a>
+    <a class="brand" id="brand" href="#" title="Click to change the logo and brand" aria-label="Change logo and brand"><img id="brand-img" src="/assets/img/logo.png" alt="Inaya Quran Academy"><span class="brand-edit" aria-hidden="true">Edit</span></a>
     <div class="search rel"><svg class="si ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="gsearch" type="search" placeholder="Search inquiries…" autocomplete="off" aria-label="Search inquiries"><div id="gres" class="pop hidden"></div></div>
     <div class="tb-right">
@@ -424,7 +424,7 @@ async function enter(session) {
   document.body.classList.toggle("ro", !canWrite);
   $("#who-email").textContent = me.email; $("#who-role").textContent = role; $("#who-av").textContent = (me.email || "A").charAt(0).toUpperCase();
   var s = await sb.from("site_settings").select("data").eq("id", 1).maybeSingle();
-  settings = I.merge(I.DEFAULT_SETTINGS, (s.data && s.data.data) || {});
+  settings = I.merge(I.DEFAULT_SETTINGS, (s.data && s.data.data) || {}); applyBrand();
   showOnly("app"); resetIdle(); route();
 }
 
@@ -580,8 +580,49 @@ VIEWS.soon = function (el, args) {
 renderNav();
 async function saveSettings(data) {
   await q(sb.from("site_settings").upsert({ id: 1, data: data, updated_at: new Date().toISOString() }));
-  settings = I.merge(I.DEFAULT_SETTINGS, data);
+  settings = I.merge(I.DEFAULT_SETTINGS, data); applyBrand();
 }
+/* The admin logo and the public site logo come from the same setting, so changing one changes both. */
+function applyBrand() {
+  var im = $("#brand-img"); if (!im) return;
+  var u = I.safeImg(settings.logo_url) || "/assets/img/logo.png";
+  if (im.getAttribute("src") !== u) im.setAttribute("src", u);
+  im.alt = settings.academy_name || "Academy";
+  try { localStorage.removeItem("inaya_site_v1"); } catch (e) {}
+}
+function brandModal() {
+  if (!needWrite()) return;
+  var cur = deep(settings);
+  function pv() {
+    var l = I.safeImg(val("br-logo")), lh = Math.min(160, Math.max(20, parseInt(val("br-lh"), 10) || 44)), fh = Math.min(160, Math.max(20, parseInt(val("br-flh"), 10) || 44));
+    var fl = I.safeImg(val("br-flogo")) || l;
+    $("#br-pv").innerHTML = l ? '<img src="' + h(l) + '" alt="Header logo preview" style="height:' + lh + 'px;width:auto;display:block">' : '<span class="muted small">No logo set. The academy name is shown as text.</span>';
+    $("#br-fpv").innerHTML = fl ? '<img src="' + h(fl) + '" alt="Footer logo preview" style="height:' + fh + 'px;width:auto;display:block;' + (val("br-fmode") === "white" ? "filter:brightness(0) invert(1)" : "") + '">' : "";
+  }
+  function imgRow(id, label, v, hint) { return '<label class="l" for="' + id + '">' + label + '</label><div class="row"><input id="' + id + '" type="text" value="' + h(v || "") + '" style="flex:1" placeholder="Image address"><button type="button" class="btn sm ghost" data-pk="' + id + '">Choose / upload</button></div>' + (hint ? '<div class="hint">' + hint + "</div>" : ""); }
+  var m = modal({ title: "Logo and brand", wide: true, okLabel: "Save and apply",
+    body: '<p class="muted small" style="margin-top:0">This logo is used at the top of the public website, in the footer and here in the admin panel. Save once and all of them change together.</p>' +
+      F("br-name", "Academy name", cur.academy_name, { req: true, max: 100 }) +
+      imgRow("br-logo", "Logo", cur.logo_url, "A transparent PNG works best. It is never stretched.") +
+      '<div class="g2" style="margin-top:8px">' + F("br-lh", "Header logo height (px)", cur.logo_height, { type: "number", attrs: 'min="20" max="160"' }) + F("br-flh", "Footer logo height (px)", cur.footer_logo_height, { type: "number", attrs: 'min="20" max="160"' }) + "</div>" +
+      '<div id="br-pv" style="background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block;margin-bottom:10px"></div>' +
+      imgRow("br-flogo", "Footer logo (optional)", cur.footer_logo_url, "Leave empty to use the main logo.") +
+      F("br-fmode", "Footer logo colour", cur.footer_logo_mode === "original" ? "original" : "white", { type: "select", options: [["white", "Make it white"], ["original", "Keep original colours"]] }) +
+      '<div id="br-fpv" style="background:' + (((cur.colors || {}).primary) || "#0F4C3A") + ';border-radius:10px;padding:10px;display:inline-block"></div>',
+    onOpen: function (mm) {
+      $$("[data-pk]", mm.el).forEach(function (b) { b.onclick = function () { pickMedia(function (u) { $("#" + b.getAttribute("data-pk"), mm.el).value = u; pv(); }); }; });
+      ["br-logo", "br-lh", "br-flh", "br-flogo"].forEach(function (i) { $("#" + i, mm.el).addEventListener("input", pv); }); $("#br-fmode", mm.el).addEventListener("change", pv); pv();
+    },
+    onOk: async function () {
+      var name = val("br-name"); if (!name) { toast("Academy name is required.", true); return false; }
+      var d = deep(settings);
+      d.academy_name = name; d.logo_url = val("br-logo"); d.footer_logo_url = val("br-flogo"); d.footer_logo_mode = val("br-fmode");
+      d.logo_height = Math.min(160, Math.max(20, parseInt(val("br-lh"), 10) || 44)); d.footer_logo_height = Math.min(160, Math.max(20, parseInt(val("br-flh"), 10) || 44));
+      await saveSettings(d); toast("Logo saved. The website and admin panel both use it now.");
+      if (location.hash.indexOf("#settings") === 0) route();
+    } });
+}
+document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("#brand"); if (b) { e.preventDefault(); brandModal(); } });
 /* ================= OVERVIEW (dashboard, real data only) ================= */
 var STATUSES = ["New", "Contacted", "Assessment Scheduled", "Assessment Completed", "Follow-up Required", "Enrollment Pending", "Enrollment Confirmed", "Not Proceeding"];
 var DAY = 864e5;
@@ -1582,6 +1623,32 @@ async function pageEditor(el, slug) {
   /* --- form HTML for one section --- */
   function fld(f, label, v, o) { o = o || {}; o.attrs = (o.attrs || "") + ' data-f="' + f + '"'; return F("sf-" + f, label, v, o).replace('id="sf-' + f + '"', ""); }
   function thumb(u) { var sf = u ? I.safeImg(u) : ""; return sf ? '<div class="imgprev"><img src="' + h(sf) + '" alt="" onerror="this.parentNode.classList.add(\'broken\')"></div>' : ""; }
+  /* Optional Bangla and Arabic text for a section. Empty fields fall back to the built-in translation or the English text. */
+  var LANGS = [["bn", "Bangla (বাংলা)", "ltr"], ["ar", "Arabic (العربية)", "rtl"]];
+  function trForm(x, T, has) {
+    var fields = []; if (has("eyebrow")) fields.push(["eyebrow", "Small label"]); if (has("heading")) fields.push(["heading", "Heading"]); if (has("body")) fields.push(["body", "Body text"]);
+    if (has("buttons")) { fields.push(["button_label", "Button 1 label"]); fields.push(["button2_label", "Button 2 label"]); }
+    var hasItems = T.itemFields && (x.items || []).length, ifs = (T.itemFields || []).filter(function (f) { return f !== "image"; });
+    if (!fields.length && !(hasItems && ifs.length)) return "";
+    var tr = x.i18n || {}, filled = LANGS.some(function (l) { return tr[l[0]] && Object.keys(tr[l[0]]).length; });
+    var html = '<details class="trans"' + (filled ? " open" : "") + '><summary>Translations (Bangla, Arabic)</summary><div class="hint" style="margin:6px 0 10px">Optional. Leave a field empty to use the built-in translation or the English text above.</div>';
+    LANGS.forEach(function (l) {
+      var o = tr[l[0]] || {};
+      html += '<div class="card" style="margin:0 0 10px;padding:12px"><b class="small">' + l[1] + "</b>";
+      fields.forEach(function (f) {
+        var big = f[0] === "body";
+        html += '<label class="l">' + f[1] + "</label>" + (big ? '<textarea rows="4" dir="' + l[2] + '" data-tl="' + l[0] + ":" + f[0] + '">' + h(o[f[0]] || "") + "</textarea>" : '<input type="text" dir="' + l[2] + '" data-tl="' + l[0] + ":" + f[0] + '" value="' + h(o[f[0]] || "") + '">');
+      });
+      if (hasItems) (x.items || []).forEach(function (it, k) {
+        html += '<div class="item" style="margin-top:8px"><b class="small">Item ' + (k + 1) + '</b>' + ifs.map(function (f) {
+          var v = (((o.items || [])[k]) || {})[f] || "";
+          return '<label class="l">' + ITEM_LABEL[f] + '</label><input type="text" dir="' + l[2] + '" data-ti="' + l[0] + ":" + k + ":" + f + '" value="' + h(v) + '">';
+        }).join("") + "</div>";
+      });
+      html += "</div>";
+    });
+    return html + "</details>";
+  }
   function secForm(x) {
     var T = S.TYPES[x.type], out = "", has = function (f) { return T.fields.indexOf(f) > -1; };
     if (T.note) out += '<div class="alert info" style="margin:10px 0 0">' + h(T.note) + "</div>";
@@ -1605,6 +1672,7 @@ async function pageEditor(el, slug) {
           }).join("") + "</div>";
       }).join("") + '<button class="btn sm ghost" data-iadd="1">+ Add item</button></div>';
     }
+    out += trForm(x, T, has);
     out += fld("anim", "Animation when this section appears", x.anim || "up", { type: "select", options: [["up", "Rise up (default)"], ["fade", "Fade in"], ["zoom", "Zoom in softly"], ["left", "Slide in from the left"], ["right", "Slide in from the right"], ["none", "No animation"]] });
     out += '<div class="g2">' + fld("align", "Text alignment", x.align || "left", { type: "select", options: [["left", "Left"], ["center", "Centered"]] }) + fld("bg", "Background", x.bg || "", { type: "select", options: BG_OPTS }) + "</div>";
     return out;
@@ -1691,6 +1759,8 @@ async function pageEditor(el, slug) {
       if (f === "columns" || f === "limit") v = parseInt(v, 10) || (f === "limit" ? 5 : 3);
       x[f] = v; if (f === "button_href" || f === "button2_href") t.classList.toggle("bad", !validHref(String(v).trim()));
     } else if (t.hasAttribute("data-if")) { var k = +t.closest("[data-ik]").getAttribute("data-ik"); x.items[k][t.getAttribute("data-if")] = t.value; }
+    else if (t.hasAttribute("data-tl")) { var a = t.getAttribute("data-tl").split(":"); x.i18n = x.i18n || {}; (x.i18n[a[0]] = x.i18n[a[0]] || {})[a[1]] = t.value; if (!t.value) delete x.i18n[a[0]][a[1]]; }
+    else if (t.hasAttribute("data-ti")) { var b = t.getAttribute("data-ti").split(":"), lg = (x.i18n = x.i18n || {})[b[0]] = (x.i18n || {})[b[0]] || {}; lg.items = lg.items || []; while (lg.items.length <= +b[1]) lg.items.push({}); lg.items[+b[1]][b[2]] = t.value; }
     else return;
     setDirty(true); refreshSoon();
     if (e.type === "change" && t.tagName === "SELECT") renderList();

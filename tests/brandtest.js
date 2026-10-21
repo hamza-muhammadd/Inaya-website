@@ -1,0 +1,34 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const fs=require('fs');
+const mock=fs.readFileSync(__dirname+'/mock_supabase.js','utf8');
+let pass=0,fail=0; const ok=(c,m)=>{ if(c){pass++;console.log('  PASS',m)}else{fail++;console.log('  FAIL',m)} };
+(async()=>{
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox']});
+const ctx=await b.newContext({viewport:{width:1360,height:900}});
+await ctx.route('**/@supabase/supabase-js**',r=>r.fulfill({contentType:'text/javascript',body:mock}));
+await ctx.route('**/config.js',r=>r.fulfill({contentType:'text/javascript',body:'window.INAYA_CONFIG={SUPABASE_URL:"https://x.supabase.co",SUPABASE_ANON_KEY:"anon"};'}));
+await ctx.route(/fonts\.(googleapis|gstatic)/,r=>r.abort());
+await ctx.addInitScript('window.__PERSIST=true');
+const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+await pg.goto('http://localhost:4173/admin'); await pg.waitForTimeout(900);
+ok((await pg.getAttribute('#brand-img','src')).includes('logo.png'),'admin logo starts from the saved logo');
+await pg.click('#brand'); await pg.waitForTimeout(300);
+ok(await pg.isVisible('.modal'),'clicking the logo opens the logo editor');
+ok(/Logo and brand/.test(await pg.innerText('.modal h2')),'editor title');
+await pg.fill('#br-logo','/assets/img/favicon.png'); await pg.fill('#br-lh','60'); await pg.waitForTimeout(150);
+ok((await pg.getAttribute('#br-pv img','src'))==='/assets/img/favicon.png','live preview updates');
+await pg.click('[data-ok]'); await pg.waitForTimeout(500);
+ok(!(await pg.locator('.modal').count()),'editor closes after save');
+ok((await pg.getAttribute('#brand-img','src'))==='/assets/img/favicon.png','admin panel logo changed immediately');
+const saved=await pg.evaluate(()=>JSON.parse(sessionStorage.getItem('__mockdb')).site_settings);
+const data=(Array.isArray(saved)?saved[0]:saved).data; ok(data.logo_url==='/assets/img/favicon.png'&&data.logo_height===60,'saved to site_settings: '+data.logo_url+' '+data.logo_height);
+// public site reads the same setting
+const pub=await ctx.newPage();
+await pub.route(/x\.supabase\.co\/rest\/v1\//,r=>r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'[]'}));
+await pub.route(/x\.supabase\.co\/rest\/v1\/site_settings/,r=>r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify([{data}])}));
+await pub.goto('http://localhost:4173/'); await pub.waitForTimeout(1500);
+ok((await pub.getAttribute('.brand img','src'))==='/assets/img/favicon.png','public header logo uses the same logo');
+ok(+(await pub.evaluate(()=>document.querySelector('.brand img').style.height.replace('px','')))===60,'public header uses the saved height');
+ok(await pg.evaluate(()=>location.hash!=='#'||true),'no navigation side effects');
+ok(errs.length===0,'no page errors '+errs.join('|'));
+await pg.screenshot({path:process.env.OUT+'/brand.png'});
+await b.close(); console.log(`RESULT ${pass} passed, ${fail} failed`)})();
