@@ -582,6 +582,67 @@ async function saveSettings(data) {
   await q(sb.from("site_settings").upsert({ id: 1, data: data, updated_at: new Date().toISOString() }));
   settings = I.merge(I.DEFAULT_SETTINGS, data); applyBrand();
 }
+/* ================= AUTOMATIC TRANSLATION (admin side) ================= */
+var TR_NAMES = { ur: "Urdu", hi: "Hindi", tr: "Turkish", id: "Indonesian", ms: "Malay", fr: "French", es: "Spanish", de: "German", ru: "Russian", pt: "Portuguese", it: "Italian", nl: "Dutch", fa: "Persian", so: "Somali", sw: "Swahili", ta: "Tamil", ne: "Nepali", "zh-CN": "Chinese", ja: "Japanese", ko: "Korean", th: "Thai", vi: "Vietnamese", he: "Hebrew", ps: "Pashto" };
+function trNorm(s) { return String(s).replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\s+/g, " ").trim(); }
+function trC53(str, seed) {
+  var h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+  for (var i = 0, ch; i < str.length; i++) { ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+function trHash(s) { var n = trNorm(s); return trC53(n, 0).toString(16).padStart(14, "0") + trC53(n, 7).toString(16).padStart(14, "0"); }
+async function trFn(action, extra) {
+  var ses = (await sb.auth.getSession()).data.session;
+  var r = await fetch(CFG.SUPABASE_URL.replace(/\/+$/, "") + "/functions/v1/translate", { method: "POST", headers: { "content-type": "application/json", apikey: CFG.SUPABASE_ANON_KEY, Authorization: "Bearer " + (ses ? ses.access_token : CFG.SUPABASE_ANON_KEY) }, body: JSON.stringify(Object.assign({ action: action }, extra || {})) });
+  var j = await r.json().catch(function () { return {}; });
+  if (!r.ok || j.ok === false) throw new Error(j.error === "forbidden" ? "Your role is not allowed to do this." : r.status === 404 ? "The translate function is not deployed yet. See the guide, section on automatic translation." : (j.error || "The translation service did not answer."));
+  return j;
+}
+/* After a page is published, fill the translation cache in the background so the first visitor does not wait. */
+async function translateWarm() {
+  try {
+    if (!canWrite || (settings.translate && settings.translate.enabled === false)) return;
+    for (var i = 0; i < 6; i++) { var r = await trFn("prewarm", { limit: 40 }); if (!r.remaining) break; }
+  } catch (e) { console.warn("translation warm-up skipped:", e.message); }
+}
+function translationReview() {
+  var lg = "bn", flt = "all", term = "";
+  var m = modal({ title: "Review translations", wide: true, ok: false, cancelLabel: "Close", body:
+    '<p class="muted small" style="margin-top:0">Machine translations appear here after a visitor opens a page in that language, or after you press "Translate everything now". Edit any wording to replace it. Your wording is kept and the machine never overwrites it. "Use machine text again" removes your override.</p>' +
+    '<div class="row" style="margin-bottom:10px"><select id="tr-lg"></select><select id="tr-flt"><option value="all">All</option><option value="override">My overrides</option><option value="failed">Failed</option></select><input id="tr-q" type="search" placeholder="Search English or translated text" style="flex:1;min-width:160px"><button class="btn ghost sm" id="tr-add">Add wording for a text</button></div><div id="tr-list" class="small"></div>',
+    onOpen: function (mm) {
+      var langs = ["bn", "ar"].concat(((settings.translate || {}).languages || []).filter(function (c) { return TR_NAMES[c]; }));
+      $("#tr-lg", mm.el).innerHTML = langs.map(function (c) { return '<option value="' + c + '">' + h(c === "bn" ? "Bangla" : c === "ar" ? "Arabic" : TR_NAMES[c]) + "</option>"; }).join("");
+      async function draw() {
+        var qy = sb.from("translations").select("*").eq("lang", lg).order("updated_at", { ascending: false }).limit(300);
+        if (flt === "override") qy = qy.eq("is_override", true); if (flt === "failed") qy = qy.eq("status", "failed");
+        var rows = (await q(qy)).data || [];
+        if (term) { var t = term.toLowerCase(); rows = rows.filter(function (r) { return (r.source || "").toLowerCase().indexOf(t) > -1 || (r.text || "").toLowerCase().indexOf(t) > -1; }); }
+        $("#tr-list", mm.el).innerHTML = rows.length ? rows.map(function (r, i) {
+          return '<div class="card" style="margin:0 0 8px;padding:10px" data-i="' + i + '"><div class="muted">English</div><div>' + h(r.source) + '</div><div class="muted" style="margin-top:6px">Translation ' + (r.is_override ? '<span class="badge b-published">your wording</span>' : r.status === "failed" ? '<span class="badge b-archived">failed</span>' : "") + '</div><textarea rows="2" dir="auto" style="width:100%">' + h(r.text || "") + '</textarea><div class="row" style="margin-top:6px"><button class="btn sm" data-s="' + i + '">Save my wording</button>' + (r.is_override || r.status === "failed" ? '<button class="btn sm ghost" data-r="' + i + '">Use machine text again</button>' : "") + "</div></div>";
+        }).join("") : '<div class="empty">Nothing here yet.</div>';
+        $$("[data-s]", mm.el).forEach(function (b) { b.onclick = async function () {
+          var r = rows[+b.getAttribute("data-s")], v = $("textarea", b.closest("[data-i]")).value.trim(); if (!v) return toast("Write the translation first.", true);
+          try { await q(sb.from("translations").upsert({ lang: r.lang, src_hash: r.src_hash, source: r.source, text: v, status: "ok", is_override: true, provider: "manual", error: null, updated_at: new Date().toISOString() }, { onConflict: "lang,src_hash" })); toast("Saved. Visitors see your wording."); draw(); } catch (e) { fail(e); } }; });
+        $$("[data-r]", mm.el).forEach(function (b) { b.onclick = async function () {
+          var r = rows[+b.getAttribute("data-r")];
+          try { await q(sb.from("translations").update({ is_override: false, status: "failed", text: null, attempts: 0, updated_at: new Date().toISOString() }).eq("lang", r.lang).eq("src_hash", r.src_hash)); toast("Done. It will be translated again on the next visit."); draw(); } catch (e) { fail(e); } }; });
+      }
+      $("#tr-lg", mm.el).onchange = function () { lg = this.value; draw(); };
+      $("#tr-flt", mm.el).onchange = function () { flt = this.value; draw(); };
+      $("#tr-q", mm.el).oninput = function () { term = this.value.trim(); draw(); };
+      $("#tr-add", mm.el).onclick = function () {
+        modal({ title: "Add wording for a text", okLabel: "Save", body: '<p class="muted small" style="margin-top:0">Use this to correct fixed website text such as a button label. Paste the English exactly as it appears on the website.</p>' + F("ta-src", "English text (exact)", "", { type: "textarea", rows: 2 }) + F("ta-txt", "Your translation", "", { type: "textarea", rows: 2 }),
+          onOk: async function () {
+            var src = trNorm(val("ta-src")), txt = val("ta-txt"); if (!src || !txt) { toast("Both fields are required.", true); return false; }
+            await q(sb.from("translations").upsert({ lang: lg, src_hash: trHash(src), source: src, text: txt, status: "ok", is_override: true, provider: "manual", updated_at: new Date().toISOString() }, { onConflict: "lang,src_hash" })); toast("Saved."); draw();
+          } });
+      };
+      draw().catch(fail);
+    } });
+}
 /* The admin logo and the public site logo come from the same setting, so changing one changes both. */
 function applyBrand() {
   var im = $("#brand-img"); if (!im) return;
@@ -1833,6 +1894,7 @@ async function pageEditor(el, slug) {
     if (feat) { pub.noindex = !!meta.noindex; pub.draft_meta = null; if (!isSys) { pub.show_in_nav = !!meta.show_in_nav; pub.nav_label = (meta.nav_label || "").trim() || null; pub.nav_order = meta.nav_order; } }
     var r = await q(sb.from("pages").update(pub).eq("slug", slug).select().single());
     row = r.data; setDirty(false); toast("Published ✓" + (slug === "home" ? "" : ". Live at /" + slug)); $("#ed-status").innerHTML = badge(row.status); liveLink();
+    translateWarm();
   }
   $("#b-save").onclick = function () { saveDraft().catch(fail); };
   $("#b-pub").onclick = function () { publish().catch(fail); };
@@ -2353,6 +2415,12 @@ VIEWS.settings = async function (el) {
     '<div class="card"><h2>Forms</h2>' + F("st-as", "Assessment form success message", s.assessment_success, { type: "textarea", rows: 2, max: 300 }) + F("st-cs", "Contact form success message", s.contact_success, { type: "textarea", rows: 2, max: 300 }) +
     '<label class="l">Optional assessment-form fields to show</label><div class="row">' + [["student_name", "Student name"], ["age_group", "Age group"], ["country", "Country"], ["reading_level", "Reading level"], ["preferred_time", "Preferred time"]].map(function (f) { return '<label class="chk"><input type="checkbox" id="st-f-' + f[0] + '"' + (ff[f[0]] !== false ? " checked" : "") + "> " + f[1] + "</label>"; }).join("") + '</div><div class="hint">Name, contact (email or WhatsApp) and consent are always required, and are enforced by the server.</div></div>' +
     '<div class="card"><h2>Analytics</h2>' + F("st-an", "Provider", an.provider || "none", { type: "select", options: [["none", "None (first-party click counts only)"], ["ga4", "Google Analytics 4 (asks visitors for consent)"], ["plausible", "Plausible (cookie-free)"]] }) + '<div class="g2">' + F("st-ga", "GA4 Measurement ID", an.ga4_id, { max: 20, attrs: 'placeholder="G-XXXXXXXXXX"' }) + F("st-pl", "Plausible domain", an.plausible_domain, { max: 100, attrs: 'placeholder="inayaquran.com"' }) + '</div><div class="hint">No names, emails or phone numbers are ever sent to analytics.</div></div>' +
+    '<div class="card"><h2>Automatic translation</h2><p class="muted small" style="margin-top:0">Write everything in English. Visitors who choose another language get a translation automatically, kept in a cache and refreshed whenever the English changes. Bangla and Arabic are always available.</p>' +
+      '<label class="chk"><input type="checkbox" id="st-tr-on"' + (((s.translate || {}).enabled !== false) ? " checked" : "") + '> Translate the website automatically</label>' +
+      '<label class="l" style="margin-top:10px">More languages visitors can choose</label><div class="row" style="flex-wrap:wrap;gap:6px 16px">' + Object.keys(TR_NAMES).map(function (c) { return '<label class="chk"><input type="checkbox" data-trl="' + c + '"' + ((((s.translate || {}).languages) || []).indexOf(c) > -1 ? " checked" : "") + "> " + TR_NAMES[c] + "</label>"; }).join("") + "</div>" +
+      '<div id="tr-status" class="small muted" style="margin:12px 0">Checking the translation service…</div>' +
+      '<div class="row wbtn" style="flex-wrap:wrap"><button class="btn ghost sm" id="tr-warm" type="button">Translate everything now</button><button class="btn ghost sm" id="tr-retry" type="button">Retry failed</button><button class="btn ghost sm" id="tr-purge" type="button">Remove unused</button><button class="btn sm" id="tr-review" type="button">Review translations</button></div>' +
+      '<div class="hint">Translations of Quran verses are never changed: Arabic script stays exactly as you wrote it. Check religious or sensitive wording under "Review translations" and replace anything inaccurate.</div></div>' +
     '<div class="card"><h2>My account</h2><p class="muted">Signed in as <b>' + h(me.email) + "</b> · role <b>" + h(role) + '</b>. Sessions end after 60 minutes of inactivity.</p><button class="btn ghost" id="st-pw">Change my password</button></div>';
 
   function dirtyNow() { dirty = true; var d = $("#st-dirty"); if (d) d.classList.remove("hidden"); }
@@ -2404,10 +2472,26 @@ VIEWS.settings = async function (el) {
       footer_text: val("st-foot"), copyright: val("st-copy"), seo_title: val("st-seot"), seo_description: val("st-seod"), og_image: val("st-og"), site_url: val("st-url").replace(/\/+$/, ""),
       assessment_success: val("st-as"), contact_success: val("st-cs"),
       form_fields: { student_name: val("st-f-student_name"), age_group: val("st-f-age_group"), country: val("st-f-country"), reading_level: val("st-f-reading_level"), preferred_time: val("st-f-preferred_time") },
-      analytics: { provider: prov, ga4_id: val("st-ga"), plausible_domain: val("st-pl") }
+      analytics: { provider: prov, ga4_id: val("st-ga"), plausible_domain: val("st-pl") },
+      translate: { enabled: !!$("#st-tr-on").checked, languages: $$("[data-trl]").filter(function (x) { return x.checked; }).map(function (x) { return x.getAttribute("data-trl"); }) }
     });
     this.disabled = true; try { await saveSettings(data); dirty = false; $("#st-dirty").classList.add("hidden"); toast("Settings saved. The website is updated."); } catch (e) { fail(e); } this.disabled = false;
   };
+  /* automatic translation card */
+  async function trStatus() {
+    var box = $("#tr-status", el); if (!box) return;
+    try {
+      var j = await trFn("status"), rows = Object.keys(j.per_language || {}).map(function (c) { var o = j.per_language[c]; return (c === "bn" ? "Bangla" : c === "ar" ? "Arabic" : TR_NAMES[c] || c) + ": " + o.ok + " ready, " + o.override + " yours, " + o.failed + " failed"; });
+      var today = new Date().toISOString().slice(0, 10), u = (j.usage || []).filter(function (x) { return x.day === today; }), reqs = u.reduce(function (n, x) { return n + x.requests; }, 0), errs = u.reduce(function (n, x) { return n + x.errors; }, 0);
+      box.innerHTML = (j.provider ? "Provider: <b>" + h(j.provider) + "</b>. " : '<span style="color:#9A3412">No translation provider key is set yet. See the guide.</span> ') + h(rows.join(" · ") || "No translations stored yet.") + " · Today: " + reqs + " provider calls, " + errs + " errors · Texts on the site: " + j.source_units;
+    } catch (e) { box.innerHTML = '<span style="color:#9A3412">' + h(e.message) + "</span>"; }
+  }
+  trStatus();
+  function trBtn(id, label, fn) { $("#" + id, el).onclick = async function () { if (!needWrite()) return; var b = this; b.disabled = true; var old = b.textContent; b.textContent = "Working…"; try { await fn(); } catch (e) { fail(e); } b.textContent = old; b.disabled = false; trStatus(); }; }
+  trBtn("tr-warm", "Translate everything now", async function () { var n = 0; for (var i = 0; i < 40; i++) { var r = await trFn("prewarm", { limit: 40 }); Object.keys(r.report).forEach(function (c) { n += r.report[c].translated; }); if (!r.remaining) break; } toast(n + " texts translated."); });
+  trBtn("tr-retry", "Retry failed", async function () { var r = await trFn("retry", { limit: 60 }), n = 0; Object.keys(r.report).forEach(function (c) { n += r.report[c].translated; }); toast(n + " retried successfully."); });
+  trBtn("tr-purge", "Remove unused", async function () { var r = await trFn("purge"); toast(r.removed + " unused translations removed."); });
+  $("#tr-review", el).onclick = translationReview;
   $("#st-pw").onclick = function () {
     modal({ title: "Change password", okLabel: "Update password", body: F("pw1", "New password (10+ characters)", "", { type: "password", attrs: 'autocomplete="new-password"' }) + F("pw2", "Repeat new password", "", { type: "password", attrs: 'autocomplete="new-password"' }),
       onOk: async function () { var a = val("pw1"); if (a.length < 10) { toast("Use at least 10 characters.", true); return false; } if (a !== val("pw2")) { toast("The two passwords do not match.", true); return false; } var r = await sb.auth.updateUser({ password: a }); if (r.error) throw r.error; toast("Password updated"); } });

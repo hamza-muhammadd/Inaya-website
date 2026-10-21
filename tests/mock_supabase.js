@@ -6,6 +6,7 @@
     site_settings:[{id:1,data:{academy_name:'Inaya Quran Academy',whatsapp_number:'8801700000000'}}],
     pages:[{slug:'home',title:'Home',status:'published',draft_sections:[],published_sections:[],has_unpublished:false,updated_at:now},{slug:'about',title:'About',status:'published',draft_sections:[],published_sections:[],has_unpublished:false,updated_at:now}],
     page_templates:[],
+    translations:[{id:1,lang:'bn',src_hash:'aaaaaaaaaaaaaaaaaaaaaaaaaaaa',source:'Quran Reading for Beginners',text:'[machine] bn',status:'ok',is_override:false,updated_at:now},{id:2,lang:'bn',src_hash:'bbbbbbbbbbbbbbbbbbbbbbbbbbbb',source:'Open day',text:null,status:'failed',is_override:false,updated_at:now}],
     programs:[{id:'p1',slug:'quran-reading-fluency',title:'Quran Reading & Fluency',short_description:'s',description:'d',objectives:['a'],student_profile:'',curriculum_overview:'',cta_label:'Book',image_url:'',sort_order:1,status:'published'},{id:'p2',slug:'two',title:'Two',short_description:'',description:'',objectives:[],student_profile:'',curriculum_overview:'',cta_label:'Book',image_url:'',sort_order:2,status:'draft'}],
     program_levels:[{id:'l1',program_id:'p1',level_number:1,title:'Reading Foundations',description:'',sort_order:1,status:'published'},{id:'l2',program_id:'p1',level_number:2,title:'Connected',description:'',sort_order:2,status:'published'}],
     curriculum_modules:[{id:'m1',level_id:'l1',title:'Letters',description:'x',lessons:[{title:'Alif',description:'first'}],assessment_criteria:'reads',sort_order:1,status:'draft'}],

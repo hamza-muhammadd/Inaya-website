@@ -30,9 +30,6 @@ await pg.screenshot({path:process.env.OUT+'/bn_contact.png'});
 // form errors translate
 await pg.goto(U+'/assessment'); await pg.waitForTimeout(1500); await pg.click('#asubmit'); await pg.waitForTimeout(400);
 ok(await pg.evaluate(()=>/অনুগ্রহ/.test(document.querySelector('[data-err=name]').textContent)),'form error in Bangla');
-// google option
-await pg.click('.lang-btn'); await pg.selectOption('.lang-menu select','g:fr'); await pg.waitForTimeout(1200);
-ok(await pg.evaluate(()=>document.documentElement.lang==='fr'&&/googtrans=\/en\/fr/.test(document.cookie)),'More languages sets Google Translate cookie');
 // mobile
 const m=await ctx.newPage(); await m.setViewportSize({width:390,height:800}); await m.goto(U+'/?lang=bn'); await m.waitForTimeout(1500);
 ok(await m.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'mobile bn no horizontal scroll');

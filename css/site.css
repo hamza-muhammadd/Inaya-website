@@ -284,10 +284,6 @@ main:empty + footer { visibility: hidden; }
 @media (min-width: 861px) { .header-in { gap: 12px; } .header-in .nav { order: 1; } .header-in .lang-switch { order: 2; margin-inline-start: 4px; } }
 @media (max-width: 860px) { .lang-switch { margin-inline-start: auto; } }
 
-/* Google Translate: hide its banner and widget chrome */
-.goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame, .skiptranslate iframe { display: none !important; }
-body { top: 0 !important; }
-.goog-text-highlight { background: none !important; box-shadow: none !important; }
 
 /* ---------- Bangla and Arabic typography ---------- */
 html.lang-bn body, html.lang-bn { font-family: "Hind Siliguri", var(--font-body); }

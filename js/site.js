@@ -42,7 +42,8 @@
     assessment_success: "JazakAllahu khairan! We have received your request. Our team will contact you soon, InshaAllah.",
     contact_success: "JazakAllahu khairan! Your message has been sent. We will reply as soon as possible.",
     form_fields: { student_name: true, age_group: true, country: true, reading_level: true, preferred_time: true },
-    analytics: { provider: "none", ga4_id: "", plausible_domain: "" }
+    analytics: { provider: "none", ga4_id: "", plausible_domain: "" },
+    translate: { enabled: true, languages: [] }
   };
 
   /* ---------- tiny helpers ---------- */
@@ -471,6 +472,7 @@
       loadSettings().then(function (s) {
         settingsRef = s; applyTheme(s);
         if (JSON.stringify(s) !== shown) renderChrome(s);
+        try { document.dispatchEvent(new CustomEvent("inaya:settings", { detail: s })); } catch (e) {}
         initAnalytics(s);
         var p = location.pathname.replace(/\/+$/, "") || "/";
         track("page_view");
@@ -482,6 +484,7 @@
   }
 
   window.Inaya = {
+    getSettings: function () { return settingsRef; },
     configured: configured, esc: esc, md: md, inline: inline, safeHref: safeHref, safeImg: safeImg, digits: digits,
     get: get, rpc: rpc, boot: boot, track: track, setMeta: setMeta, waLink: waLink, resolveHref: resolveHref,
     loadPrograms: loadPrograms, loadFaqs: loadFaqs, loadPage: loadPage, loadSettings: loadSettings,

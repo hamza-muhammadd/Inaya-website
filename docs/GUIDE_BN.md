@@ -270,3 +270,15 @@ Website মেনুর "Brand Identity" থেকে লোগো বদলা�
 ## প্রোগ্রাম মেনু
 
 হেডারে "Programs" এর পাশের ছোট তীর বা মাউস নিলে তিনটি প্রোগ্রামের তালিকা খোলে। কিবোর্ডে Enter দিয়ে খোলা এবং Esc দিয়ে বন্ধ করা যায়।
+
+## স্বয়ংক্রিয় অনুবাদ চালু করার ধাপ
+
+আপনি শুধু ইংরেজিতে লিখবেন। দর্শক বাংলা, আরবি বা অন্য ভাষা বাছলে সাইট নিজে থেকে অনুবাদ করে দেখায় এবং অনুবাদ জমা রাখে। ইংরেজি লেখা বদলালে নতুন অনুবাদ তৈরি হয়, পুরনোটা আর দেখানো হয় না।
+
+একবার এই ধাপগুলো করতে হবে:
+1. Supabase এর SQL Editor এ `sql/009_auto_translation.sql` চালান।
+2. Edge Function ডিপ্লয় করুন। কম্পিউটারে Supabase CLI থাকলে প্রজেক্ট ফোল্ডারে চালান: `supabase functions deploy translate`। CLI না থাকলে Supabase Dashboard এর Edge Functions থেকে নতুন ফাংশন "translate" বানিয়ে `supabase/functions/translate` ফোল্ডারের তিনটি ফাইল (`index.ts`, `core.js`, `ui_strings.js`) দিন।
+3. অনুবাদের জন্য একটি চাবি (API key) দিন: `supabase secrets set ANTHROPIC_API_KEY=আপনার_চাবি`। Google Translate ব্যবহার করতে চাইলে `TRANSLATE_PROVIDER=google` ও `GOOGLE_TRANSLATE_API_KEY=...` দিন। চাবি শুধু ফাংশনের ভেতরে থাকে, ওয়েবসাইটের কোডে কখনো যায় না।
+4. অ্যাডমিন > Settings > Automatic translation এ গিয়ে চাইলে আরও ভাষা টিক দিন, Save করুন, তারপর একবার "Translate everything now" চাপুন।
+
+পরে: পাতা Publish করলে নিজে থেকে পেছনে অনুবাদ গরম হয়ে যায়। কোনো অনুবাদ ভুল মনে হলে "Review translations" এ গিয়ে নিজের শব্দ লিখে দিন, মেশিন সেটা আর বদলাবে না। কুরআনের আয়াত কখনো অনুবাদ বা বদল হয় না, আরবি লেখা যেমন আছে তেমনই থাকে। ধর্মীয় ব্যাখ্যার অনুবাদ কোনো জ্ঞানী মানুষকে দিয়ে একবার দেখিয়ে নিন।
