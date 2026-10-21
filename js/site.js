@@ -1,4 +1,4 @@
-/* Inaya Quran Academy — shared public-site runtime
+/* Inaya Quran Academy, shared public-site runtime
    - talks to Supabase through its REST API using only the public (anon) key
    - applies Admin → Settings (logo, colours, nav, footer…) to every page
    - privacy-conscious tracking (no personal data ever leaves the browser)  */
@@ -223,7 +223,7 @@
     return safeHref(h);
   }
 
-  /* ---------- attribution (UTM) — session only, no personal data ---------- */
+  /* ---------- attribution (UTM), session only, no personal data ---------- */
   function captureAttribution() {
     var a = {};
     try { a = JSON.parse(sessionStorage.getItem("iqa_attr") || "{}"); } catch (e) {}
@@ -286,6 +286,22 @@
   /* ---------- header / footer ---------- */
   var ICON_WA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.2-.7-2.7-1.1-4.4-3.9-4.6-4.1-.1-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.2.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.8-.1 1.4z"/></svg>';
 
+  function cachedProgs() { try { var c = JSON.parse(localStorage.getItem("inaya_progs_v1") || "null"); return c && c.length ? c : null; } catch (e) { return null; } }
+  function subLinks(ps) { return ps.map(function (p) { return '<a href="/programs/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + "</a>"; }).join("") + '<a href="/programs">All programs</a>'; }
+  /* Opens on hover (with a short delay so the pointer can travel into the menu), on the arrow button, and by keyboard. */
+  function initDropdowns(header) {
+    header.querySelectorAll(".nav-item.has-sub").forEach(function (it) {
+      var btn = it.querySelector(".sub-toggle"), t = 0;
+      function open() { clearTimeout(t); it.classList.add("open"); btn.setAttribute("aria-expanded", "true"); }
+      function close() { clearTimeout(t); it.classList.remove("open"); btn.setAttribute("aria-expanded", "false"); }
+      var fine = window.matchMedia && matchMedia("(hover: hover)").matches;
+      if (fine) { it.addEventListener("mouseenter", open); it.addEventListener("mouseleave", function () { clearTimeout(t); t = setTimeout(close, 220); }); }
+      btn.addEventListener("click", function (e) { e.stopPropagation(); it.classList.contains("open") ? close() : open(); });
+      it.addEventListener("focusout", function (e) { if (!it.contains(e.relatedTarget)) close(); });
+      it.addEventListener("keydown", function (e) { if (e.key === "Escape") { close(); btn.focus(); } if (e.key === "ArrowDown" && document.activeElement === btn) { e.preventDefault(); open(); var a = it.querySelector(".sub-menu a"); if (a) a.focus(); } });
+      document.addEventListener("click", function (e) { if (!it.contains(e.target)) close(); });
+    });
+  }
   function renderChrome(s) {
     var path = location.pathname.replace(/\/+$/, "") || "/";
     var logo = safeImg(s.logo_url), name = esc(s.academy_name);
@@ -294,7 +310,10 @@
     var brand = logo ? '<img src="' + esc(logo) + '" alt="' + name + '" style="height:' + lh + 'px;width:auto">' : '<span class="brand-text">' + name + "</span>";
     var links = (s.nav || []).map(function (n) {
       var h = safeHref(n.href), cur = (h === path || (h !== "/" && path.indexOf(h + "/") === 0)) ? ' aria-current="page"' : "";
-      return '<a class="nav-link" href="' + esc(h) + '"' + cur + ">" + esc(n.label) + "</a>";
+      var a = '<a class="nav-link" href="' + esc(h) + '"' + cur + ">" + esc(n.label) + "</a>";
+      if (h !== "/programs") return a;
+      return '<div class="nav-item has-sub">' + a + '<button type="button" class="sub-toggle" aria-expanded="false" aria-controls="sub-programs" aria-label="Programs menu"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>' +
+        '<div class="sub-menu" id="sub-programs"><div>' + subLinks(cachedProgs() || FALLBACK_PROGRAMS) + "</div></div></div>";
     }).join("");
     var header = document.getElementById("site-header");
     if (header) {
@@ -309,6 +328,8 @@
       nav.addEventListener("click", function (e) { if (e.target.closest("a")) shut(); });
       document.addEventListener("click", function (e) { if (!header.contains(e.target)) shut(); });
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") shut(); });
+      initDropdowns(header);
+      loadPrograms().then(function (ps) { var box = header.querySelector("#sub-programs > div"); if (box && ps && ps.length) { box.innerHTML = subLinks(ps); try { localStorage.setItem("inaya_progs_v1", JSON.stringify(ps.map(function (p) { return { slug: p.slug, title: p.title }; }))); } catch (e) {} } });
       var img = header.querySelector(".brand img");
       if (img) img.addEventListener("error", function () { img.outerHTML = '<span class="brand-text">' + name + "</span>"; });
     }
@@ -384,7 +405,9 @@
     { category: "Enrollment", question: "What are the fees?", answer: "Please contact us via WhatsApp or the contact page for current fee information." }
   ];
 
-  function loadPrograms() {
+  var progsP = null;
+  function loadPrograms() { return progsP || (progsP = loadProgramsNow()); }
+  function loadProgramsNow() {
     return get("programs?select=*,program_levels(*)&order=sort_order.asc").then(function (rows) {
       if (rows === null) return FALLBACK_PROGRAMS;               // not configured / error → defaults
       return rows.map(function (p) {

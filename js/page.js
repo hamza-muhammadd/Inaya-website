@@ -13,7 +13,7 @@ Inaya.boot(async function (s) {
     var m = document.createElement("meta"); m.name = "robots"; m.content = "noindex"; document.head.appendChild(m);
     return;
   }
-  var sections = (page.sections && page.sections.length) ? page.sections : InayaSections.defaults(slug);
+  var sections = (page.sections && page.sections.length && !InayaSections.isLegacySeed(slug, page.sections)) ? page.sections : InayaSections.defaults(slug);
   if (!sections.length) sections = [InayaSections.newSection("page_head", { heading: page.title || slug })];
   if (page.noindex) { var ni = document.createElement("meta"); ni.name = "robots"; ni.content = "noindex"; document.head.appendChild(ni); }
   else { var ex = document.querySelector('meta[name="robots"]'); if (ex && !page.hidden) ex.remove(); }

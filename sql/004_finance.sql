@@ -1,5 +1,5 @@
 -- =====================================================================
--- Inaya Quran Academy — Phase 4: FINANCE (manual records only)
+-- Inaya Quran Academy, Phase 4: FINANCE (manual records only)
 -- Additive. Run AFTER 003_classes.sql. Safe to run twice.
 -- NO card numbers, NO online payment processing. Staff record payments
 -- that were received outside the system (cash, bank transfer, mobile wallet).

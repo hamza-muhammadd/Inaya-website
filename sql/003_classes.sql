@@ -1,5 +1,5 @@
 -- =====================================================================
--- Inaya Quran Academy — Phase 3: TEACHERS + CLASSES & TIMETABLE
+-- Inaya Quran Academy, Phase 3: TEACHERS + CLASSES & TIMETABLE
 -- Additive. Run AFTER schema.sql and 002_students.sql. Safe to run twice.
 -- No compensation/pay data here (that belongs to the Finance phase).
 -- Attendance is NOT in this phase.

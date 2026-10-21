@@ -1,5 +1,5 @@
 -- =====================================================================
--- INAYA QURAN ACADEMY — Supabase schema (run ONCE in SQL Editor)
+-- INAYA QURAN ACADEMY, Supabase schema (run ONCE in SQL Editor)
 -- Safe to re-run: uses IF NOT EXISTS / CREATE OR REPLACE / ON CONFLICT.
 -- =====================================================================
 
@@ -72,7 +72,7 @@ insert into public.site_settings (id, data) values (1, jsonb_build_object(
   'cta_secondary_href','/programs',
   'footer_text','Structured Quran learning with care, for every age and level.',
   'copyright','© Inaya Quran Academy. All rights reserved.',
-  'seo_title','Inaya Quran Academy — Online Quran Learning',
+  'seo_title','Inaya Quran Academy, Online Quran Learning',
   'seo_description','Structured online Quran programs: reading & fluency, Tajweed & recitation, and Islamic foundations. Book a free assessment.',
   'og_image','assets/img/og-default.jpg',
   'site_url','https://inayaquran.com',
@@ -605,7 +605,7 @@ revoke all on function public.analytics_summary(timestamptz,timestamptz) from pu
 grant execute on function public.analytics_summary(timestamptz,timestamptz) to authenticated;
 
 -- ---------------------------------------------------------------------
--- 13. SEED CONTENT (official program structure — names are exact)
+-- 13. SEED CONTENT (official program structure, names are exact)
 -- Descriptions use only wording from the academy flyer; edit in /admin.
 -- ---------------------------------------------------------------------
 insert into public.programs (slug,title,short_description,description,objectives,student_profile,curriculum_overview,sort_order,status) values
@@ -613,7 +613,7 @@ insert into public.programs (slug,title,short_description,description,objectives
  'From letters to fluency, one step at a time.',
  'A structured path that takes a learner from the Arabic letters to confident, fluent Quran reading, one clear level at a time.',
  '["Recognise and read the Arabic letters and their vowel marks","Read connected words and verses with growing accuracy","Build steady, fluent reading"]',
- 'Beginners and learners who want to strengthen their Quran reading — children and adults.',
+ 'Beginners and learners who want to strengthen their Quran reading, children and adults.',
  'Three levels: Reading Foundations, Connected Quran Reading and Reading Fluency. Detailed curriculum is being finalised by the academy.',
  1,'published'),
 ('quran-recitation-tajweed-sunnah','Quran Recitation, Tajweed & Sunnah',
@@ -659,12 +659,12 @@ where not exists (select 1 from public.faqs);
 
 -- Pages seed (sections are rendered by the site; edit in /admin → Website Content)
 insert into public.pages (slug,title,seo_title,seo_description,status,draft_sections,published_sections,published_at) values
-('home','Home','Inaya Quran Academy — Quran Learning Made Simple',
+('home','Home','Inaya Quran Academy, Quran Learning Made Simple',
  'Structured online Quran programs with caring teachers. Book a free assessment with Inaya Quran Academy.','published',
  '[]','[]',now()),
 ('about','About','About Inaya Quran Academy','Learn about Inaya Quran Academy and our approach to structured Quran learning.','published','[]','[]',now()),
-('privacy','Privacy Policy','Privacy Policy — Inaya Quran Academy','How Inaya Quran Academy handles your information.','published','[]','[]',now()),
-('terms','Terms of Use','Terms of Use — Inaya Quran Academy','Terms for using the Inaya Quran Academy website.','published','[]','[]',now())
+('privacy','Privacy Policy','Privacy Policy, Inaya Quran Academy','How Inaya Quran Academy handles your information.','published','[]','[]',now()),
+('terms','Terms of Use','Terms of Use, Inaya Quran Academy','Terms for using the Inaya Quran Academy website.','published','[]','[]',now())
 on conflict (slug) do nothing;
 -- Empty sections ([]) => the website shows the built-in default layout.
 -- The first time you save/publish a page in /admin, your edited sections take over.

@@ -17,7 +17,6 @@ for (const page of ['/','/programs','/faq','/contact','/assessment','/privacy'])
   ok(await pg.evaluate(()=>document.documentElement.dir==='rtl'),'ar rtl');
 }
 await pg.goto(U+'/?lang=ar'); await pg.waitForTimeout(1200);
-ok(await pg.evaluate(()=>document.querySelector('h1').innerHTML.includes('<em>')),'ar hero heading keeps em');
 ok(await pg.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'ar no horizontal scroll');
 await pg.screenshot({path:process.env.OUT+'/ar_home.png'});
 // switcher

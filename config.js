@@ -1,5 +1,5 @@
 /* =====================================================================
-   Inaya Quran Academy — public configuration
+   Inaya Quran Academy, public configuration
    ---------------------------------------------------------------------
    Fill these TWO values from Supabase → Project Settings → API:
      • Project URL      → SUPABASE_URL

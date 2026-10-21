@@ -1,5 +1,5 @@
 -- =====================================================================
--- Inaya Quran Academy — Phase 5: ATTENDANCE
+-- Inaya Quran Academy, Phase 5: ATTENDANCE
 -- Additive. Run AFTER 003_classes.sql. Safe to run twice.
 -- One row per student per class per date.
 -- =====================================================================

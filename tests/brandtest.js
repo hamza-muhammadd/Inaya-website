@@ -29,6 +29,14 @@ await pub.goto('http://localhost:4173/'); await pub.waitForTimeout(1500);
 ok((await pub.getAttribute('.brand img','src'))==='/assets/img/favicon.png','public header logo uses the same logo');
 ok(+(await pub.evaluate(()=>document.querySelector('.brand img').style.height.replace('px','')))===60,'public header uses the saved height');
 ok(await pg.evaluate(()=>location.hash!=='#'||true),'no navigation side effects');
+
+await pg.goto('http://localhost:4173/admin#brand'); await pg.waitForTimeout(900);
+ok(/Brand Identity/.test(await pg.innerText('#view h1')),'Brand Identity page opens from the menu');
+ok(await pg.locator('#br-rev').count()===1,'previous logo is kept and can be restored');
+await pg.click('#br-rev'); await pg.waitForTimeout(700);
+ok((await pg.getAttribute('#brand-img','src')).includes('logo.png'),'reverting restores the earlier logo in the admin panel');
+await pg.click('#brand'); await pg.fill('#br-fav','/assets/img/favicon.png'); await pg.click('[data-ok]'); await pg.waitForTimeout(500);
+ok((await pg.evaluate(()=>JSON.parse(sessionStorage.getItem('__mockdb')).site_settings)).toString().length>0,'favicon saved');
 ok(errs.length===0,'no page errors '+errs.join('|'));
 await pg.screenshot({path:process.env.OUT+'/brand.png'});
 await b.close(); console.log(`RESULT ${pass} passed, ${fail} failed`)})();

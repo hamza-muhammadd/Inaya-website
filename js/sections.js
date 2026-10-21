@@ -1,4 +1,4 @@
-/* Inaya Quran Academy — controlled section library
+/* Inaya Quran Academy, controlled section library
    Used by the public pages AND by the admin live preview.
    No arbitrary HTML/JS is ever rendered: every field is escaped or passed
    through the safe formatter in site.js. */
@@ -9,12 +9,13 @@
   /* ---------- section type catalogue (drives the admin editor forms) ---------- */
   var TYPES = {
     page_head:     { label: "Page heading",      fields: ["eyebrow", "heading", "body"] },
-    hero:          { label: "Hero",              fields: ["eyebrow", "heading", "body", "image", "image_alt", "buttons", "layout"] },
+    hero:          { label: "Hero",              fields: ["eyebrow", "heading", "body", "image", "image_alt", "buttons", "note", "layout"] },
     text_image:    { label: "Text and image",    fields: ["eyebrow", "heading", "body", "image", "image_alt", "buttons", "reverse"] },
-    program_cards: { label: "Program cards",     fields: ["eyebrow", "heading", "body", "buttons"], note: "Cards are filled automatically from Programs & Curriculum." },
+    rows:          { label: "Rows (title, text, link)", fields: ["eyebrow", "heading", "body", "items"], itemFields: ["title", "text", "label", "href"], note: "A calm list: a title on one side, text and an optional link on the other." },
+    program_cards: { label: "Programs",          fields: ["eyebrow", "heading", "body", "buttons", "style"], note: "Cards are filled automatically from Programs & Curriculum." },
     level_list:    { label: "Level list",        fields: ["eyebrow", "heading", "body"], note: "Lists every published program with its levels." },
     benefits:      { label: "Benefits / points", fields: ["eyebrow", "heading", "body", "items", "columns"], itemFields: ["title", "text"] },
-    process:       { label: "Step-by-step process", fields: ["eyebrow", "heading", "body", "items"], itemFields: ["title", "text"] },
+    process:       { label: "Step-by-step process", fields: ["eyebrow", "heading", "body", "items", "plist"], itemFields: ["title", "text"] },
     stats:         { label: "Statistics",        fields: ["eyebrow", "heading", "items"], itemFields: ["value", "label"], note: "Use ONLY real, verified numbers." },
     faq:           { label: "FAQ",               fields: ["eyebrow", "heading", "body", "limit", "buttons"], note: "Questions are managed under Website Content → FAQ." },
     testimonials:  { label: "Testimonials",      fields: ["eyebrow", "heading", "items"], itemFields: ["text", "name"], note: "Only genuine, approved testimonials." },
@@ -36,33 +37,32 @@
   function defaults(slug) {
     var D = {
       home: [
-        sec("hero", { eyebrow: "Learn · Practice · Grow", heading: "Quran Learning <em>Made Simple</em>",
-          body: "Structured programs, caring teachers and a supportive learning journey for every age and level.",
+        sec("hero", { eyebrow: "Online Quran classes", heading: "Learn to read the Quran well, starting from where you are",
+          body: "Inaya Quran Academy teaches Quran reading, Tajweed and Islamic basics online, to children and adults. A short free assessment shows us your level, so you begin in the right place.",
           image: "assets/img/hero.jpg", image_alt: "A child reading the Quran beside a sunlit window",
-          button_label: "Book a Free Assessment", button_href: "/assessment", button2_label: "Explore Our Programs", button2_href: "/programs", layout: "split" }),
-        sec("program_cards", { eyebrow: "Our 3 Core Programs", heading: "A clear path, one level at a time",
-          body: "Each program has three levels, so every learner knows where they are and what comes next.", button_label: "See all programs", button_href: "/programs" }),
-        sec("text_image", { eyebrow: "About the academy", heading: "Quran learning with care",
-          body: "Inaya Quran Academy is an online Quran and Islamic learning academy. We offer structured programs, caring teachers and a supportive environment so that learners of every age and level can learn, practice and grow.",
-          button_label: "About us", button_href: "/about", image: "assets/img/flyer.jpg", image_alt: "Inaya Quran Academy programs", bg: "soft" }),
-        sec("benefits", { eyebrow: "Why structure matters", heading: "Benefits of structured Quran learning", columns: 4, items: [
-          { title: "Clear levels", text: "Learners and parents always know the current level and the next step." },
-          { title: "Right pronunciation", text: "Step-by-step practice builds accurate reading and recitation." },
-          { title: "Steady progress", text: "Small, regular steps make progress visible and motivating." },
-          { title: "A supportive pace", text: "Lessons move at a pace that suits the learner, with care." }] }),
-        sec("process", { eyebrow: "How it works", heading: "From first message to first class", bg: "green", items: [
-          { title: "Request a free assessment", text: "Fill in a short form or message us on WhatsApp." },
+          button_label: "Book a Free Assessment", button_href: "/assessment", button2_label: "See the programs", button2_href: "/programs",
+          note: "Online classes · Children and adults · Free reading assessment", layout: "split" }),
+        sec("rows", { eyebrow: "Find your starting point", heading: "Where would you like to begin?", items: [
+          { title: "I am new to reading Arabic", text: "Start with Quran Reading & Fluency. The first level begins with the letters and their vowel marks.", label: "See Quran Reading & Fluency", href: "/programs/quran-reading-fluency" },
+          { title: "I can read, and I want to recite correctly", text: "Quran Recitation, Tajweed & Sunnah covers correct pronunciation and the essential rules of Tajweed.", label: "See Recitation and Tajweed", href: "/programs/quran-recitation-tajweed-sunnah" },
+          { title: "I want to learn the basics of Islam", text: "Islamic Foundations & Daily Living covers core foundations, worship, Sunnah and character in daily life.", label: "See Islamic Foundations", href: "/programs/islamic-foundations-daily-living" },
+          { title: "I am looking for a class for my child", text: "Children and adults of every age can join. Share the age group in the assessment form and we will guide you.", label: "Book a free assessment", href: "/assessment" },
+          { title: "I am not sure where I fit", text: "The free assessment is a short reading check. Our assessor listens to the learner read and recommends a level.", label: "Book a free assessment", href: "/assessment" }] }),
+        sec("program_cards", { eyebrow: "The programs", heading: "Three programs, three levels each", style: "rows", bg: "soft",
+          body: "Each level builds on the one before, so you always know where you are and what comes next.", button_label: "See all programs", button_href: "/programs" }),
+        sec("process", { eyebrow: "How it works", heading: "What happens after you get in touch", plist: "list",
+          body: "The assessment is free. It is not an enrollment and not a payment.", items: [
+          { title: "Send a request", text: "Fill in the short assessment form, or message us on WhatsApp." },
           { title: "We contact you", text: "Our team reaches out to arrange a convenient time." },
           { title: "Reading assessment", text: "Our assessor listens to the learner read and recommends a starting level." },
-          { title: "Enroll and begin", text: "If you wish to proceed, we confirm enrollment, arrange payment, assign a teacher and schedule classes." }] }),
-        sec("benefits", { eyebrow: "What you can expect", heading: "Built around the learner", columns: 4, items: [
-          { title: "Qualified & caring teachers", text: "Experienced and student-focused." },
-          { title: "Structured curriculum", text: "Clear levels, real progress." },
-          { title: "Flexible learning", text: "Online and one-on-one options." },
-          { title: "Safe & supportive environment", text: "For every learner, with care." }] }),
-        sec("faq", { eyebrow: "FAQ", heading: "Questions parents often ask", limit: 5, button_label: "More questions", button_href: "/faq" }),
-        sec("cta", { heading: "Ready to begin?", body: "Book a free assessment, or message us to ask about programs and enrollment.",
-          button_label: "Book a Free Assessment", button_href: "/assessment", button2_label: "Chat on WhatsApp", button2_href: "{whatsapp}", bg: "soft" })
+          { title: "Enrollment", text: "If you wish to continue, we confirm enrollment, arrange payment, assign a teacher and schedule classes." }] }),
+        sec("text_image", { eyebrow: "How we teach", heading: "Clear levels and patient practice",
+          body: "We believe that clear structure, patient guidance and regular practice help learners build confidence. An assessment is used to understand where a learner is today, never to judge them. Topics a learner has not been taught yet are simply marked Not Yet Learned.",
+          button_label: "About the academy", button_href: "/about", bg: "soft" }),
+        sec("teachers", { visible: false, eyebrow: "Our teachers", heading: "Meet the teachers", body: "", items: [] }),
+        sec("faq", { eyebrow: "Questions", heading: "Questions people ask before starting", limit: 5, button_label: "All questions", button_href: "/faq" }),
+        sec("cta", { heading: "Not sure which program fits?", body: "Book a free assessment, or message us with your question.",
+          button_label: "Book a Free Assessment", button_href: "/assessment", button2_label: "Chat on WhatsApp", button2_href: "{whatsapp}", bg: "green" })
       ],
       programs: [
         sec("page_head", { eyebrow: "Our 3 Core Programs", heading: "Programs & levels", body: "Structured programs for every age and level. Each program has three clear levels. Begin with a free assessment and we will recommend the right starting point." }),
@@ -86,14 +86,14 @@
         sec("page_head", { eyebrow: "About us", heading: "About Inaya Quran Academy",
           body: "Inaya (عناية) means care. We are an online Quran and Islamic learning academy built around structured programs and caring teaching." }),
         sec("text_image", { heading: "Our educational approach",
-          body: "Learning is organised into three programs, each with three clear levels:\n\n- Quran Reading & Fluency\n- Quran Recitation, Tajweed & Sunnah\n- Islamic Foundations & Daily Living\n\nEvery learner begins with a free reading assessment so we can recommend the right starting level.",
-          image: "assets/img/flyer.jpg", image_alt: "Inaya Quran Academy programs" }),
-        sec("benefits", { eyebrow: "Mission and values", heading: "What guides us", columns: 3, bg: "soft", items: [
+          body: "Learning is organised into three programs, each with three clear levels:\n\n- Quran Reading & Fluency\n- Quran Recitation, Tajweed & Sunnah\n- Islamic Foundations & Daily Living\n\nEvery learner begins with a free reading assessment so we can recommend the right starting level." }),
+        sec("rows", { eyebrow: "Mission and values", heading: "What guides us", bg: "soft", items: [
           { title: "Better Quran, Better You", text: "Quran learning that shapes the learner as well as the reading." },
           { title: "Learn · Practice · Grow", text: "Understanding, steady practice and visible growth." },
           { title: "Care for every learner", text: "A safe, supportive environment for every age and level." }] }),
-        sec("rich_text", { heading: "Teaching philosophy",
-          body: "We believe that clear structure, patient guidance and regular practice help learners build confidence. Assessments are used to understand where a learner is today, never to judge them, and topics a learner has not yet been taught are simply noted as \"Not Yet Learned\"." }),
+        sec("rich_text", { eyebrow: "Teaching philosophy", heading: "How we help learners progress",
+          body: "We believe that clear structure, patient guidance and regular practice help learners build confidence. Assessments are used to understand where a learner is today, never to judge them, and topics a learner has not yet been taught are simply noted as \"Not Yet Learned\".\n\n- Strong foundations in reading\n- Accurate recitation\n- Tajweed rules learned and then applied\n- Teaching at the learner's own level\n- A clear path through three levels" }),
+        sec("teachers", { visible: false, eyebrow: "The people behind the academy", heading: "Our teachers", body: "", items: [] }),
         sec("cta", { heading: "Meet us through a free assessment", body: "A short, friendly session to understand the learner's current level.",
           button_label: "Book a Free Assessment", button_href: "/assessment" })
       ],
@@ -164,19 +164,33 @@
     },
     hero: function (x, c) {
       var img = I.safeImg(x.image), center = x.layout === "center" || !img;
-      var art = img ? '<div class="hero-art"><div class="arch"><img src="' + esc(img) + '" alt="' + esc(x.image_alt || "") + '" width="930" height="910" fetchpriority="high"></div>' +
-        '<div class="hero-badge"><strong>3 programs · 3 levels each</strong>Online &amp; one-on-one options</div></div>' : "";
+      var art = img ? '<div class="hero-art"><div class="arch"><img src="' + esc(img) + '" alt="' + esc(x.image_alt || "") + '" width="930" height="910" fetchpriority="high"></div></div>' : "";
+      var note = x.note ? '<p class="hero-note">' + esc(x.note).split(" · ").join('<span aria-hidden="true"> · </span>') + "</p>" : "";
       return '<section class="hero' + (center ? " center" : "") + '" data-sec="' + esc(x.id) + '" data-anim="' + anim(x.anim) + '"><div class="container hero-grid"><div>' +
         (x.eyebrow ? '<div class="eyebrow">' + esc(x.eyebrow) + "</div>" : "") +
         "<h1>" + inlineHead(x.heading) + "</h1>" +
-        (x.body ? '<p class="lead">' + I.inline(x.body) + "</p>" : "") + buttons(x, c.settings) + "</div>" + art + "</div></section>";
+        (x.body ? '<p class="lead">' + I.inline(x.body) + "</p>" : "") + buttons(x, c.settings) + note + "</div>" + art + "</div></section>";
+    },
+    rows: function (x, c) {
+      var items = (x.items || []).map(function (it) {
+        var link = it.label && it.href ? '<a class="row-link" href="' + esc(safeHref(I.resolveHref(it.href, c.settings))) + '">' + esc(it.label) + ' <span class="arr" aria-hidden="true">→</span></a>' : "";
+        return '<li class="rw"><h3>' + esc(it.title) + '</h3><div><p>' + esc(it.text) + "</p>" + link + "</div></li>";
+      }).join("");
+      return wrap(x, '<div class="sec-head">' + head(x) + '</div><ul class="rows">' + items + "</ul>");
     },
     text_image: function (x, c) {
       var img = I.safeImg(x.image);
       var media = img ? '<div class="split-media"><img src="' + esc(img) + '" alt="' + esc(x.image_alt || "") + '" loading="lazy"></div>' : "";
-      return wrap(x, '<div class="split' + (x.reverse ? " rev" : "") + '"><div>' + head(x) + buttons(x, c.settings) + "</div>" + media + "</div>");
+      return wrap(x, '<div class="split' + (x.reverse ? " rev" : "") + (img ? "" : " one") + '"><div>' + head(x) + buttons(x, c.settings) + "</div>" + media + "</div>");
     },
     program_cards: function (x, c) {
+      if (x.style === "rows") {
+        var rows = (c.programs || []).map(function (p, i) {
+          var lv = (p.levels || []).map(function (l) { return '<li><span class="lv">Level ' + esc(l.level_number) + "</span> " + esc(l.title) + "</li>"; }).join("");
+          return '<li class="pr"><span class="pr-n" aria-hidden="true">' + (i + 1) + '</span><div class="pr-main"><h3><a href="/programs/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + "</a></h3><p>" + esc(p.short_description) + '</p><a class="row-link" href="/programs/' + encodeURIComponent(p.slug) + '">Learn more <span class="arr" aria-hidden="true">→</span></a></div><ul class="pr-levels">' + lv + "</ul></li>";
+        }).join("");
+        return wrap(x, '<div class="sec-head">' + head(x) + "</div>" + (rows ? '<ol class="prog-rows">' + rows + "</ol>" : '<div class="empty">Programs will appear here soon.</div>') + buttons(x, c.settings));
+      }
       var cards = (c.programs || []).map(function (p, i) {
         var lv = (p.levels || []).map(function (l) { return '<li><span class="pill">Level ' + esc(l.level_number) + "</span><span>" + esc(l.title) + "</span></li>"; }).join("");
         return '<article class="card"><div class="icon-dot" aria-hidden="true">' + (i + 1) + "</div><h3>" + esc(p.title) + '</h3><p class="sub">' + esc(p.short_description) + '</p><ul class="levels">' + lv +
@@ -199,7 +213,12 @@
       }).join("");
       return wrap(x, '<div class="sec-head">' + head(x) + '</div><div class="grid ' + cols(x.columns) + '">' + items + "</div>");
     },
-    process: function (x) {
+    process: function (x, c) {
+      var list = x.plist === "list";
+      if (list) {
+        var li = (x.items || []).map(function (it) { return "<li><h3>" + esc(it.title) + "</h3><p>" + esc(it.text) + "</p></li>"; }).join("");
+        return wrap(x, '<div class="split top"><div>' + head(x) + buttons(x, c && c.settings) + '</div><ol class="timeline">' + li + "</ol></div>");
+      }
       var items = (x.items || []).map(function (it) { return '<div class="step"><h3>' + esc(it.title) + "</h3><p>" + esc(it.text) + "</p></div>"; }).join("");
       return wrap(x, '<div class="sec-head">' + head(x) + '</div><div class="steps">' + items + "</div>");
     },
@@ -222,6 +241,7 @@
       return wrap(x, '<div class="sec-head">' + head(x, false) + '</div><div class="grid c3">' + items + "</div>");
     },
     teachers: function (x) {
+      if (!(x.items || []).length) return "";
       var items = (x.items || []).map(function (it) {
         var im = I.safeImg(it.image);
         return '<div class="card person">' + (im ? '<img src="' + esc(im) + '" alt="' + esc(it.name) + '" loading="lazy">' : "") + "<h3>" + esc(it.name) + '</h3><p class="sub">' + esc(it.role) + '</p><p style="margin:0">' + esc(it.text) + "</p></div>";
@@ -325,5 +345,13 @@
     }).join("");
   }
 
-  window.InayaSections = { META: META, TYPES: TYPES, defaults: defaults, render: render, faqHtml: faqHtml, faqByCategory: faqByCategory, programDetail: programDetail, programsOverview: programsOverview, uid: uid, newSection: sec };
+  /* Pages saved by the very first version still hold the old default layout. If a page has never been edited,
+     show the current default design instead. A page the owner changed is never touched. */
+  function isLegacySeed(slug, sections) {
+    var f = function (t) { return (sections || []).filter(function (x) { return x && x.type === t; })[0]; };
+    if (slug === "home") { var h = f("hero"); return !!(h && /Made Simple/.test(h.heading || "") && sections.length === 8); }
+    if (slug === "about") { var t = f("text_image"), b = f("benefits"); return !!(t && b && t.heading === "Our educational approach" && sections.length === 5 && !f("rows")); }
+    return false;
+  }
+  window.InayaSections = { isLegacySeed: isLegacySeed, META: META, TYPES: TYPES, defaults: defaults, render: render, faqHtml: faqHtml, faqByCategory: faqByCategory, programDetail: programDetail, programsOverview: programsOverview, uid: uid, newSection: sec };
 })();

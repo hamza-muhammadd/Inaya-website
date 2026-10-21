@@ -1,5 +1,5 @@
 -- =====================================================================
--- Inaya Quran Academy — Phase 2: STUDENTS (additive migration)
+-- Inaya Quran Academy, Phase 2: STUDENTS (additive migration)
 -- Run AFTER schema.sql, in the Supabase SQL editor. Safe to run twice.
 -- Does not modify or delete any existing table or row.
 -- No payment/card data. Soft delete only (deleted_at).

@@ -511,7 +511,7 @@ function ico(n) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke
 /* soon:true = planned module, NOT built yet. It opens an honest "not built" page. */
 var NAV = [
   ["Main", [["overview", "Dashboard", "grid"], ["leads", "Leads & Inquiries", "mail"], ["assessments", "Assessments", "check"], ["enrollments", "Enrollments", "users"], ["students", "Students", "user"]]],
-  ["Website", [["builder", "Website Builder", "brush"], ["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
+  ["Website", [["builder", "Website Builder", "brush"], ["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["brand", "Brand Identity", "brush"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
   ["Academy", [["classes", "Classes & Timetable", "cal"], ["teachers", "Teachers", "users"], ["finance", "Finance", "cash"], ["reminders", "Reminders", "bolt"]]],
   ["System", [["reports", "Reports", "chart"], ["activity", "Activity log", "check"], ["users", "Users & Access", "users"], ["settings", "Settings & Brand", "gear"]]]
 ];
@@ -607,6 +607,7 @@ function brandModal() {
       '<div class="g2" style="margin-top:8px">' + F("br-lh", "Header logo height (px)", cur.logo_height, { type: "number", attrs: 'min="20" max="160"' }) + F("br-flh", "Footer logo height (px)", cur.footer_logo_height, { type: "number", attrs: 'min="20" max="160"' }) + "</div>" +
       '<div id="br-pv" style="background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block;margin-bottom:10px"></div>' +
       imgRow("br-flogo", "Footer logo (optional)", cur.footer_logo_url, "Leave empty to use the main logo.") +
+      imgRow("br-fav", "Favicon (small icon in the browser tab)", cur.favicon_url, "A square PNG or ICO. Optional.") +
       F("br-fmode", "Footer logo colour", cur.footer_logo_mode === "original" ? "original" : "white", { type: "select", options: [["white", "Make it white"], ["original", "Keep original colours"]] }) +
       '<div id="br-fpv" style="background:' + (((cur.colors || {}).primary) || "#0F4C3A") + ';border-radius:10px;padding:10px;display:inline-block"></div>',
     onOpen: function (mm) {
@@ -616,12 +617,29 @@ function brandModal() {
     onOk: async function () {
       var name = val("br-name"); if (!name) { toast("Academy name is required.", true); return false; }
       var d = deep(settings);
+      if (d.logo_url && d.logo_url !== val("br-logo")) d.logo_prev = d.logo_url;
+      d.favicon_url = val("br-fav");
       d.academy_name = name; d.logo_url = val("br-logo"); d.footer_logo_url = val("br-flogo"); d.footer_logo_mode = val("br-fmode");
       d.logo_height = Math.min(160, Math.max(20, parseInt(val("br-lh"), 10) || 44)); d.footer_logo_height = Math.min(160, Math.max(20, parseInt(val("br-flh"), 10) || 44));
       await saveSettings(d); toast("Logo saved. The website and admin panel both use it now.");
-      if (location.hash.indexOf("#settings") === 0) route();
+      if (/^#(settings|brand)/.test(location.hash)) route();
     } });
 }
+VIEWS.brand = function (el) {
+  var s = settings, l = I.safeImg(s.logo_url), fl = I.safeImg(s.footer_logo_url) || l, fv = I.safeImg(s.favicon_url), prev = I.safeImg(s.logo_prev);
+  var lh = Math.min(160, Math.max(20, parseInt(s.logo_height, 10) || 44)), fh = Math.min(160, Math.max(20, parseInt(s.footer_logo_height, 10) || 44));
+  el.innerHTML = pageHead("Brand Identity", "One logo setting feeds the website header, the footer, the mobile menu and this admin panel. Change it here, or click the logo at the top of any admin page.", '<button class="btn wbtn" id="br-edit">Replace logo or edit brand</button>') +
+    '<div class="g2"><div class="card"><h2>Header and admin</h2><div style="background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:14px;display:inline-block">' + (l ? '<img src="' + h(l) + '" alt="Current logo" style="height:' + lh + 'px;width:auto;display:block">' : '<b>' + h(s.academy_name) + "</b>") + '</div><p class="muted small">Height ' + lh + ' px</p></div>' +
+    '<div class="card"><h2>Footer</h2><div style="background:' + h((s.colors || {}).primary || "#0F4C3A") + ';border-radius:10px;padding:14px;display:inline-block">' + (fl ? '<img src="' + h(fl) + '" alt="Footer logo" style="height:' + fh + "px;width:auto;display:block;" + (s.footer_logo_mode === "original" ? "" : "filter:brightness(0) invert(1)") + '">' : "") + '</div><p class="muted small">' + (s.footer_logo_mode === "original" ? "Original colours" : "Shown in white") + "</p></div></div>" +
+    '<div class="g2" style="margin-top:14px"><div class="card"><h2>Favicon</h2>' + (fv ? '<img src="' + h(fv) + '" alt="Favicon" style="height:40px;width:40px;object-fit:contain;border:1px solid var(--bd);border-radius:8px;padding:4px">' : '<p class="muted">Not set. The site uses its default icon.</p>') + "</div>" +
+    '<div class="card"><h2>Previous logo</h2>' + (prev ? '<div style="background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block"><img src="' + h(prev) + '" alt="Previous logo" style="height:40px;width:auto;display:block"></div><div style="margin-top:10px"><button class="btn ghost sm wbtn" id="br-rev">Go back to this logo</button></div>' : '<p class="muted">No earlier logo yet. The last one is kept here after you replace it.</p>') + "</div></div>" +
+    '<p class="hint" style="margin-top:14px">Uploads accept PNG, JPG, WebP or ICO up to 5 MB. If an upload fails, the logo that works now stays in place.</p>';
+  $("#br-edit", el).onclick = brandModal;
+  var rv = $("#br-rev", el); if (rv) rv.onclick = async function () {
+    if (!needWrite()) return; var d = deep(settings), cur = d.logo_url; d.logo_url = d.logo_prev; d.logo_prev = cur;
+    try { await saveSettings(d); toast("Previous logo restored."); route(); } catch (e) { fail(e); }
+  };
+};
 document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("#brand"); if (b) { e.preventDefault(); brandModal(); } });
 /* ================= OVERVIEW (dashboard, real data only) ================= */
 var STATUSES = ["New", "Contacted", "Assessment Scheduled", "Assessment Completed", "Follow-up Required", "Enrollment Pending", "Enrollment Confirmed", "Not Proceeding"];
@@ -1561,7 +1579,7 @@ async function templatesTab(el, feat) {
 }
 
 /* ---------- PAGE EDITOR ---------- */
-var ITEM_LABEL = { title: "Title", text: "Text", value: "Value (e.g. 120+)", label: "Label", name: "Name", role: "Role", image: "Image", alt: "Alt text" };
+var ITEM_LABEL = { title: "Title", text: "Text", value: "Value (e.g. 120+)", label: "Label / link text", href: "Link destination (for example /assessment)", name: "Name", role: "Role", image: "Image", alt: "Alt text" };
 var NO_HEADING = { gallery: 1, programs_detail: 1, faq_all: 1, assessment_form: 1, contact_form: 1 };
 var BG_OPTS = [["", "Default (cream)"], ["soft", "Soft sand"], ["green", "Deep green"]];
 
@@ -1606,6 +1624,7 @@ async function pageEditor(el, slug) {
     var errs = [];
     draft.forEach(function (x, i) {
       var T = S.TYPES[x.type], n = (i + 1) + ". " + T.label + ": ";
+      if (x.visible === false) return;   // hidden sections are not shown to visitors, so they can stay unfinished
       if (!(x.heading || "").trim() && !NO_HEADING[x.type] && !(x.type === "rich_text" && (x.body || "").trim())) errs.push({ i: i, msg: n + "heading is required" });
       if (x.type === "rich_text" && !(x.body || "").trim()) errs.push({ i: i, msg: n + "text is required" });
       [["button_label", "button_href"], ["button2_label", "button2_href"]].forEach(function (p) {
@@ -1614,7 +1633,11 @@ async function pageEditor(el, slug) {
       });
       if (T.itemFields) {
         if (!(x.items || []).length && x.type !== "stats") errs.push({ i: i, msg: n + "add at least one item" });
-        (x.items || []).forEach(function (it, k) { if (!(it[T.itemFields[0]] || "").trim()) errs.push({ i: i, msg: n + "item " + (k + 1) + " needs “" + ITEM_LABEL[T.itemFields[0]] + "”" }); });
+        (x.items || []).forEach(function (it, k) {
+          if (!(it[T.itemFields[0]] || "").trim()) errs.push({ i: i, msg: n + "item " + (k + 1) + " needs “" + ITEM_LABEL[T.itemFields[0]] + "”" });
+          if (it.href && !validHref(String(it.href).trim())) errs.push({ i: i, msg: n + "item " + (k + 1) + ": the link must start with /, #, https://, mailto: or tel:" });
+          if (it.label && !it.href) errs.push({ i: i, msg: n + "item " + (k + 1) + ": the link text needs a destination" });
+        });
       }
     });
     return errs;
@@ -1628,7 +1651,7 @@ async function pageEditor(el, slug) {
   function trForm(x, T, has) {
     var fields = []; if (has("eyebrow")) fields.push(["eyebrow", "Small label"]); if (has("heading")) fields.push(["heading", "Heading"]); if (has("body")) fields.push(["body", "Body text"]);
     if (has("buttons")) { fields.push(["button_label", "Button 1 label"]); fields.push(["button2_label", "Button 2 label"]); }
-    var hasItems = T.itemFields && (x.items || []).length, ifs = (T.itemFields || []).filter(function (f) { return f !== "image"; });
+    var hasItems = T.itemFields && (x.items || []).length, ifs = (T.itemFields || []).filter(function (f) { return f !== "image" && f !== "href"; });
     if (!fields.length && !(hasItems && ifs.length)) return "";
     var tr = x.i18n || {}, filled = LANGS.some(function (l) { return tr[l[0]] && Object.keys(tr[l[0]]).length; });
     var html = '<details class="trans"' + (filled ? " open" : "") + '><summary>Translations (Bangla, Arabic)</summary><div class="hint" style="margin:6px 0 10px">Optional. Leave a field empty to use the built-in translation or the English text above.</div>';
@@ -1658,6 +1681,9 @@ async function pageEditor(el, slug) {
     if (has("image")) out += '<label class="l">Image</label>' + thumb(x.image) + '<div class="row"><input type="text" data-f="image" value="' + h(x.image || "") + '" placeholder="Choose or paste an image URL" class="grow" style="flex:1"><button type="button" class="btn sm ghost" data-pick="image">' + (x.image ? "Replace" : "Choose / upload") + "</button>" + (x.image ? '<button type="button" class="btn sm ghost" data-clear="image">Remove</button>' : "") + '</div>' + fld("image_alt", "Image description (alt text)", x.image_alt, { max: 200, hint: "Describe the picture for screen readers." });
     if (has("layout")) out += fld("layout", "Layout", x.layout || "split", { type: "select", options: [["split", "Text + image"], ["center", "Centered text only"]] });
     if (has("reverse")) out += '<label class="chk" style="margin-top:12px"><input type="checkbox" data-f="reverse"' + (x.reverse ? " checked" : "") + "> Show image on the left</label>";
+    if (has("note")) out += fld("note", "Short facts under the buttons", x.note, { max: 140, hint: "Separate items with a middle dot, for example: Online classes · Children and adults. Only true statements." });
+    if (has("style")) out += fld("style", "Layout", x.style || "cards", { type: "select", options: [["rows", "Calm list (recommended)"], ["cards", "Cards"]] });
+    if (has("plist")) out += fld("plist", "Layout", x.plist || "grid", { type: "select", options: [["list", "Vertical list beside the heading"], ["grid", "Numbered boxes"]] });
     if (has("columns")) out += fld("columns", "Columns", String(x.columns || 3), { type: "select", options: [["2", "2"], ["3", "3"], ["4", "4"]] });
     if (has("limit")) out += fld("limit", "How many questions to show", x.limit || 5, { type: "number", attrs: 'min="1" max="50"', hint: "The first N questions from the FAQ list." });
     if (has("buttons")) out += '<div class="g2">' + fld("button_label", "Button 1 label", x.button_label, { max: 60 }) + fld("button_href", "Button 1 destination", x.button_href, { attrs: 'list="dests" placeholder="/assessment"' }) +
@@ -1691,7 +1717,7 @@ async function pageEditor(el, slug) {
 
   el.classList.add("fill");
   el.innerHTML = '<div class="page-h"><div><a href="#builder" class="small">← Website Builder / Pages</a><h1>Edit page: ' + h(row.title) + '</h1><div class="row"><span id="ed-status">' + badge(row.status) + '</span><span id="ed-dirty" class="badge b-draft hidden">unsaved changes</span><span id="ed-live"></span>' + (usingDefaults ? '<span class="badge b-New">built-in layout loaded, save to keep</span>' : "") + "</div></div>" +
-    '<div class="row"><button class="btn ghost" id="b-prev" title="Open the draft in a new tab">Preview</button><button class="btn ghost wbtn" id="b-save">Save draft</button><button class="btn wbtn" id="b-pub">Publish</button><button class="btn ghost wbtn" id="b-more">More…</button></div></div>' +
+    '<div class="row"><button class="btn ghost" id="b-prev" title="Open the draft in a new tab">Preview</button>'+(isSys?'<button class="btn ghost wbtn" id="b-reset" title="Replace the draft with the current built-in design for this page">Use the new design</button>':'')+'<button class="btn ghost wbtn" id="b-save">Save draft</button><button class="btn wbtn" id="b-pub">Publish</button><button class="btn ghost wbtn" id="b-more">More…</button></div></div>' +
     '<div class="ed"><div><div class="card"><div class="row sb"><b>Page settings</b><button class="ico" id="seo-tog">Edit settings</button></div><div id="seo" class="hidden"></div></div>' +
     '<div style="margin-top:14px"><div id="sl"></div></div><div class="card wbtn row" style="margin-top:10px"><select id="add-type" style="flex:1;min-width:160px">' + Object.keys(S.TYPES).map(function (k) { return '<option value="' + k + '">' + h(S.TYPES[k].label) + "</option>"; }).join("") + '</select><button class="btn" id="add-sec">+ Add section</button></div></div>' +
     '<div class="pv"><div class="pv-bar"><b class="grow">Live preview</b><button class="chip" data-m="desktop">Desktop</button><button class="chip" data-m="mobile">Mobile</button></div><div class="pv-frame" id="pvf"><iframe id="pv" title="Page preview" sandbox=""></iframe></div><p class="hint">Shows your unsaved draft. Visitors see it only after you publish.</p></div></div>';
@@ -1727,6 +1753,14 @@ async function pageEditor(el, slug) {
   function liveLink() { var on = row.status === "published" && !row.archived, u = livePath(slug); $("#ed-live").innerHTML = on ? '<a class="small" target="_blank" rel="noopener" href="' + h(u) + '" title="' + h(location.origin + u) + '">View live page ↗</a>' : ""; }
   seoHtml(); renderList(); refreshPreview(); liveLink();
   $("#b-prev").onclick = function () { var w = window.open(URL.createObjectURL(new Blob([previewDoc().replace("<head>", '<head><base href="' + location.origin + '/" target="_blank">')], { type: "text/html" })), "_blank"); if (!w) toast("Allow pop-ups to open the preview.", true); };
+  var rb = $("#b-reset");
+  if (rb) rb.onclick = async function () {
+    if (!needWrite()) return;
+    var ok = await confirmBox("Replace the draft of this page with the current built-in design? Your present draft sections will be lost. The published page stays as it is until you click Publish.", { okLabel: "Use the new design" });
+    if (!ok) return;
+    draft = S.defaults(slug); openId = null; setDirty(true); renderList(); refreshPreview(); toast("New design loaded into the draft. Check it, then Publish.");
+  };
+  if (isSys && S.isLegacySeed(slug, draft)) $("#sl").insertAdjacentHTML("beforebegin", '<div class="alert info" style="margin-bottom:12px">This page still has the first default layout. Visitors already see the new design, because the page was never edited. Click "Use the new design" to load it here so you can edit it.</div>');
   $("#seo-tog").onclick = function () { $("#seo").classList.toggle("hidden"); this.textContent = $("#seo").classList.contains("hidden") ? "Edit settings" : "Hide settings"; };
   $$("[data-m]", el).forEach(function (b) { b.onclick = function () { $("#pvf").style.width = b.getAttribute("data-m") === "mobile" ? "390px" : "100%"; }; });
 

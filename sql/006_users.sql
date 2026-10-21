@@ -1,5 +1,5 @@
 -- =====================================================================
--- Inaya Quran Academy — Phase 6: USERS & ACCESS (owner only)
+-- Inaya Quran Academy, Phase 6: USERS & ACCESS (owner only)
 -- Additive. Safe to run twice.
 -- The person must ALREADY exist in Supabase Authentication → Users
 -- (invite or create them there first). These functions only grant a role.
