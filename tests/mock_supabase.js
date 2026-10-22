@@ -28,7 +28,7 @@
     const api={
       select(s,o){ if(st.op==='select'||true){st.sel=s||'*';} if(o&&o.count)st.count=true; if(o&&o.head)st.head=true; return api;},
       insert(p){st.op='insert';st.payload=p;return api;},update(p){st.op='update';st.payload=p;return api;},upsert(p,o){st.op='upsert';st.payload=p;st.conf=o&&o.onConflict;return api;},delete(){st.op='delete';return api;},
-      eq(c,v){st.f.push(r=>r[c]===v);return api;},lte(c,v){st.f.push(r=>r[c]!=null&&r[c]<=v);return api;},gte(c,v){st.f.push(r=>r[c]>=v);return api;},
+      eq(c,v){st.f.push(r=>r[c]===v);return api;},in(c,v){st.f.push(r=>v.includes(r[c]));return api;},lte(c,v){st.f.push(r=>r[c]!=null&&r[c]<=v);return api;},gte(c,v){st.f.push(r=>r[c]>=v);return api;},
       not(c,op,v){st.f.push(r=>!String(v).includes('"'+r[c]+'"'));return api;},or(){return api;},lt(c,v){st.f.push(r=>String(r[c]||"")<v);return api;},
       order(c,o){st.ord.push([c,!(o&&o.ascending===false)]);return api;},limit(n){st.lim=n;return api;},range(a,b){st.rng=[a,b];return api;},
       single(){st.single=true;return api;},maybeSingle(){st.maybe=true;return api;},

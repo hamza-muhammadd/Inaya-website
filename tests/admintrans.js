@@ -19,7 +19,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { c ? pass++ : fail++; console.log(
     r.fulfill({ status: 200, headers: Object.assign({ 'content-type': 'application/json' }, H), body: JSON.stringify(body) });
   });
   const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
-  await pg.goto('http://localhost:4173/admin#settings'); await pg.waitForTimeout(1200);
+  await pg.goto('http://localhost:4173/admin#settings/language'); await pg.waitForTimeout(1200);
   ok(await pg.locator('#st-tr-on').isChecked(), 'translation card present, automatic translation on by default');
   ok(/anthropic/.test(await pg.innerText('#tr-status')) && /12 ready/.test(await pg.innerText('#tr-status')), 'status shows provider and counts: ' + (await pg.innerText('#tr-status')).slice(0, 90));
   ok(await pg.locator('.nav a[data-v=settings], #nav a[data-v=settings]').count() === 1 && (await pg.locator('#nav a').allInnerTexts()).filter(t => /translat/i.test(t)).length === 0, 'no extra menu item: it lives in Settings');

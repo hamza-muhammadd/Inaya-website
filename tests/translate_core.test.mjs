@@ -87,6 +87,14 @@ r = await W.call({ action: 'status' }, 'staff-token');
 ok(r.body.ok && r.body.per_language.bn.ok > 20 && r.body.provider === 'anthropic', 'status: counts and provider are reported');
 r = await W.call({ action: 'purge' }, 'owner-token');
 ok(r.body.removed === 1 && !W.tables.translations.some(x => x.id === 500), 'purge: translations of text that no longer exists are removed');
+// gemini provider
+W = makeWorld({ noKey: true, gemini: true });
+r = await W.call({ action: 'translate', lang: 'bn', texts: [T] });
+ok(r.body.t && r.body.t[hashText(T)] && /^\[/.test(r.body.t[hashText(T)]) && W.geminiSeen && W.geminiSeen.key === 'gem-test-secret' && /gemini/.test(W.geminiSeen.url), 'gemini: used automatically when only GEMINI_API_KEY is set');
+ok(!JSON.stringify(r.body).includes('gem-test-secret') && !JSON.stringify(W.tables).includes('gem-test-secret'), 'gemini: key never appears in responses or stored rows');
+W = makeWorld({ noKey: true, gemini: true }); W.providerMode = 'error';
+r = await W.call({ action: 'translate', lang: 'bn', texts: [T] });
+ok(r.status === 200 && !(r.body.t && r.body.t[hashText(T)]), 'gemini: provider error leaves English, no crash');
 // helpers
 const p = protect('Learn Tajweed with Quran and ' + ar, 'bn'); ok(restore(p.text, p.keep).includes('তাজবিদ') && restore(p.text, p.keep).includes(ar), 'helpers: glossary and Arabic restored');
 ok(restore(p.text.replace('⟦0⟧', ''), p.keep) === null, 'helpers: a lost placeholder is detected');

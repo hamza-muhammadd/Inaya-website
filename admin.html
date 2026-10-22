@@ -104,6 +104,8 @@ h1{font-size:1.5rem}h2{font-size:1.2rem}
 .card+.card{margin-top:14px}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--bd);margin-bottom:16px;flex-wrap:wrap}
 .tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:9px 14px;font-weight:600;color:var(--mu)}.tabs button.on{color:var(--g);border-color:var(--sand)}
+.savebar{position:sticky;bottom:0;display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:10px 0;margin-top:8px;background:linear-gradient(to top,var(--bg,#fff) 70%,transparent)}
+#st-tabs{overflow-x:auto;flex-wrap:nowrap}#st-tabs button{white-space:nowrap}
 /* tiles */
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px}
 .tile{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px}
@@ -294,7 +296,7 @@ input[type=text],input[type=email],input[type=password],input[type=search],input
  <div class="frame">
   <header class="topbar">
     <button id="menu" class="ibtn" aria-label="Open menu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-    <a class="brand" id="brand" href="#" title="Click to change the logo and brand" aria-label="Change logo and brand"><img id="brand-img" src="/assets/img/logo.png" alt="Inaya Quran Academy"><span class="brand-edit" aria-hidden="true">Edit</span></a>
+    <a class="brand" id="brand" href="#" title="Brand Identity settings" aria-label="Open Brand Identity settings"><img id="brand-img" src="/assets/img/logo.png" alt="Inaya Quran Academy"><span class="brand-edit" aria-hidden="true">Edit</span></a>
     <div class="search rel"><svg class="si ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="gsearch" type="search" placeholder="Search inquiries…" autocomplete="off" aria-label="Search inquiries"><div id="gres" class="pop hidden"></div></div>
     <div class="tb-right">
@@ -478,7 +480,9 @@ $("#signout").addEventListener("click", async function (e) { e.preventDefault();
 var VIEWS = {}, prevHash = "#overview";
 function route() {
   if (!me) return;
-  var parts = (location.hash.slice(1) || "overview").split("/"), name = VIEWS[parts[0]] ? parts[0] : "overview";
+  var parts = (location.hash.slice(1) || "overview").split("/");
+  if (parts[0] === "brand") { parts = ["settings", "brand"]; try { history.replaceState(null, "", "#settings/brand"); prevHash = "#settings/brand"; } catch (e) {} }   // old bookmark, one Brand Identity place now
+  var name = VIEWS[parts[0]] ? parts[0] : "overview";
   $$("#nav a").forEach(function (a) { var key = a.getAttribute("data-v"); a.classList.toggle("on", key === name || key === parts.slice(0, 2).join("/")); });
   $("#side").classList.remove("open"); view = $("#view"); view.classList.remove("fill"); view.innerHTML = '<div class="muted">Loading…</div>'; guard = null; window.scrollTo(0, 0); view.scrollTop = 0;
   Promise.resolve(VIEWS[name](view, parts.slice(1))).catch(function (e) { fail(e); view.innerHTML = '<div class="alert bad">Could not load this section: ' + h(e.message || e) + "</div>"; });
@@ -511,9 +515,9 @@ function ico(n) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke
 /* soon:true = planned module, NOT built yet. It opens an honest "not built" page. */
 var NAV = [
   ["Main", [["overview", "Dashboard", "grid"], ["leads", "Leads & Inquiries", "mail"], ["assessments", "Assessments", "check"], ["enrollments", "Enrollments", "users"], ["students", "Students", "user"]]],
-  ["Website", [["builder", "Website Builder", "brush"], ["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["brand", "Brand Identity", "brush"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
+  ["Website", [["builder", "Website Builder", "brush"], ["content", "Website Content", "edit"], ["programs", "Programs & Curriculum", "book"], ["media", "Media Library", "img"], ["analytics", "Analytics", "chart"]]],
   ["Academy", [["classes", "Classes & Timetable", "cal"], ["teachers", "Teachers", "users"], ["finance", "Finance", "cash"], ["reminders", "Reminders", "bolt"]]],
-  ["System", [["reports", "Reports", "chart"], ["activity", "Activity log", "check"], ["users", "Users & Access", "users"], ["settings", "Settings & Brand", "gear"]]]
+  ["System", [["reports", "Reports", "chart"], ["activity", "Activity log", "check"], ["users", "Users & Access", "users"], ["settings", "Settings", "gear"]]]
 ];
 var navShut = {};
 try { navShut = JSON.parse(localStorage.getItem("inaya_nav_shut") || "{}"); } catch (e) {}
@@ -607,6 +611,53 @@ async function translateWarm() {
     for (var i = 0; i < 6; i++) { var r = await trFn("prewarm", { limit: 40 }); if (!r.remaining) break; }
   } catch (e) { console.warn("translation warm-up skipped:", e.message); }
 }
+/* Your own Bangla or Arabic wording for the text of one item (a program and its levels). It writes exactly what the
+   Review translations window writes: your wording in the translations table, keyed by the English text. No second system. */
+function trUnits(fields) {
+  var out = [], seen = {};
+  function add(t) { t = trNorm(t || ""); if (!t || !/[A-Za-z]/.test(t)) return; var k = trHash(t); if (seen[k]) return; seen[k] = 1; out.push({ hash: k, text: t }); }
+  fields.forEach(function (f) {
+    if (f.kind === "line") add(f.t);
+    else if (f.kind === "lines") String(f.t || "").split("\n").forEach(add);
+    else String(f.t || "").split(/\n\s*\n/).forEach(function (blk) {
+      var ls = blk.split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+      if (ls.length && ls.every(function (x) { return /^[-*] /.test(x); })) ls.forEach(function (x) { add(x.replace(/^[-*] /, "")); });
+      else add(blk.replace(/^#+\s+/, ""));
+    });
+  });
+  return out;
+}
+async function trPanel(host, units) {
+  if (!units.length) { host.innerHTML = ""; return; }
+  var langs = ["bn", "ar"].concat(((settings.translate || {}).languages || []).filter(function (c) { return TR_NAMES[c]; })), data = {}, byHash = {};
+  units.forEach(function (u) { byHash[u.hash] = u; });
+  for (var i = 0; i < langs.length; i++) {
+    var rows = (await q(sb.from("translations").select("src_hash,text,is_override,status").eq("lang", langs[i]).in("src_hash", units.map(function (u) { return u.hash; })))).data || [];
+    data[langs[i]] = {}; rows.forEach(function (r) { data[langs[i]][r.src_hash] = r; });
+  }
+  function nm(c) { return c === "bn" ? "Bangla (বাংলা)" : c === "ar" ? "Arabic (العربية)" : (TR_NAMES[c] || c); }
+  host.innerHTML = '<div class="card"><h2>Translations</h2><p class="muted small" style="margin-top:0">The website translates this program automatically. Write your own wording only where the automatic text is not right. This shows the English that is saved now, so save English changes first.</p>' +
+    langs.map(function (c, li) {
+      return '<details' + (li === 0 ? " open" : "") + ' style="margin-bottom:8px"><summary><b>' + nm(c) + "</b></summary>" + units.map(function (u) {
+        var r = data[c][u.hash], has = r && r.status === "ok" && r.text, tag = has ? (r.is_override ? "your wording" : "automatic") : "not translated yet";
+        return '<div class="item" style="margin-top:8px"><div class="small muted">' + h(u.text) + ' <span class="badge">' + tag + '</span></div><textarea rows="2" dir="' + (c === "ar" || c === "ur" || c === "fa" || c === "he" || c === "ps" ? "rtl" : "ltr") + '" data-trl="' + c + '" data-th="' + u.hash + '" data-orig="' + h(has ? r.text : "") + '" data-ovr="' + (r && r.is_override ? "1" : "") + '">' + h(has ? r.text : "") + "</textarea></div>";
+      }).join("") + "</details>";
+    }).join("") + '<div class="row wbtn" style="margin-top:10px"><button class="btn" type="button" id="trp-save">Save translations</button></div><div class="hint">Empty a box you wrote yourself to go back to the automatic translation.</div></div>';
+  $("#trp-save", host).onclick = async function () {
+    if (!needWrite()) return; var b = this, n = 0; b.disabled = true;
+    try {
+      var boxes = $$("textarea[data-th]", host);
+      for (var k = 0; k < boxes.length; k++) {
+        var t = boxes[k], v = t.value.trim(), orig = t.getAttribute("data-orig"), lg = t.getAttribute("data-trl"), hs = t.getAttribute("data-th"), u = byHash[hs];
+        if (v === orig.trim()) continue;
+        if (v) { await q(sb.from("translations").upsert({ lang: lg, src_hash: hs, source: u.text, text: v, status: "ok", is_override: true, provider: "manual", error: null, updated_at: new Date().toISOString() }, { onConflict: "lang,src_hash" })); n++; }
+        else if (t.getAttribute("data-ovr")) { await q(sb.from("translations").update({ is_override: false, status: "failed", text: null, attempts: 0, updated_at: new Date().toISOString() }).eq("lang", lg).eq("src_hash", hs)); n++; }
+      }
+      toast(n ? n + " translation" + (n > 1 ? "s" : "") + " saved. The website shows them now." : "Nothing changed.");
+      await trPanel(host, units);
+    } catch (e) { fail(e); b.disabled = false; }
+  };
+}
 function translationReview() {
   var lg = "bn", flt = "all", term = "";
   var m = modal({ title: "Review translations", wide: true, ok: false, cancelLabel: "Close", body:
@@ -651,57 +702,8 @@ function applyBrand() {
   im.alt = settings.academy_name || "Academy";
   try { localStorage.removeItem("inaya_site_v1"); } catch (e) {}
 }
-function brandModal() {
-  if (!needWrite()) return;
-  var cur = deep(settings);
-  function pv() {
-    var l = I.safeImg(val("br-logo")), lh = Math.min(160, Math.max(20, parseInt(val("br-lh"), 10) || 44)), fh = Math.min(160, Math.max(20, parseInt(val("br-flh"), 10) || 44));
-    var fl = I.safeImg(val("br-flogo")) || l;
-    $("#br-pv").innerHTML = l ? '<img src="' + h(l) + '" alt="Header logo preview" style="height:' + lh + 'px;width:auto;display:block">' : '<span class="muted small">No logo set. The academy name is shown as text.</span>';
-    $("#br-fpv").innerHTML = fl ? '<img src="' + h(fl) + '" alt="Footer logo preview" style="height:' + fh + 'px;width:auto;display:block;' + (val("br-fmode") === "white" ? "filter:brightness(0) invert(1)" : "") + '">' : "";
-  }
-  function imgRow(id, label, v, hint) { return '<label class="l" for="' + id + '">' + label + '</label><div class="row"><input id="' + id + '" type="text" value="' + h(v || "") + '" style="flex:1" placeholder="Image address"><button type="button" class="btn sm ghost" data-pk="' + id + '">Choose / upload</button></div>' + (hint ? '<div class="hint">' + hint + "</div>" : ""); }
-  var m = modal({ title: "Logo and brand", wide: true, okLabel: "Save and apply",
-    body: '<p class="muted small" style="margin-top:0">This logo is used at the top of the public website, in the footer and here in the admin panel. Save once and all of them change together.</p>' +
-      F("br-name", "Academy name", cur.academy_name, { req: true, max: 100 }) +
-      imgRow("br-logo", "Logo", cur.logo_url, "A transparent PNG works best. It is never stretched.") +
-      '<div class="g2" style="margin-top:8px">' + F("br-lh", "Header logo height (px)", cur.logo_height, { type: "number", attrs: 'min="20" max="160"' }) + F("br-flh", "Footer logo height (px)", cur.footer_logo_height, { type: "number", attrs: 'min="20" max="160"' }) + "</div>" +
-      '<div id="br-pv" style="background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block;margin-bottom:10px"></div>' +
-      imgRow("br-flogo", "Footer logo (optional)", cur.footer_logo_url, "Leave empty to use the main logo.") +
-      imgRow("br-fav", "Favicon (small icon in the browser tab)", cur.favicon_url, "A square PNG or ICO. Optional.") +
-      F("br-fmode", "Footer logo colour", cur.footer_logo_mode === "original" ? "original" : "white", { type: "select", options: [["white", "Make it white"], ["original", "Keep original colours"]] }) +
-      '<div id="br-fpv" style="background:' + (((cur.colors || {}).primary) || "#0F4C3A") + ';border-radius:10px;padding:10px;display:inline-block"></div>',
-    onOpen: function (mm) {
-      $$("[data-pk]", mm.el).forEach(function (b) { b.onclick = function () { pickMedia(function (u) { $("#" + b.getAttribute("data-pk"), mm.el).value = u; pv(); }); }; });
-      ["br-logo", "br-lh", "br-flh", "br-flogo"].forEach(function (i) { $("#" + i, mm.el).addEventListener("input", pv); }); $("#br-fmode", mm.el).addEventListener("change", pv); pv();
-    },
-    onOk: async function () {
-      var name = val("br-name"); if (!name) { toast("Academy name is required.", true); return false; }
-      var d = deep(settings);
-      if (d.logo_url && d.logo_url !== val("br-logo")) d.logo_prev = d.logo_url;
-      d.favicon_url = val("br-fav");
-      d.academy_name = name; d.logo_url = val("br-logo"); d.footer_logo_url = val("br-flogo"); d.footer_logo_mode = val("br-fmode");
-      d.logo_height = Math.min(160, Math.max(20, parseInt(val("br-lh"), 10) || 44)); d.footer_logo_height = Math.min(160, Math.max(20, parseInt(val("br-flh"), 10) || 44));
-      await saveSettings(d); toast("Logo saved. The website and admin panel both use it now.");
-      if (/^#(settings|brand)/.test(location.hash)) route();
-    } });
-}
-VIEWS.brand = function (el) {
-  var s = settings, l = I.safeImg(s.logo_url), fl = I.safeImg(s.footer_logo_url) || l, fv = I.safeImg(s.favicon_url), prev = I.safeImg(s.logo_prev);
-  var lh = Math.min(160, Math.max(20, parseInt(s.logo_height, 10) || 44)), fh = Math.min(160, Math.max(20, parseInt(s.footer_logo_height, 10) || 44));
-  el.innerHTML = pageHead("Brand Identity", "One logo setting feeds the website header, the footer, the mobile menu and this admin panel. Change it here, or click the logo at the top of any admin page.", '<button class="btn wbtn" id="br-edit">Replace logo or edit brand</button>') +
-    '<div class="g2"><div class="card"><h2>Header and admin</h2><div style="background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:14px;display:inline-block">' + (l ? '<img src="' + h(l) + '" alt="Current logo" style="height:' + lh + 'px;width:auto;display:block">' : '<b>' + h(s.academy_name) + "</b>") + '</div><p class="muted small">Height ' + lh + ' px</p></div>' +
-    '<div class="card"><h2>Footer</h2><div style="background:' + h((s.colors || {}).primary || "#0F4C3A") + ';border-radius:10px;padding:14px;display:inline-block">' + (fl ? '<img src="' + h(fl) + '" alt="Footer logo" style="height:' + fh + "px;width:auto;display:block;" + (s.footer_logo_mode === "original" ? "" : "filter:brightness(0) invert(1)") + '">' : "") + '</div><p class="muted small">' + (s.footer_logo_mode === "original" ? "Original colours" : "Shown in white") + "</p></div></div>" +
-    '<div class="g2" style="margin-top:14px"><div class="card"><h2>Favicon</h2>' + (fv ? '<img src="' + h(fv) + '" alt="Favicon" style="height:40px;width:40px;object-fit:contain;border:1px solid var(--bd);border-radius:8px;padding:4px">' : '<p class="muted">Not set. The site uses its default icon.</p>') + "</div>" +
-    '<div class="card"><h2>Previous logo</h2>' + (prev ? '<div style="background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block"><img src="' + h(prev) + '" alt="Previous logo" style="height:40px;width:auto;display:block"></div><div style="margin-top:10px"><button class="btn ghost sm wbtn" id="br-rev">Go back to this logo</button></div>' : '<p class="muted">No earlier logo yet. The last one is kept here after you replace it.</p>') + "</div></div>" +
-    '<p class="hint" style="margin-top:14px">Uploads accept PNG, JPG, WebP or ICO up to 5 MB. If an upload fails, the logo that works now stays in place.</p>';
-  $("#br-edit", el).onclick = brandModal;
-  var rv = $("#br-rev", el); if (rv) rv.onclick = async function () {
-    if (!needWrite()) return; var d = deep(settings), cur = d.logo_url; d.logo_url = d.logo_prev; d.logo_prev = cur;
-    try { await saveSettings(d); toast("Previous logo restored."); route(); } catch (e) { fail(e); }
-  };
-};
-document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("#brand"); if (b) { e.preventDefault(); brandModal(); } });
+/* The logo at the top of every admin page is a shortcut to the one Brand Identity place: Settings, Brand Identity. */
+document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("#brand"); if (b) { e.preventDefault(); location.hash = "#settings/brand"; } });
 /* ================= OVERVIEW (dashboard, real data only) ================= */
 var STATUSES = ["New", "Contacted", "Assessment Scheduled", "Assessment Completed", "Follow-up Required", "Enrollment Pending", "Enrollment Confirmed", "Not Proceeding"];
 var DAY = 864e5;
@@ -1969,7 +1971,7 @@ async function programEditor(el, id) {
       student_profile: val("pe-prof"), curriculum_overview: val("pe-curr"), cta_label: val("pe-cta") || "Book a Free Assessment", image_url: val("pe-img"), status: val("pe-status"), updated_at: new Date().toISOString() };
     this.disabled = true;
     try {
-      if (id) { await q(sb.from("programs").update(row).eq("id", id)); dirty = false; toast("Saved"); p = Object.assign(p, row); }
+      if (id) { await q(sb.from("programs").update(row).eq("id", id)); dirty = false; toast("Saved"); p = Object.assign(p, row); drawTr(); }
       else { row.slug = slug; row.sort_order = ((await q(sb.from("programs").select("id", { count: "exact", head: true }))).count || 0) + 1; var r = await q(sb.from("programs").insert(row).select().single()); dirty = false; toast("Program created"); location.hash = "#programs/" + r.data.id; }
     } catch (e) { fail(e.code === "23505" ? { message: "That URL name is already used by another program." } : e); }
     this.disabled = false;
@@ -1980,6 +1982,12 @@ async function programEditor(el, id) {
   };
   if (!id) return;
 
+  var trHost = document.createElement("div"); el.appendChild(trHost);
+  function drawTr() {
+    var f = [{ kind: "line", t: p.title }, { kind: "line", t: p.short_description }, { kind: "para", t: p.description }, { kind: "lines", t: (p.objectives || []).join("\n") }, { kind: "line", t: p.student_profile }, { kind: "para", t: p.curriculum_overview }, { kind: "line", t: p.cta_label }];
+    levels.forEach(function (l) { f.push({ kind: "line", t: l.title }); f.push({ kind: "line", t: l.description }); });
+    trPanel(trHost, trUnits(f)).catch(function (e) { trHost.innerHTML = ""; console.warn("translation panel:", e.message); });
+  }
   function drawLevels() {
     $("#lv").innerHTML = levels.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Order</th><th>Level</th><th>Status</th><th></th></tr></thead><tbody>' + levels.map(function (l, i) {
       return '<tr><td class="nowrap"><button class="ico wbtn" data-lm="' + i + ':-1"' + (i === 0 ? " disabled" : "") + '>↑</button> <button class="ico wbtn" data-lm="' + i + ':1"' + (i === levels.length - 1 ? " disabled" : "") + '>↓</button></td><td><span class="badge">Level ' + l.level_number + "</span> <b>" + h(l.title) + '</b><div class="muted small">' + h(l.description.slice(0, 100)) + "</div></td><td>" + badge(l.status) + '</td><td class="right nowrap"><a class="btn sm ghost" href="#programs/' + id + "/level/" + l.id + '">Curriculum</a> <button class="btn sm ghost wbtn" data-le="' + i + '">Edit</button> <button class="btn sm danger wbtn" data-ld="' + i + '">Delete</button></td></tr>';
@@ -1998,11 +2006,11 @@ async function programEditor(el, id) {
         var row = { level_number: n, title: t, description: val("lv-d"), status: val("lv-s"), updated_at: new Date().toISOString() };
         if (l) { await q(sb.from("program_levels").update(row).eq("id", l.id)); Object.assign(l, row); }
         else { row.program_id = id; row.sort_order = levels.length + 1; var r = await q(sb.from("program_levels").insert(row).select().single()); levels.push(r.data); }
-        drawLevels(); toast("Saved");
+        drawLevels(); drawTr(); toast("Saved");
       } });
   }
   $("#lv-add").onclick = function () { editLevel(null); };
-  drawLevels();
+  drawLevels(); drawTr();
 }
 
 /* ---------- curriculum modules for one level ---------- */
@@ -2389,13 +2397,13 @@ function lum(hex) { var c = [1, 3, 5].map(function (i) { var v = parseInt(hex.su
 function ratio(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
 var PRESETS = [["Inaya default", { primary: "#0F4C3A", accent: "#B8975A", background: "#FBF7EE", text: "#26312C" }], ["Forest & sand", { primary: "#14532D", accent: "#A8854A", background: "#FAF6EC", text: "#1F2A24" }], ["Deep teal", { primary: "#134E4A", accent: "#A88B4E", background: "#FAF7F0", text: "#23302D" }]];
 
-VIEWS.settings = async function (el) {
+VIEWS.settings = async function (el, args) {
   var s = deep(settings), nav = deep(s.nav || []), dirty = false; guard = function () { return dirty; };
   var c = s.colors, so = s.social || {}, ff = s.form_fields || {}, an = s.analytics || {};
   function imgField(id, label, v, hint) { return '<label class="l" for="' + id + '">' + label + '</label><div class="row"><input id="' + id + '" type="text" value="' + h(v || "") + '" style="flex:1"><button type="button" class="btn sm ghost" data-pk="' + id + '">Choose / upload</button></div>' + (hint ? '<div class="hint">' + hint + "</div>" : ""); }
   function colorField(k, label) { return '<div><label class="l" for="st-c-' + k + '">' + label + '</label><div class="sw"><input type="color" id="st-c-' + k + '" value="' + h(c[k]) + '"><input type="text" id="st-ch-' + k + '" value="' + h(c[k]) + '" maxlength="7" style="width:110px"></div></div>'; }
-  el.innerHTML = pageHead("Settings", "Brand, contact details, menu, footer, SEO and forms. Saved changes go live immediately.", '<span id="st-dirty" class="badge b-draft hidden">unsaved changes</span><button class="btn wbtn" id="st-save">Save settings</button>') +
-    '<div class="card"><h2>Brand</h2><div class="g2">' + F("st-name", "Academy name", s.academy_name, { req: true, max: 100 }) + F("st-tag", "Tagline", s.tagline, { max: 100 }) + "</div>" +
+  el.innerHTML = pageHead("Settings", "One place for everything that controls the website. Pick a group, change what you need, then press Save settings. Saved changes go live immediately.", '<span id="st-dirty" class="badge b-draft hidden">unsaved changes</span><button class="btn wbtn" id="st-save">Save settings</button>') +
+    '<div class="card"><h2>Logo, favicon, colours and font</h2><div class="g2">' + F("st-name", "Academy name", s.academy_name, { req: true, max: 100 }) + F("st-tag", "Tagline", s.tagline, { max: 100 }) + "</div>" +
     imgField("st-logo", "Logo", s.logo_url, "Used in the header, footer and emails. Transparent PNG works best. It is never stretched.") + '<div class="g2" style="margin-top:8px">' + F("st-lh", "Header logo height (px)", s.logo_height || 44, { type: "number", attrs: 'min="20" max="160" step="2"', hint: "20–160. The width follows automatically, so the logo is never stretched." }) + F("st-flh", "Footer logo height (px)", s.footer_logo_height || 44, { type: "number", attrs: 'min="20" max="160" step="2"' }) + "</div>" +
     '<div id="st-logo-pv" style="margin-top:8px;background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block"></div>' +
     imgField("st-flogo", "Footer logo (optional)", s.footer_logo_url, "Leave empty to use the main logo. Upload a light/white version here if your main logo is dark.") +
@@ -2415,15 +2423,44 @@ VIEWS.settings = async function (el) {
     '<div class="card"><h2>Forms</h2>' + F("st-as", "Assessment form success message", s.assessment_success, { type: "textarea", rows: 2, max: 300 }) + F("st-cs", "Contact form success message", s.contact_success, { type: "textarea", rows: 2, max: 300 }) +
     '<label class="l">Optional assessment-form fields to show</label><div class="row">' + [["student_name", "Student name"], ["age_group", "Age group"], ["country", "Country"], ["reading_level", "Reading level"], ["preferred_time", "Preferred time"]].map(function (f) { return '<label class="chk"><input type="checkbox" id="st-f-' + f[0] + '"' + (ff[f[0]] !== false ? " checked" : "") + "> " + f[1] + "</label>"; }).join("") + '</div><div class="hint">Name, contact (email or WhatsApp) and consent are always required, and are enforced by the server.</div></div>' +
     '<div class="card"><h2>Analytics</h2>' + F("st-an", "Provider", an.provider || "none", { type: "select", options: [["none", "None (first-party click counts only)"], ["ga4", "Google Analytics 4 (asks visitors for consent)"], ["plausible", "Plausible (cookie-free)"]] }) + '<div class="g2">' + F("st-ga", "GA4 Measurement ID", an.ga4_id, { max: 20, attrs: 'placeholder="G-XXXXXXXXXX"' }) + F("st-pl", "Plausible domain", an.plausible_domain, { max: 100, attrs: 'placeholder="inayaquran.com"' }) + '</div><div class="hint">No names, emails or phone numbers are ever sent to analytics.</div></div>' +
-    '<div class="card"><h2>Automatic translation</h2><p class="muted small" style="margin-top:0">Write everything in English. Visitors who choose another language get a translation automatically, kept in a cache and refreshed whenever the English changes. Bangla and Arabic are always available.</p>' +
+    '<div class="card"><h2>Languages and automatic translation</h2><p class="muted small" style="margin-top:0">Write everything in English. Visitors who choose another language get a translation automatically, kept in a cache and refreshed whenever the English changes. Bangla and Arabic are always available.</p>' +
       '<label class="chk"><input type="checkbox" id="st-tr-on"' + (((s.translate || {}).enabled !== false) ? " checked" : "") + '> Translate the website automatically</label>' +
       '<label class="l" style="margin-top:10px">More languages visitors can choose</label><div class="row" style="flex-wrap:wrap;gap:6px 16px">' + Object.keys(TR_NAMES).map(function (c) { return '<label class="chk"><input type="checkbox" data-trl="' + c + '"' + ((((s.translate || {}).languages) || []).indexOf(c) > -1 ? " checked" : "") + "> " + TR_NAMES[c] + "</label>"; }).join("") + "</div>" +
       '<div id="tr-status" class="small muted" style="margin:12px 0">Checking the translation service…</div>' +
       '<div class="row wbtn" style="flex-wrap:wrap"><button class="btn ghost sm" id="tr-warm" type="button">Translate everything now</button><button class="btn ghost sm" id="tr-retry" type="button">Retry failed</button><button class="btn ghost sm" id="tr-purge" type="button">Remove unused</button><button class="btn sm" id="tr-review" type="button">Review translations</button></div>' +
       '<div class="hint">Translations of Quran verses are never changed: Arabic script stays exactly as you wrote it. Check religious or sensitive wording under "Review translations" and replace anything inaccurate.</div></div>' +
-    '<div class="card"><h2>My account</h2><p class="muted">Signed in as <b>' + h(me.email) + "</b> · role <b>" + h(role) + '</b>. Sessions end after 60 minutes of inactivity.</p><button class="btn ghost" id="st-pw">Change my password</button></div>';
+    '<div class="card"><h2>My account and sign-in</h2><p class="muted">Signed in as <b>' + h(me.email) + "</b> · role <b>" + h(role) + '</b>. Sessions end after 60 minutes of inactivity.</p><button class="btn ghost" id="st-pw">Change my password</button></div>';
 
-  function dirtyNow() { dirty = true; var d = $("#st-dirty"); if (d) d.classList.remove("hidden"); }
+  function dirtyNow() { dirty = true; ["st-dirty", "st-dirty2"].forEach(function (i) { var d = $("#" + i); if (d) d.classList.remove("hidden"); }); }
+  /* Group the cards into tabs. One page, one Save button, one source of truth for every value. */
+  var TABS = [["general", "General"], ["brand", "Brand Identity"], ["language", "Language"], ["website", "Website"], ["seo", "SEO and analytics"], ["security", "Security and access"]];
+  (function () {
+    var byTitle = {}, kids = Array.prototype.slice.call(el.children).filter(function (c) { return c.classList && c.classList.contains("card"); });
+    kids.forEach(function (c) { var t = c.querySelector("h2"); if (t) byTitle[t.textContent.trim()] = c; });
+    var brandCard = byTitle["Logo, favicon, colours and font"], gen = document.createElement("div");
+    gen.className = "card"; gen.innerHTML = "<h2>Academy details</h2>"; gen.appendChild(brandCard.querySelector(".g2"));
+    var prevL = I.safeImg(s.logo_prev), prevCard = document.createElement("div"); prevCard.className = "card";
+    prevCard.innerHTML = "<h2>Previous logo</h2>" + (prevL ? '<div style="background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block"><img src="' + h(prevL) + '" alt="Previous logo" style="height:40px;width:auto;display:block"></div><div style="margin-top:10px"><button type="button" class="btn ghost sm" id="st-logo-prev">Use the previous logo</button><div class="hint">It fills the logo field above. Press Save settings to apply it.</div></div>' : '<p class="muted small" style="margin:0">Nothing yet. When you replace the logo, the old one is kept here for one step back.</p>');
+    var lang = byTitle["Languages and automatic translation"];
+    var note = document.createElement("div"); note.className = "hint"; note.innerHTML = "English is the default language and the source for every translation. If a translation is not ready, visitors see the English text. Arabic is shown right to left automatically."; lang.appendChild(note);
+    var sec = document.createElement("div"); sec.className = "card"; sec.innerHTML = "<h2>Roles and permissions</h2><p class=\"muted small\" style=\"margin:0\">Who can sign in and what each role may change is managed in one place." + (role === "owner" ? ' <a href="#users">Open Users and Access</a>' : " Only the owner can open it.") + "</p>";
+    var groups = { general: [gen, byTitle["Contact & social"]], brand: [brandCard, prevCard], language: [lang], website: [byTitle["Menu, buttons & footer"], byTitle["Forms"]], seo: [byTitle["SEO & sharing defaults"], byTitle["Analytics"]], security: [byTitle["My account and sign-in"], sec] };
+    var bar = document.createElement("div"); bar.className = "tabs"; bar.setAttribute("role", "tablist"); bar.id = "st-tabs";
+    bar.innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-stab="' + t[0] + '">' + t[1] + "</button>"; }).join("");
+    el.appendChild(bar);
+    TABS.forEach(function (t) { var pn = document.createElement("div"); pn.setAttribute("data-pane", t[0]); (groups[t[0]] || []).forEach(function (c) { if (c) pn.appendChild(c); }); el.appendChild(pn); });
+    var sb2 = document.createElement("div"); sb2.className = "savebar"; sb2.innerHTML = '<span id="st-dirty2" class="badge b-draft hidden">unsaved changes</span><button class="btn wbtn" id="st-save2" type="button">Save settings</button>'; el.appendChild(sb2);
+  })();
+  function showTab(k, push) {
+    if (!TABS.some(function (t) { return t[0] === k; })) k = "general";
+    $$("[data-pane]", el).forEach(function (pn) { pn.classList.toggle("hidden", pn.getAttribute("data-pane") !== k); });
+    $$("[data-stab]", el).forEach(function (b) { var on = b.getAttribute("data-stab") === k; b.classList.toggle("on", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+    if (push) { try { history.replaceState(null, "", "#settings/" + k); prevHash = "#settings/" + k; } catch (e) {} }
+  }
+  $$("[data-stab]", el).forEach(function (b) { b.onclick = function () { showTab(b.getAttribute("data-stab"), true); }; });
+  showTab((args && args[0]) || "general", false);
+  var lp = $("#st-logo-prev"); if (lp) lp.onclick = function () { $("#st-logo").value = s.logo_prev; dirtyNow(); upd(); };
+
   el.addEventListener("input", function () { if ($("#st-dirty")) dirtyNow(); });   // listener only acts while the Settings page is showing
   function drawNav() {
     $("#st-nav").innerHTML = nav.map(function (n, i) { return '<div class="row" style="margin-bottom:6px"><input type="text" data-nl="' + i + '" value="' + h(n.label) + '" placeholder="Label" style="width:34%"><input type="text" data-nh="' + i + '" value="' + h(n.href) + '" placeholder="/page" list="dests" style="flex:1"><button class="ico" data-nm="' + i + ':-1"' + (i === 0 ? " disabled" : "") + '>↑</button><button class="ico" data-nm="' + i + ':1"' + (i === nav.length - 1 ? " disabled" : "") + '>↓</button><button class="ico" data-nd="' + i + '">✕</button></div>'; }).join("");
@@ -2465,7 +2502,7 @@ VIEWS.settings = async function (el) {
     var prov = val("st-an"); if (prov === "ga4" && !/^G-[A-Z0-9]{4,14}$/.test(val("st-ga"))) errs.push("Enter a valid GA4 Measurement ID (like G-ABC123XYZ)."); if (prov === "plausible" && !/^[a-z0-9.\-]+\.[a-z]{2,}$/i.test(val("st-pl"))) errs.push("Enter the Plausible domain (like inayaquran.com).");
     if (errs.length) return modal({ title: "Please fix these first", ok: false, cancelLabel: "Close", body: "<ul>" + errs.map(function (x) { return "<li>" + h(x) + "</li>"; }).join("") + "</ul>" });
     var data = Object.assign({}, settings, {
-      academy_name: name, tagline: val("st-tag"), logo_url: val("st-logo"), logo_height: Math.min(160, Math.max(20, parseInt(val("st-lh"), 10) || 44)), footer_logo_url: val("st-flogo"), footer_logo_height: Math.min(160, Math.max(20, parseInt(val("st-flh"), 10) || 44)), footer_logo_mode: val("st-fmode") === "original" ? "original" : "white", favicon_url: val("st-fav"), colors: k, font: val("st-font"),
+      academy_name: name, logo_prev: (settings.logo_url && settings.logo_url !== val("st-logo")) ? settings.logo_url : settings.logo_prev, tagline: val("st-tag"), logo_url: val("st-logo"), logo_height: Math.min(160, Math.max(20, parseInt(val("st-lh"), 10) || 44)), footer_logo_url: val("st-flogo"), footer_logo_height: Math.min(160, Math.max(20, parseInt(val("st-flh"), 10) || 44)), footer_logo_mode: val("st-fmode") === "original" ? "original" : "white", favicon_url: val("st-fav"), colors: k, font: val("st-font"),
       contact_email: email, whatsapp_number: wad, whatsapp_message: val("st-wam"), response_time: val("st-resp"),
       social: { facebook: val("st-fb"), instagram: val("st-ig"), telegram: val("st-tg"), youtube: val("st-yt") },
       nav: cl.map(function (n) { return { label: n.label.trim(), href: n.href.trim() }; }), cta_primary_label: val("st-c1l"), cta_primary_href: val("st-c1h"), cta_secondary_label: val("st-c2l"), cta_secondary_href: val("st-c2h"),
@@ -2475,8 +2512,9 @@ VIEWS.settings = async function (el) {
       analytics: { provider: prov, ga4_id: val("st-ga"), plausible_domain: val("st-pl") },
       translate: { enabled: !!$("#st-tr-on").checked, languages: $$("[data-trl]").filter(function (x) { return x.checked; }).map(function (x) { return x.getAttribute("data-trl"); }) }
     });
-    this.disabled = true; try { await saveSettings(data); dirty = false; $("#st-dirty").classList.add("hidden"); toast("Settings saved. The website is updated."); } catch (e) { fail(e); } this.disabled = false;
+    this.disabled = true; try { await saveSettings(data); dirty = false; ["st-dirty", "st-dirty2"].forEach(function (i) { var d = $("#" + i); if (d) d.classList.add("hidden"); }); toast("Settings saved. The website is updated."); } catch (e) { fail(e); } this.disabled = false;
   };
+  $("#st-save2").onclick = $("#st-save").onclick;
   /* automatic translation card */
   async function trStatus() {
     var box = $("#tr-status", el); if (!box) return;

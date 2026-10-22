@@ -33,7 +33,8 @@ Arabic script is replaced by placeholders before the text reaches the provider a
 3. Add one provider key as a secret:
    supabase secrets set ANTHROPIC_API_KEY=your_key
    or, for Google Cloud Translation: supabase secrets set TRANSLATE_PROVIDER=google GOOGLE_TRANSLATE_API_KEY=your_key
-   Optional: supabase secrets set ANTHROPIC_MODEL=model_name
+   or, for Google AI Studio (Gemini): supabase secrets set GEMINI_API_KEY=your_key TRANSLATE_PROVIDER=gemini
+   Optional: supabase secrets set ANTHROPIC_MODEL=model_name (or GEMINI_MODEL=model_name, default gemini-2.5-flash)
 4. In Admin, Settings, Automatic translation, choose the extra languages and save. Press Translate everything now once.
 
 The key lives only in the function. It is never in the website code.

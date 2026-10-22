@@ -12,7 +12,7 @@ export function makeWorld(opts = {}) {
       translations: [], translation_usage: []
     },
     providerCalls: 0, providerTexts: [], providerMode: 'ok', apiCalls: [],
-    env: { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_ANON_KEY: 'anon', SUPABASE_SERVICE_ROLE_KEY: 'service-secret', ANTHROPIC_API_KEY: opts.noKey ? undefined : 'sk-test-secret', TRANSLATE_PROVIDER: opts.provider }
+    env: { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_ANON_KEY: 'anon', SUPABASE_SERVICE_ROLE_KEY: 'service-secret', ANTHROPIC_API_KEY: opts.noKey ? undefined : 'sk-test-secret', TRANSLATE_PROVIDER: opts.provider, GEMINI_API_KEY: opts.gemini ? 'gem-test-secret' : undefined }
   };
   let id = 1;
   const filt = (rows, params) => {
@@ -36,6 +36,14 @@ export function makeWorld(opts = {}) {
       const lang = (JSON.parse(init.body).system.match(/into (\w+)/) || [])[1];
       const out = W.providerMode === 'garbage' ? items.map(() => '<script>alert(1)</script>') : items.map(t => `[${lang}] ${t}`);
       return json({ content: [{ type: 'text', text: JSON.stringify(out) }] });
+    }
+    if (u.hostname === 'generativelanguage.googleapis.com') {
+      W.providerCalls++; W.geminiSeen = { url: String(url), key: init.headers['x-goog-api-key'] };
+      if (W.providerMode === 'error') return json({ error: 'boom' }, 500);
+      const b = JSON.parse(init.body), items = JSON.parse(b.contents[0].parts[0].text);
+      W.providerTexts.push(...items);
+      const lang = (b.systemInstruction.parts[0].text.match(/into (\w+)/) || [])[1];
+      return json({ candidates: [{ content: { parts: [{ text: JSON.stringify(items.map(t => `[${lang}] ${t}`)) }] } }] });
     }
     if (u.pathname.startsWith('/rest/v1/rpc/')) {
       const ok = (init.headers.Authorization || '') === 'Bearer staff-token' || ((init.headers.Authorization || '') === 'Bearer owner-token');
