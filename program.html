@@ -53,6 +53,7 @@ Inaya.boot(async function (s) {
     return;
   }
   main.innerHTML = InayaSections.programDetail(p, { settings: s });
+  try { Inaya.dl('view_item', { ecommerce: { items: [{ item_id: p.slug, item_name: p.title, item_category: 'program' }] } }); } catch (e) {}
   try { await InayaCurriculum.render(p); } catch (e) { console.error(e); }
   Inaya.setMeta({ title: p.title + " | " + s.academy_name, description: p.short_description || p.description.slice(0, 155), image: p.image_url || s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/programs/" + p.slug });
 });
