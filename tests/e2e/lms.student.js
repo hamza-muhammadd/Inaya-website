@@ -131,12 +131,13 @@ module.exports = async function () {
   ok(!/Omar Ali/.test(r), 'a student cannot read other students: ' + r.slice(0, 60));
 
   console.log('Admin: overrides, history, certificates');
-  await a.goto(BASE + '/admin#progress/cccccccc-0000-4000-8000-000000000001/' + pid); await wait(a, 2000);
-  ok(/Aisha Khan/.test(await a.locator('h1').first().innerText()) || /Aisha Khan/.test(await a.locator('.page-h').innerText()), 'student profile opens');
-  const ov = await a.locator('#sp-body').innerText(); ok(/Level 1: Foundation/.test(ov) && /Progress/.test(ov), 'profile overview shows levels and totals');
-  await a.click('#sp-tabs [data-t=timeline]'); await wait(a, 800); ok(/Completed: Arabic letters/.test(await a.locator('#sp-body').innerText()), 'timeline lists completed lessons');
-  await a.click('#sp-tabs [data-t=attempts]'); await wait(a, 800); ok(/Reading Foundations check/.test(await a.locator('#sp-body').innerText()) && /Passed/.test(await a.locator('#sp-body').innerText()), 'assessment history shows the attempt');
-  await a.click('#sp-tabs [data-t=overrides]'); await wait(a, 800); await a.click('#ov-add'); await a.selectOption('#ov-ty', 'level'); await a.selectOption('#ov-t', { label: 'Level 2: Fluency' }); await a.selectOption('#ov-ac', 'unlock'); await a.click('.modal [data-ok]'); await wait(a, 500);
+  await a.goto(BASE + '/admin#progress/cccccccc-0000-4000-8000-000000000001/' + pid); await a.reload(); await wait(a, 2200);   // reload: the profile is a snapshot taken when it opens
+  ok(/Aisha Khan/.test(await a.locator('.jr-head h2').innerText()), 'student profile opens');
+  const ov = await a.locator('#jr-body').innerText(); ok(/Lessons completed/.test(ov) && /Enrolment and progress/.test(ov) && /Quranic Excellence/.test(ov), 'profile overview shows totals and the enrolment');
+  await a.click('.jr-tabs [data-t=map]'); await wait(a, 900); ok(/Level 1: Foundation/.test(await a.locator('#jr-body').innerText()), 'course map tab shows the levels');
+  await a.click('.jr-tabs [data-t=history]'); await wait(a, 800); const hb = await a.locator('#jr-body').innerText(); ok(/Completed: Arabic letters/.test(hb), 'timeline lists completed lessons' + (/Completed: Arabic letters/.test(hb) ? '' : ': ' + hb.replace(/\s+/g, ' ').slice(0, 300)));
+  await a.click('.jr-tabs [data-t=attempts]'); await wait(a, 800); ok(/Reading Foundations check/.test(await a.locator('#jr-body').innerText()) && /Passed/.test(await a.locator('#jr-body').innerText()), 'assessment history shows the attempt');
+  await a.click('.jr-tabs [data-t=overrides]'); await wait(a, 800); await a.click('#ov-add'); await a.selectOption('#ov-ty', 'level'); await a.selectOption('#ov-t', { label: 'Level 2: Fluency' }); await a.selectOption('#ov-ac', 'unlock'); await a.click('.modal [data-ok]'); await wait(a, 500);
   ok(/reason/i.test(await a.locator('.toast').last().innerText()), 'an override without a reason is refused');
   await a.fill('#ov-re', 'Placement test result'); await a.click('.modal [data-ok]'); await wait(a, 1200);
   ok(sql("select count(*) from progression_overrides where reason='Placement test result' and revoked_at is null") === '1', 'override is stored with its reason');
@@ -145,10 +146,10 @@ module.exports = async function () {
   ok(await s.locator('.lp-les a', { hasText: 'Reading short words smoothly' }).count() === 1, 'the student sees Level 2 open after the override');
   await a.click('[data-rv]'); await wait(a, 1000);
   await s.reload(); await wait(s, 1800); ok(await s.locator('.lp-les a', { hasText: 'Reading short words smoothly' }).count() === 0, 'removing the override locks it again');
-  await a.click('#sp-tabs [data-t=certs]'); await wait(a, 800); await a.click('#ce-add'); await a.selectOption('#ci-l', { label: 'Level 1: Foundation' }); await a.fill('#ci-t', 'Foundation Certificate'); await a.click('.modal [data-ok]'); await wait(a, 1200);
+  await a.click('.jr-tabs [data-t=certs]'); await wait(a, 800); await a.click('#ce-add'); await a.selectOption('#ci-l', { label: 'Level 1: Foundation' }); await a.fill('#ci-t', 'Foundation Certificate'); await a.click('.modal [data-ok]'); await wait(a, 1200);
   const code = sql("select code from certificates where title='Foundation Certificate'"); ok(!!code, 'a certificate can be issued by hand: ' + code);
   await s.goto(BASE + '/learn#home'); await wait(s, 1800); await s.click('a:has-text("View")'); await wait(s, 1200);
-  ok(/Aisha Khan/.test(await s.locator('.lp-cert').innerText()) && (await s.locator('.lp-cert').innerText()).includes(code), 'the student can open the certificate');
+  ok(/Aisha Khan/.test(await s.locator('.ct-sheet').innerText()) && (await s.locator('.ct-sheet').innerText()).includes(code), 'the student can open the certificate');
   const V = await ctx('visitor'); await V.p.goto(BASE + '/learn#verify/' + code); await wait(V.p, 1800);
   ok(/Genuine/.test(await V.p.locator('#vr').innerText()) && /Aisha K\./.test(await V.p.locator('#vr').innerText()) && !/Khan/.test(await V.p.locator('#vr').innerText()), 'anyone can verify the code and sees only the first name and last initial');
   await V.p.fill('#vc', 'NOPE-0000'); await V.p.click('#vf button'); await wait(V.p, 1000); ok(/No valid certificate/.test(await V.p.locator('#vr').innerText()), 'a wrong code is not valid');

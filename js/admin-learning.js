@@ -590,47 +590,57 @@ window.InayaLearningAdmin = function (K) {
     };
   }
 
-  /* ---------- student profile ---------- */
+  /* ---------- student profile (shared journey component + the staff-only tabs) ---------- */
   var SPTAB = "overview";
   async function studentProfile(el, sid, pid) {
-    var st = (await q(T("students").select("id,full_name,student_code,status,user_id").eq("id", sid).maybeSingle())).data;
-    if (!st) { el.innerHTML = '<div class="alert bad">Student not found.</div>'; return; }
+    var data = await rpc("student_journey", { p_student: sid });
+    if (!data) { el.innerHTML = '<div class="alert bad">Student not found.</div>'; return; }
+    var st = data.student;
     var enr = (await q(T("student_programs").select("id,status,program_id,teacher_id,programs(title)").eq("student_id", sid))).data || [];
-    if (!enr.length) { el.innerHTML = '<p class="small"><a href="#progress">&larr; Student progress</a></p><div class="empty">' + h(st.full_name) + " is not enrolled in a learning program.</div>"; return; }
-    if (!pid || !enr.some(function (e) { return e.program_id === pid; })) pid = enr[0].program_id;
-    var S = await rpc("student_learning", { p_student: sid, p_program: pid });
-    var pr = enr.filter(function (e) { return e.program_id === pid; })[0];
+    if (enr.length && (!pid || !enr.some(function (e) { return e.program_id === pid; }))) pid = enr[0].program_id;
+    var pr = enr.filter(function (e) { return e.program_id === pid; })[0] || null;
     var teachers = (await q(T("teachers").select("id,full_name").order("full_name"))).data || [];
     var refresh = function () { studentProfile(el, sid, pid); };
+    var S = null, getS = async function () { return S || (S = await rpc("student_learning", { p_student: sid, p_program: pid })); };
+    var noEnr = function (body) { body.innerHTML = '<div class="empty">Enrol ' + h(st.name) + " in a learning program first (use the Enrolment button above).</div>"; };
+    var waiting = data.scores.waiting;
     el.innerHTML = '<p class="small"><a href="#progress">&larr; Student progress</a> &middot; <a href="#students/' + sid + '">Student record</a></p>' +
-      pageHead(h(st.full_name) + " " + badge(pr.status), h(st.student_code) + " &middot; " + h(S.program.title) + (S.enrollment && S.enrollment.teacher ? " &middot; Teacher: " + h(S.enrollment.teacher) : ""), (enr.length > 1 ? '<select id="sp-prog" style="width:auto">' + enr.map(function (e) { return '<option value="' + e.program_id + '"' + (e.program_id === pid ? " selected" : "") + ">" + h(e.programs.title) + "</option>"; }).join("") + "</select>" : "") + '<button class="btn ghost wbtn" id="sp-acc">Student sign-in</button><button class="btn ghost wbtn" id="sp-enr">Enrolment</button>') +
-      (S.awaiting_review ? '<div class="alert warn">' + S.awaiting_review + ' attempt(s) are waiting for review. <a href="#progress/review">Open the review queue</a></div>' : "") +
-      (st.user_id ? "" : '<div class="alert info">This student has no sign-in yet, so they cannot open lessons. Create the account from the student record.</div>') +
-      '<div class="tabs" id="sp-tabs">' + [["overview", "Overview"], ["timeline", "Timeline"], ["attempts", "Assessments"], ["overrides", "Overrides"], ["certs", "Certificates"]].map(function (t) { return '<button data-t="' + t[0] + '" class="' + (SPTAB === t[0] ? "on" : "") + '">' + t[1] + "</button>"; }).join("") + '</div><div id="sp-body"></div>';
-    $$("#sp-tabs button").forEach(function (b) { b.onclick = function () { SPTAB = b.getAttribute("data-t"); refresh(); }; });
+      (enr.length > 1 ? '<div class="row" style="margin-bottom:10px"><span class="muted small">Program for map, overrides and certificates:</span><select id="sp-prog" style="width:auto">' + enr.map(function (e) { return '<option value="' + e.program_id + '"' + (e.program_id === pid ? " selected" : "") + ">" + h(e.programs.title) + "</option>"; }).join("") + "</select></div>" : "") +
+      (waiting ? '<div class="alert warn">' + waiting + ' attempt(s) are waiting for review. <a href="#progress/review">Open the review queue</a></div>' : "") +
+      (st.has_login ? "" : '<div class="alert info">This student has no sign-in yet, so they cannot open lessons. Use the Student sign-in button below to create one.</div>') +
+      '<div id="sp-host"></div>';
     if ($("#sp-prog")) $("#sp-prog").onchange = function () { location.hash = "#progress/" + sid + "/" + this.value; };
-    $("#sp-enr").onclick = function () {
+    var mapTab = async function (body) {
+      if (!pr) return noEnr(body);
+      var S2 = await getS();
+      body.innerHTML = S2.levels.map(function (lv) { return '<div class="card"><div class="row sb"><b>Level ' + lv.number + ": " + h(lv.title) + "</b><span>" + (lv.done ? badge("Completed") : lv.open ? badge("Open") : badge("Locked")) + (lv.needs_approval && !lv.done ? ' <span class="badge b-Needs-Support">needs teacher approval</span>' : "") + "</span></div>" + bar(lv.percent) +
+        lv.domains.map(function (d) { return '<div style="margin-top:10px"><div class="muted small" style="text-transform:uppercase;letter-spacing:.06em;font-weight:700">' + h(d.title) + "</div>" + d.units.map(function (u) { return '<div class="row small" style="gap:8px;padding:3px 0"><span style="flex:1">' + h(u.title) + "</span>" + (u.done ? badge("Completed") : u.open ? '<span class="muted">' + u.percent + "%</span>" : badge("Locked")) + "</div>"; }).join("") + "</div>"; }).join("") + "</div>"; }).join("") +
+        (S2.feedback.length ? '<div class="card"><b>Teacher feedback</b>' + S2.feedback.map(function (f) { return '<div class="small" style="margin-top:6px"><b>' + h(f.assessment) + ":</b> " + h(f.text) + "</div>"; }).join("") + "</div>" : "");
+    };
+    var attTab = async function (body) {
+      if (!pr) return noEnr(body);
+      var at = (await q(T("assessment_attempts").select("id,attempt_no,status,score,passed,submitted_at,learning_assessments(title)").eq("student_id", sid).eq("program_id", pid).order("started_at", { ascending: false }))).data || [];
+      body.innerHTML = at.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Assessment</th><th>Attempt</th><th>Submitted</th><th>Score</th><th>Result</th><th></th></tr></thead><tbody>' + at.map(function (a) { return "<tr><td>" + h(a.learning_assessments.title) + "</td><td>" + a.attempt_no + "</td><td>" + (a.submitted_at ? fmtDT(a.submitted_at) : "In progress") + "</td><td>" + (a.score == null ? "-" : Math.round(a.score) + "%") + "</td><td>" + (a.status === "needs_review" ? badge("Awaiting review") : a.status === "graded" ? (a.passed ? badge("Passed") : badge("Not yet")) : "-") + '</td><td class="right">' + (a.status !== "in_progress" ? '<a class="btn ghost sm" href="#progress/review/' + a.id + '">' + (a.status === "needs_review" ? "Review" : "View") + "</a>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">No attempts yet.</div>';
+    };
+    var acts = '<button class="btn ghost wbtn" id="sp-acc">Student sign-in</button>' + (pr ? '<button class="btn ghost wbtn" id="sp-enr">Enrolment</button>' : "") + '<button class="btn ghost wbtn" id="sp-photo">Photo</button>';
+    var J = window.InayaJourney.mount($("#sp-host"), data, {
+      admin: true, tab: SPTAB, actions: acts, certHref: function (id) { return "/learn#cert/" + id; }, onTab: function (k) { SPTAB = k; },
+      tabs: [{ key: "map", label: "Course map", render: mapTab }, { key: "attempts", label: "Assessments", render: attTab },
+        { key: "overrides", label: "Overrides", render: async function (body) { if (!pr) return noEnr(body); overridesTab(body, await getS(), sid, pid, refresh); } },
+        { key: "certs", label: "Certificates", render: async function (body) { if (!pr) return noEnr(body); certsTab(body, await getS(), sid, pid, refresh); } }]
+    });
+    $("#sp-acc").onclick = function () { accountModal({ id: st.id, full_name: st.name, student_code: st.code, user_id: st.has_login ? "x" : null }, refresh); };
+    if ($("#sp-enr")) $("#sp-enr").onclick = function () {
       if (!needWrite()) return;
       modal({ title: "Change enrolment", body: F("ce-s", "Status", pr.status, { type: "select", options: [["active", "Active"], ["paused", "Paused (access stops, progress kept)"], ["completed", "Completed"], ["withdrawn", "Withdrawn (progress kept)"]] }) + F("ce-t", "Teacher", pr.teacher_id || "", { type: "select", options: [["", "Not assigned"]].concat(teachers.map(function (t) { return [t.id, t.full_name]; })) }),
         onOk: async function () { try { await rpc("set_enrollment", { p_id: pr.id, p_status: val("ce-s"), p_teacher: val("ce-t") || null }); toast("Saved"); refresh(); } catch (e) { fl(e); return false; } } });
     };
-    $("#sp-acc").onclick = function () { accountModal(st, refresh); };
-    var body = $("#sp-body");
-    if (SPTAB === "overview") {
-      var t = S.totals;
-      body.innerHTML = '<div class="row" style="gap:12px;margin-bottom:14px">' + [["Progress", t.percent + "%"], ["Lessons", t.completed + " of " + t.lessons], ["XP", t.xp], ["Day streak", t.streak]].map(function (x) { return '<div class="card" style="flex:1;min-width:130px;text-align:center"><div class="muted small">' + x[0] + '</div><div style="font-size:1.5rem;font-weight:800;color:var(--g)">' + x[1] + "</div></div>"; }).join("") + "</div>" +
-        S.levels.map(function (lv) { return '<div class="card"><div class="row sb"><b>Level ' + lv.number + ": " + h(lv.title) + "</b><span>" + (lv.done ? badge("Completed") : lv.open ? badge("Open") : badge("Locked")) + (lv.needs_approval && !lv.done ? ' <span class="badge b-Needs-Support">needs teacher approval</span>' : "") + "</span></div>" + bar(lv.percent) +
-          lv.domains.map(function (d) { return '<div style="margin-top:10px"><div class="muted small" style="text-transform:uppercase;letter-spacing:.06em;font-weight:700">' + h(d.title) + "</div>" + d.units.map(function (u) { return '<div class="row small" style="gap:8px;padding:3px 0"><span style="flex:1">' + h(u.title) + "</span>" + (u.done ? badge("Completed") : u.open ? '<span class="muted">' + u.percent + "%</span>" : badge("Locked")) + "</div>"; }).join("") + "</div>"; }).join("") + "</div>"; }).join("") +
-        (S.feedback.length ? '<div class="card"><b>Teacher feedback</b>' + S.feedback.map(function (f) { return '<div class="small" style="margin-top:6px"><b>' + h(f.assessment) + ":</b> " + h(f.text) + "</div>"; }).join("") + "</div>" : "") +
-        (S.achievements.length ? '<div class="card"><b>Badges</b><div class="row" style="margin-top:6px">' + S.achievements.map(function (a) { return '<span class="badge ' + (a.awarded_at ? "b-Strong" : "b-archived") + '" title="' + h(a.description) + '">' + h(a.title) + (a.awarded_at ? "" : " (not yet)") + "</span>"; }).join("") + "</div></div>" : "");
-    } else if (SPTAB === "timeline") {
-      var ev = (await q(T("progress_events").select("type,title,created_at").eq("student_id", sid).eq("program_id", pid).order("created_at", { ascending: false }).limit(200))).data || [];
-      body.innerHTML = '<div class="card">' + (ev.length ? ev.map(function (e) { return '<div class="row small" style="gap:10px;padding:6px 0;border-top:1px solid #F0ECDF"><span class="muted nowrap" style="width:150px">' + fmtDT(e.created_at) + '</span><span style="flex:1">' + h(e.title) + '</span><span class="badge">' + h(e.type.replace(/_/g, " ")) + "</span></div>"; }).join("") : '<div class="empty">No activity yet.</div>') + "</div>";
-    } else if (SPTAB === "attempts") {
-      var at = (await q(T("assessment_attempts").select("id,attempt_no,status,score,passed,submitted_at,learning_assessments(title)").eq("student_id", sid).eq("program_id", pid).order("started_at", { ascending: false }))).data || [];
-      body.innerHTML = at.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Assessment</th><th>Attempt</th><th>Submitted</th><th>Score</th><th>Result</th><th></th></tr></thead><tbody>' + at.map(function (a) { return "<tr><td>" + h(a.learning_assessments.title) + "</td><td>" + a.attempt_no + "</td><td>" + (a.submitted_at ? fmtDT(a.submitted_at) : "In progress") + "</td><td>" + (a.score == null ? "-" : Math.round(a.score) + "%") + "</td><td>" + (a.status === "needs_review" ? badge("Awaiting review") : a.status === "graded" ? (a.passed ? badge("Passed") : badge("Not yet")) : "-") + '</td><td class="right">' + (a.status !== "in_progress" ? '<a class="btn ghost sm" href="#progress/review/' + a.id + '">' + (a.status === "needs_review" ? "Review" : "View") + "</a>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<div class="empty">No attempts yet.</div>';
-    } else if (SPTAB === "overrides") overridesTab(body, S, sid, pid, refresh);
-    else certsTab(body, S, sid, pid, refresh);
+    $("#sp-photo").onclick = function () {
+      if (!needWrite()) return;
+      modal({ title: "Student photo", okLabel: "Save", body: F("ph-u", "Picture link", st.photo_url || "", { hint: "Paste the link of an image from the Media Library (starts with https:// or /). Leave empty to remove the photo." }),
+        onOk: async function () { var v = (val("ph-u") || "").trim(); if (v && !/^(https:\/\/|\/)/.test(v)) { fl(new Error("The link must start with https:// or /")); return false; }
+          try { await q(T("students").update({ photo_url: v || null }).eq("id", sid)); toast("Saved"); refresh(); } catch (e) { fl(e); return false; } } });
+    };
   }
 
   async function accountFn(body) {
@@ -675,7 +685,7 @@ window.InayaLearningAdmin = function (K) {
   async function certsTab(body, S, sid, pid, refresh) {
     var cs = (await q(T("certificates").select("id,code,title,issued_at,revoked_at").eq("student_id", sid).eq("program_id", pid).order("issued_at", { ascending: false }))).data || [];
     body.innerHTML = '<div class="card"><div class="row sb"><b>Certificates</b><button class="btn sm wbtn" id="ce-add">+ Issue certificate</button></div><div class="muted small" style="margin:4px 0 8px">Certificates are issued automatically when a level or the program is finished, if you left that switched on. You can also issue or revoke one by hand. Anyone can check a code on the public certificate check page.</div>' +
-      (cs.length ? cs.map(function (c) { return '<div class="row small" style="gap:8px;padding:6px 0;border-top:1px solid #F0ECDF"><span style="flex:1"><b>' + h(c.title) + "</b><br><span class=\"muted\">Code " + h(c.code) + " &middot; " + fmtDT(c.issued_at) + "</span></span>" + (c.revoked_at ? badge("archived") : '<button class="btn ghost sm" data-cr="' + c.id + '">Revoke</button>') + "</div>"; }).join("") : '<div class="muted small">None yet.</div>') + "</div>";
+      (cs.length ? cs.map(function (c) { return '<div class="row small" style="gap:8px;padding:6px 0;border-top:1px solid #F0ECDF"><span style="flex:1"><b>' + h(c.title) + "</b><br><span class=\"muted\">Code " + h(c.code) + " &middot; " + fmtDT(c.issued_at) + "</span></span>" + '<a class="btn ghost sm" target="_blank" rel="noopener" href="/learn#cert/' + c.id + '">View</a>' + (c.revoked_at ? badge("archived") : '<button class="btn ghost sm" data-cr="' + c.id + '">Revoke</button>') + "</div>"; }).join("") : '<div class="muted small">None yet.</div>') + "</div>";
     $$("[data-cr]", body).forEach(function (b) { b.onclick = async function () { if (!needWrite()) return; if (!(await confirmBox("Revoke this certificate? The code will show as no longer valid.", { danger: true, okLabel: "Revoke" }))) return; try { await rpc("revoke_certificate", { p_id: b.getAttribute("data-cr") }); refresh(); } catch (e) { fl(e); } }; });
     $("#ce-add").onclick = function () {
       if (!needWrite()) return;

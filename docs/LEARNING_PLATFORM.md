@@ -67,3 +67,19 @@ SQL level, on real PostgreSQL with row level security on: 177 checks. Browser le
 3. Audio recording needs microphone permission. If it is not allowed, the student can upload an audio file instead.
 4. Staff preview shows the structure and lessons. Quizzes are best checked with a test student.
 5. Bangla and Arabic versions of curriculum text come from the existing translation system. You can review and override them in the translation review.
+
+## Student profile, attendance and certificate (update)
+
+Run sql/012_fix_certificate_code.sql and then sql/013_student_journey.sql in the Supabase SQL Editor (Run without RLS).
+
+Student profile
+- Admin: click an enrolled student in Students, or open Student Progress. The profile has Overview, Attendance, Scores, Progress, Badges and History, plus the staff tabs Course map, Assessments, Overrides and Certificates.
+- Student: sign in at /learn and press My profile. Same six tabs, own data only.
+- All numbers come from the database function student_journey (staff) or my_journey (the signed in student). A student cannot call the staff one, and cannot read the attendance table directly.
+- Attendance rate counts Present and Late as attended and leaves Excused days out.
+- Photo: in the admin profile press Photo and paste an image link (Media Library). Without a photo the initials are shown.
+
+Certificate
+- Open it from the student dashboard, or from the admin Certificates tab with View.
+- Download PDF opens the print window. Choose Save as PDF, A4 landscape is already set. Switch off headers and footers for a clean page.
+- The logo file is used as it is.

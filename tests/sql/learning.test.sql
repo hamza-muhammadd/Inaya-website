@@ -435,6 +435,34 @@ select t.login('teacher'); select t.ok((select count(*) from storage.objects whe
 reset role;
 select t.ok((select public from storage.buckets where id = 'submissions') = false, 'the audio bucket is private');
 
+
+-- ===== student journey (profile data): access control and numbers =====
+reset role;
+select t.ins('jclass', $q$insert into public.class_groups(name, status) values ('Journey class', 'Active')$q$);
+insert into public.attendance(class_id, student_id, session_date, status) values
+  (t.id('jclass'), t.id('st1'), current_date, 'Present'), (t.id('jclass'), t.id('st1'), current_date - 1, 'Present'), (t.id('jclass'), t.id('st1'), current_date - 2, 'Present'),
+  (t.id('jclass'), t.id('st1'), current_date - 3, 'Late'), (t.id('jclass'), t.id('st1'), current_date - 4, 'Absent'), (t.id('jclass'), t.id('st1'), current_date - 5, 'Excused'),
+  (t.id('jclass'), t.id('st2'), current_date, 'Absent');
+set role authenticated; select t.login('owner');
+select t.ok((public.student_journey(t.id('st1'))->'student'->>'name') = 'Amina Rahman', 'staff can open a student journey');
+select t.ok((public.student_journey(t.id('st1'))->'attendance'->>'percent')::int = 80 and (public.student_journey(t.id('st1'))->'attendance'->>'total')::int = 6, 'attendance percent: late counts, excused is left out (4 of 5 = 80)');
+select t.ok(jsonb_array_length(public.student_journey(t.id('st1'))->'attendance'->'weeks') = 8 and jsonb_array_length(public.student_journey(t.id('st1'))->'attendance'->'months') = 6, 'attendance has 8 weeks and 6 months of history');
+select t.ok(jsonb_array_length(public.student_journey(t.id('st1'))->'progress'->'days') = 14, 'progress has 14 daily points');
+select t.ok(jsonb_typeof(public.student_journey(t.id('st1'))->'badges') = 'array' and jsonb_typeof(public.student_journey(t.id('st1'))->'scores'->'history') = 'array', 'badges and score history are lists');
+select t.ok((public.student_journey(t.id('st1'))->'progress'->'recent'->0->>'title') is not null, 'completed lessons are listed in the journey');
+select t.ok(t.err($$select public.my_journey()$$) like '%No student record%', 'a staff sign-in without a student record has no personal journey');
+select t.login('stu1');
+select t.ok((public.my_journey()->'student'->>'id')::uuid = t.id('st1'), 'a student gets their own journey');
+select t.ok(t.err($$select public.student_journey(t.id('st1'))$$) like '%Staff only%', 'a student cannot use the staff door, even for themselves');
+select t.ok(t.err($$select public.student_journey(t.id('st2'))$$) like '%Staff only%', 'a student cannot open another student by id');
+select t.ok(t.count($$select count(*) from public.attendance$$) = 0, 'a student cannot read attendance rows directly');
+select t.ok(t.fails($$select public.journey_data(t.id('st2'))$$), 'the inner function is not callable from the browser');
+select t.login('stu2');
+select t.ok((public.my_journey()->'student'->>'id')::uuid = t.id('st2') and (public.my_journey()->'attendance'->>'absent')::int = 1 and (public.my_journey()->'attendance'->>'total')::int = 1, 'another student sees only their own numbers');
+select t.login('ro'); select t.ok((public.student_journey(t.id('st1'))->'student'->>'code') is not null, 'read only staff can view a journey');
+reset role;
+select t.ok(has_function_privilege('anon', 'public.my_journey()', 'execute') = false and has_function_privilege('anon', 'public.student_journey(uuid)', 'execute') = false, 'the public cannot call either journey door');
+
 -- ===== summary =====
 \o
 select case when ok then 'PASS' else 'FAIL' end as r, name from t.results where not ok order by n;

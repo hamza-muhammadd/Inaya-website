@@ -76,7 +76,7 @@
   /* ---------------- shell and router ---------------- */
   function top(extra) {
     var who = profile ? profile.full_name : "Staff preview";
-    return '<div class="lp-top"><div class="lp-row"><a href="#home" style="text-decoration:none"><b>My learning</b></a>' + (profile ? '<span class="lp-pill">' + profile.xp + ' XP</span><span class="lp-pill">' + profile.streak + " day streak</span>" : "") + '</div><div class="lp-row"><span class="lp-mut">' + h(who) + '</span><button class="btn ghost sm" id="lo">Sign out</button></div></div>' + (extra || "");
+    return '<div class="lp-top"><div class="lp-row"><a href="#home" style="text-decoration:none"><b>My learning</b></a>' + (profile ? '<a href="#me" class="lp-pill ok" style="text-decoration:none">My profile</a>' : "") + (profile ? '<span class="lp-pill">' + profile.xp + ' XP</span><span class="lp-pill">' + profile.streak + " day streak</span>" : "") + '</div><div class="lp-row"><span class="lp-mut">' + h(who) + '</span><button class="btn ghost sm" id="lo">Sign out</button></div></div>' + (extra || "");
   }
   function wire() { var b = $("#lo"); if (b) b.onclick = function () { sb.auth.signOut(); }; }
   async function route() {
@@ -86,9 +86,11 @@
       if (v === "verify") return verify();
       var ses = (await sb.auth.getSession()).data.session; if (!ses) return login();
       if (!profile && !staff) { return page(top() + say("This account is not linked to a student record. If you are a student, ask the academy to check your sign-in.", "warn")), wire(); }
+      if (v === "cert" && (staff || profile)) return certificate(id);
       if (v === "preview" && staff) return preview(id);
       if (v === "plesson" && staff) return previewLesson(id);
       if (!profile) return page(top() + say("You are signed in as staff. Open a program in the admin area and press Preview as student.", "info") + '<p><a class="btn" href="/admin">Open admin</a></p>'), wire();
+      if (v === "me") return me();
       if (v === "program") return programMap(id);
       if (v === "lesson") return lesson(id);
       if (v === "quiz") return quiz(id);
@@ -312,10 +314,28 @@
   }
   async function resultPage(attemptId) { var r = await rpc("attempt_result", { p_attempt: attemptId }); var a = await q(sb.from("assessment_attempts").select("assessment_id,learning_assessments(title)").eq("id", attemptId).single()); showResult(r, a.learning_assessments.title, a.assessment_id); }
 
+  /* ---------------- my profile (attendance, scores, progress, badges, history) ---------------- */
+  async function me() {
+    var d = await rpc("my_journey");
+    page(top('<div class="lp-crumb lp-noprint"><a href="#home">&larr; Back to my lessons</a></div>') + '<div id="jr-host"></div>');
+    window.InayaJourney.mount($("#jr-host"), d, { admin: false, tab: ME_TAB, onTab: function (k) { ME_TAB = k; } });
+    wire();
+  }
+  var ME_TAB = "overview";
+
   /* ---------------- certificate and check ---------------- */
   async function certificate(id) {
-    var c = await q(sb.from("certificates").select("id,code,title,issued_at,revoked_at").eq("id", id).single());
-    page(top('<div class="lp-crumb lp-noprint"><a href="#home">&larr; Back</a></div>') + '<div class="lp-cert"><div class="lp-mut">Inaya Quran Academy</div><h1>Certificate</h1><p>This is to certify that</p><h2 style="font-size:2rem">' + h(profile.full_name) + "</h2><p>has completed</p><h2>" + h(c.title) + '</h2><p class="lp-mut">' + new Date(c.issued_at).toLocaleDateString([], { dateStyle: "long" }) + "<br>Certificate code " + h(c.code) + "</p>" + (c.revoked_at ? say("This certificate is no longer valid.") : "") + '</div><div class="lp-row lp-noprint" style="margin-top:14px"><button class="btn" onclick="window.print()">Print or save as PDF</button></div>');
+    var c = await q(sb.from("certificates").select("id,code,title,issued_at,revoked_at,student_id,programs(title),program_levels(title,level_number)").eq("id", id).single());
+    var name = profile ? profile.full_name : null;
+    if (!name) { var st = await q(sb.from("students").select("full_name").eq("id", c.student_id).single()); name = st.full_name; }
+    var lv = c.program_levels ? "Level " + c.program_levels.level_number + ": " + c.program_levels.title : "";
+    var date = new Date(c.issued_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    page(top('<div class="lp-crumb lp-noprint"><a href="' + (profile ? "#home" : "/admin#progress") + '">&larr; Back</a></div>') +
+      window.InayaCert.html({ name: name, title: c.title, program: c.programs ? c.programs.title : "", level: lv, date: date, code: c.code, revoked: !!c.revoked_at }) +
+      '<div class="ct-actions lp-noprint"><button class="btn" id="ct-pdf">Download PDF</button><button class="btn ghost" id="ct-print">Print</button></div>' +
+      '<p class="ct-hint lp-noprint">In the window that opens, choose Save as PDF as the printer. Turn off headers and footers for a clean page.</p>');
+    var old = document.title, doPrint = function () { document.title = "Certificate - " + name; window.print(); setTimeout(function () { document.title = old; }, 1500); };
+    $("#ct-pdf").onclick = doPrint; $("#ct-print").onclick = doPrint;
     wire();
   }
   async function verify() {
