@@ -686,5 +686,5 @@ window.InayaLearningAdmin = function (K) {
 
   /* ===================================================== NAV */
   var ac = K.NAV.filter(function (g) { return g[0] === "Academy"; })[0];
-  if (ac) { ac[1].unshift(["learning", "Learning Programs", "book"], ["progress", "Student Progress", "chart"]); }
+  if (ac) { ac[1].unshift(["learning", "Learning Programs", "cap"], ["progress", "Student Progress", "chart"]); }
 };

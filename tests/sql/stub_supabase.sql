@@ -6,6 +6,8 @@ do $$ begin
 end $$;
 grant anon, authenticated, service_role to postgres;
 create schema auth; create schema storage;
+-- Supabase keeps pgcrypto in the "extensions" schema, which is NOT on the search_path of our functions. Match that so a missing schema prefix fails here too.
+create schema extensions; create extension if not exists pgcrypto schema extensions;
 create table auth.users(id uuid primary key default gen_random_uuid(), email text unique, raw_user_meta_data jsonb default '{}'::jsonb, created_at timestamptz default now());
 create function auth.uid() returns uuid language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''), nullif(nullif(current_setting('request.jwt.claims', true), '')::jsonb->>'sub', ''))::uuid $$;
 create function auth.role() returns text language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), nullif(current_setting('request.jwt.claims', true), '')::jsonb->>'role', 'anon') $$;
