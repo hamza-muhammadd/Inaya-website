@@ -18,7 +18,7 @@ ok(await pg.isVisible('#st-logo')&&!(await pg.isVisible('#st-email')),'Brand Ide
 const old=await pg.inputValue('#st-logo');
 await pg.fill('#st-logo','/assets/img/favicon.png'); await pg.fill('#st-lh','60'); await pg.waitForTimeout(150);
 ok((await pg.getAttribute('#st-logo-pv img','src'))==='/assets/img/favicon.png','live preview updates');
-await pg.click('#st-save2'); await pg.waitForTimeout(600);
+await pg.click('#st-save'); await pg.waitForTimeout(600);
 ok((await pg.getAttribute('#brand-img','src'))==='/assets/img/favicon.png','admin panel logo changed immediately');
 const saved=await pg.evaluate(()=>JSON.parse(sessionStorage.getItem('__mockdb')).site_settings);
 const data=(Array.isArray(saved)?saved[0]:saved).data; ok(data.logo_url==='/assets/img/favicon.png'&&data.logo_height===60,'saved to site_settings: '+data.logo_url+' '+data.logo_height);

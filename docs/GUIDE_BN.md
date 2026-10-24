@@ -307,3 +307,7 @@ Puro guide English e ache: docs/LEARNING_PLATFORM.md. Choto kore Bangla te:
 5. Program er Students tab e student enrol korun. Tarpor Student Progress e student er profile khule "Student sign-in" theke email ar password din.
 6. Student der kache /learn link din. Seikhane login kore lesson, quiz ar audio answer dite parbe.
 7. Teacher Student Progress, Review queue theke written ar audio answer e number dibe.
+
+## Google Tag Manager (notun)
+
+Admin, Settings, SEO and analytics e Provider e "Google Tag Manager" nin, GTM-XXXXXXX container ID boshan, save korun. GTM connect korlei data layer nijei chalu hoy, alada kono switch nei. Visitor Accept na korle kichu pathay na. Student area ar admin e analytics load hoy na. Pura talika: docs/ANALYTICS_GTM.md

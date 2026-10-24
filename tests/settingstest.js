@@ -14,6 +14,14 @@ let pass = 0, fail = 0; const ok = (c, m) => { c ? pass++ : fail++; console.log(
   const db = () => pg.evaluate(() => JSON.parse(sessionStorage.getItem('__mockdb')));
   const sset = async () => { const d = (await db()).site_settings; return (Array.isArray(d) ? d[0] : d).data; };
 
+  // (added) Tag Manager option: validation and saving
+  await pg.goto('http://localhost:4173/admin#settings/seo'); await pg.waitForTimeout(1000);
+  await pg.selectOption('#st-an', 'gtm'); await pg.fill('#st-gtm', 'bad'); await pg.click('#st-save'); await pg.waitForTimeout(500);
+  ok(/Tag Manager container ID/.test(await pg.locator('.modal').innerText()), 'a wrong GTM container ID is refused'); await pg.click('.modal [data-x]');
+  await pg.fill('#st-gtm', 'GTM-ABC1234'); await pg.click('#st-save'); await pg.waitForTimeout(900);
+  const an0 = (await sset()).analytics; ok(an0.provider === 'gtm' && an0.gtm_id === 'GTM-ABC1234', 'GTM id saves with the provider');
+  ok(!(await pg.locator('#st-dl, [id*=datalayer], [id*=dl-]').count()), 'there is no separate data layer switch');
+  await pg.selectOption('#st-an', 'none'); await pg.click('#st-save'); await pg.waitForTimeout(700);
   console.log('Settings structure');
   await pg.goto('http://localhost:4173/admin#settings'); await pg.waitForTimeout(1200);
   const tabs = await pg.locator('#st-tabs button').allInnerTexts();
@@ -29,10 +37,10 @@ let pass = 0, fail = 0; const ok = (c, m) => { c ? pass++ : fail++; console.log(
   ok(await pg.locator('.modal').count() === 0, 'no pop-up logo editor anywhere');
   // one save keeps values from several groups
   await pg.fill('#st-fav', '/assets/img/favicon.png'); await pg.click('[data-stab=general]'); await pg.fill('#st-tag', 'Learn calmly'); await pg.click('[data-stab=seo]'); await pg.fill('#st-seot', 'Inaya Quran Academy online');
-  ok(!(await pg.locator('#st-dirty2').evaluate(e => e.classList.contains('hidden'))), 'unsaved changes are shown next to the save button');
-  await pg.click('#st-save2'); await pg.waitForTimeout(700);
+  ok(!(await pg.locator('#st-dirty').evaluate(e => e.classList.contains('hidden'))), 'unsaved changes are shown next to the save button');
+  await pg.click('#st-save'); await pg.waitForTimeout(700);
   let d = await sset(); ok(d.favicon_url === '/assets/img/favicon.png' && d.tagline === 'Learn calmly' && d.seo_title === 'Inaya Quran Academy online', 'one save stores changes from three groups');
-  ok(await pg.locator('#st-dirty2').evaluate(e => e.classList.contains('hidden')), 'saved state is clear after saving');
+  ok(await pg.locator('#st-dirty').evaluate(e => e.classList.contains('hidden')), 'saved state is clear after saving');
   // validation points at the problem
   await pg.click('[data-stab=general]'); await pg.fill('#st-email', 'not-an-email'); await pg.click('#st-save'); await pg.waitForTimeout(300);
   ok(/Contact email looks invalid/.test(await pg.innerText('.modal')), 'validation message names the problem'); await pg.click('.modal [data-cancel], .modal .btn.ghost'); await pg.waitForTimeout(200);

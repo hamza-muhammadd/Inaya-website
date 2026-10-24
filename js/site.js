@@ -42,7 +42,7 @@
     assessment_success: "JazakAllahu khairan! We have received your request. Our team will contact you soon, InshaAllah.",
     contact_success: "JazakAllahu khairan! Your message has been sent. We will reply as soon as possible.",
     form_fields: { student_name: true, age_group: true, country: true, reading_level: true, preferred_time: true },
-    analytics: { provider: "none", ga4_id: "", plausible_domain: "" },
+    analytics: { provider: "none", ga4_id: "", gtm_id: "", plausible_domain: "" },
     translate: { enabled: true, languages: [] }
   };
 
@@ -251,11 +251,53 @@
     try {
       var a = settingsRef.analytics || {};
       if (a.provider === "ga4" && gaReady && window.gtag) window.gtag("event", ev, { page_path: location.pathname });
+      if (a.provider === "gtm") gtmEvent(ev);
       if (a.provider === "plausible" && window.plausible) window.plausible(ev);
     } catch (e) {}
   }
+  /* ---------- Google Tag Manager and the GA4 data layer ----------
+     Connecting a GTM container switches the data layer on by itself. Events use GA4 names and shapes.
+     Nothing is pushed before the visitor accepts; events wait in a short queue and are dropped if they decline.
+     No names, emails or phone numbers are ever pushed. The student area (/learn) never loads analytics. */
+  var dlState = "off", dlQueue = [];   // off | waiting (for consent) | on
+  function dlBase() { return { page_location: location.href.split("#")[0], page_path: location.pathname, page_title: document.title, language: (window.InayaI18n && typeof window.InayaI18n.lang === "string" && window.InayaI18n.lang) || document.documentElement.lang || "en" }; }
+  function dl(name, params) {
+    if (dlState === "off" || /^\/admin|^\/learn/.test(location.pathname)) return;
+    var o = Object.assign({ event: name }, dlBase(), params || {});
+    if (dlState === "on") { window.dataLayer = window.dataLayer || []; if (o.ecommerce) window.dataLayer.push({ ecommerce: null }); window.dataLayer.push(o); }
+    else if (dlQueue.length < 40) dlQueue.push(o);
+  }
+  function flushDl() { var q = dlQueue; dlQueue = []; dlState = "on"; q.forEach(function (o) { window.dataLayer = window.dataLayer || []; if (o.ecommerce) window.dataLayer.push({ ecommerce: null }); window.dataLayer.push(o); }); }
+  function gtmEvent(ev) {
+    if (ev === "page_view") dl("page_view");
+    else if (ev === "assessment_submitted" || ev === "contact_submitted") dl("generate_lead", { lead_source: ev === "assessment_submitted" ? "assessment_form" : "contact_form" });
+    else if (ev === "assessment_form_start") dl("form_start", { form_id: "assessment" });
+    else if (ev === "whatsapp_click") dl("whatsapp_click");
+    else if (ev === "assessment_cta_click") dl("assessment_cta_click");
+    // program_view is sent as view_item with the program, see Inaya.dl in program.html
+  }
+  function loadGTM(id) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+    var sc = document.createElement("script"); sc.async = true; sc.src = "https://www.googletagmanager.com/gtm.js?id=" + encodeURIComponent(id);
+    document.head.appendChild(sc); flushDl();
+  }
+  function engagement() {
+    var ms = 0, last = Date.now(), sent = false;
+    var t = setInterval(function () {
+      var now = Date.now(); if (document.visibilityState === "visible") ms += now - last; last = now;
+      if (!sent && ms >= 30000) { sent = true; clearInterval(t); dl("user_engagement", { engagement_time_msec: 30000 }); dl("engaged_30s", { engagement_time_msec: 30000 }); }
+    }, 1000);
+  }
   function initAnalytics(s) {
     var a = s.analytics || {};
+    if (/^\/learn/.test(location.pathname) || /^\/admin/.test(location.pathname)) return;   // no analytics for students or staff
+    if (a.provider === "gtm" && /^GTM-[A-Z0-9]{4,10}$/.test(a.gtm_id || "") && !dnt) {
+      var ch = null; try { ch = localStorage.getItem("iqa_consent"); } catch (e) {}
+      if (ch === "yes") { dlState = "on"; loadGTM(a.gtm_id); engagement(); }
+      else if (ch !== "no") { dlState = "waiting"; consentBar(a.gtm_id, "gtm"); engagement(); }
+      return;
+    }
     if (a.provider === "plausible" && /^[a-z0-9.\-]+\.[a-z]{2,}$/i.test(a.plausible_domain || "")) {
       window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments); };
       var sc = document.createElement("script"); sc.defer = true; sc.setAttribute("data-domain", a.plausible_domain);
@@ -273,13 +315,14 @@
     var sc = document.createElement("script"); sc.async = true; sc.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
     document.head.appendChild(sc); gaReady = true;
   }
-  function consentBar(id) {
+  function consentBar(id, kind) {
     var b = document.createElement("div"); b.className = "consent-bar"; b.setAttribute("role", "dialog"); b.setAttribute("aria-label", "Analytics consent");
-    b.innerHTML = '<span>We use Google Analytics to understand how visitors use this site. No names or contact details are shared. <a href="/privacy">Privacy</a></span><span class="btn-row"><button class="btn sm ghost" data-c="no">Decline</button><button class="btn sm" data-c="yes">Accept</button></span>';
+    b.innerHTML = '<span>We use ' + (kind === "gtm" ? "analytics tools" : "Google Analytics") + ' to understand how visitors use this site. No names or contact details are shared. <a href="/privacy">Privacy</a></span><span class="btn-row"><button class="btn sm ghost" data-c="no">Decline</button><button class="btn sm" data-c="yes">Accept</button></span>';
     b.addEventListener("click", function (e) {
       var c = e.target.getAttribute && e.target.getAttribute("data-c"); if (!c) return;
       try { localStorage.setItem("iqa_consent", c); } catch (x) {}
-      if (c === "yes") loadGA(id); b.remove();
+      if (c === "yes") { if (kind === "gtm") loadGTM(id); else loadGA(id); } else if (kind === "gtm") { dlState = "off"; dlQueue = []; }
+      b.remove();
     });
     document.body.appendChild(b);
   }
@@ -485,6 +528,7 @@
 
   window.Inaya = {
     getSettings: function () { return settingsRef; },
+    dl: dl,
     configured: configured, esc: esc, md: md, inline: inline, safeHref: safeHref, safeImg: safeImg, digits: digits,
     get: get, rpc: rpc, boot: boot, track: track, setMeta: setMeta, waLink: waLink, resolveHref: resolveHref,
     loadPrograms: loadPrograms, loadFaqs: loadFaqs, loadPage: loadPage, loadSettings: loadSettings,
