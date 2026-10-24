@@ -100,7 +100,9 @@ export function unitsOf(str) {
 let corpusCache = { t: 0, text: "", units: [] };
 async function loadCorpus(env, db, maxAge) {
   if (Date.now() - corpusCache.t < (maxAge == null ? 60000 : maxAge)) return corpusCache;
-  var rows = [], t = ["programs?select=*", "program_levels?select=*", "faqs?select=*", "public_pages?select=title,seo_title,seo_description,sections", "site_settings?select=data"];
+  var rows = [], t = ["programs?select=*", "program_levels?select=*", "faqs?select=*", "public_pages?select=title,seo_title,seo_description,sections", "site_settings?select=data",
+    "learning_domains?select=title,description", "learning_units?select=title,description,objectives", "learning_lessons?select=title,description,objectives", "lesson_blocks?select=type,data&type=neq.teacher_note",
+    "learning_assessments?select=title,instructions", "assessment_questions?select=prompt,arabic_text,options,explanation", "achievement_defs?select=title,description"];
   for (var i = 0; i < t.length; i++) { var r = await db.get(t[i]); if (Array.isArray(r)) rows.push(r); }
   var all = leaves(rows, []).concat(UI_STRINGS), seen = {}, units = [];
   all.forEach(function (s) { unitsOf(s).forEach(function (u) { if (!seen[u]) { seen[u] = 1; units.push(u); } }); });

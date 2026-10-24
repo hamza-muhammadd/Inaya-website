@@ -104,7 +104,7 @@ h1{font-size:1.5rem}h2{font-size:1.2rem}
 .card+.card{margin-top:14px}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--bd);margin-bottom:16px;flex-wrap:wrap}
 .tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:9px 14px;font-weight:600;color:var(--mu)}.tabs button.on{color:var(--g);border-color:var(--sand)}
-.savebar{position:sticky;bottom:0;display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:10px 0;margin-top:8px;background:linear-gradient(to top,var(--bg,#fff) 70%,transparent)}
+.savebar{position:sticky;bottom:10px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;margin:14px 0 4px;background:var(--card);border:1px solid var(--bd);border-radius:14px;box-shadow:0 6px 22px rgba(15,76,58,.14)}.savebar .sb-note{color:var(--mu);font-size:13px}.savebar .sb-act{display:flex;align-items:center;gap:12px;margin-left:auto}@media(max-width:560px){.savebar .sb-note{display:none}}
 #st-tabs{overflow-x:auto;flex-wrap:nowrap}#st-tabs button{white-space:nowrap}
 /* tiles */
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px}
@@ -322,6 +322,7 @@ input[type=text],input[type=email],input[type=password],input[type=search],input
 <script src="/config.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/sections.js"></script>
+<script src="/js/admin-learning.js"></script>
 <script>
 (function () {
 "use strict";
@@ -761,6 +762,7 @@ VIEWS.overview = async function (el) {
     var rangeLbl = days[0].toLocaleDateString([], { month: "short", day: "numeric" }) + " – " + days[6].toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
     var k = function (cls, label, val, chip, note, go) { return '<button class="kpi ' + cls + '" data-go="' + go + '"><div class="top"><span></span>' + chip + "</div><b>" + val + '</b><span class="l">' + label + "</span><small>" + note + "</small></button>"; };
 
+    if (!$("#ov-body")) return;   // the person already moved to another page
     $("#ov-body").innerHTML =
       '<div class="kpis">' +
       k("k1", "Inquiries (30 days)", last30, trendChip(last30, prev30), "vs " + prev30 + " in the 30 days before", "") +
@@ -2402,7 +2404,7 @@ VIEWS.settings = async function (el, args) {
   var c = s.colors, so = s.social || {}, ff = s.form_fields || {}, an = s.analytics || {};
   function imgField(id, label, v, hint) { return '<label class="l" for="' + id + '">' + label + '</label><div class="row"><input id="' + id + '" type="text" value="' + h(v || "") + '" style="flex:1"><button type="button" class="btn sm ghost" data-pk="' + id + '">Choose / upload</button></div>' + (hint ? '<div class="hint">' + hint + "</div>" : ""); }
   function colorField(k, label) { return '<div><label class="l" for="st-c-' + k + '">' + label + '</label><div class="sw"><input type="color" id="st-c-' + k + '" value="' + h(c[k]) + '"><input type="text" id="st-ch-' + k + '" value="' + h(c[k]) + '" maxlength="7" style="width:110px"></div></div>'; }
-  el.innerHTML = pageHead("Settings", "One place for everything that controls the website. Pick a group, change what you need, then press Save settings. Saved changes go live immediately.", '<span id="st-dirty" class="badge b-draft hidden">unsaved changes</span><button class="btn wbtn" id="st-save">Save settings</button>') +
+  el.innerHTML = pageHead("Settings", "One place for everything that controls the website. Pick a group, change what you need, then press Save settings. Saved changes go live immediately.", '') +
     '<div class="card"><h2>Logo, favicon, colours and font</h2><div class="g2">' + F("st-name", "Academy name", s.academy_name, { req: true, max: 100 }) + F("st-tag", "Tagline", s.tagline, { max: 100 }) + "</div>" +
     imgField("st-logo", "Logo", s.logo_url, "Used in the header, footer and emails. Transparent PNG works best. It is never stretched.") + '<div class="g2" style="margin-top:8px">' + F("st-lh", "Header logo height (px)", s.logo_height || 44, { type: "number", attrs: 'min="20" max="160" step="2"', hint: "20–160. The width follows automatically, so the logo is never stretched." }) + F("st-flh", "Footer logo height (px)", s.footer_logo_height || 44, { type: "number", attrs: 'min="20" max="160" step="2"' }) + "</div>" +
     '<div id="st-logo-pv" style="margin-top:8px;background:#FBF7EE;border:1px solid var(--bd);border-radius:10px;padding:10px;display:inline-block"></div>' +
@@ -2449,7 +2451,7 @@ VIEWS.settings = async function (el, args) {
     bar.innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-stab="' + t[0] + '">' + t[1] + "</button>"; }).join("");
     el.appendChild(bar);
     TABS.forEach(function (t) { var pn = document.createElement("div"); pn.setAttribute("data-pane", t[0]); (groups[t[0]] || []).forEach(function (c) { if (c) pn.appendChild(c); }); el.appendChild(pn); });
-    var sb2 = document.createElement("div"); sb2.className = "savebar"; sb2.innerHTML = '<span id="st-dirty2" class="badge b-draft hidden">unsaved changes</span><button class="btn wbtn" id="st-save2" type="button">Save settings</button>'; el.appendChild(sb2);
+    var sb2 = document.createElement("div"); sb2.className = "savebar"; sb2.innerHTML = '<span class="sb-note">Saved changes go live on the website straight away.</span><span class="sb-act"><span id="st-dirty" class="badge b-draft hidden">unsaved changes</span><button class="btn wbtn" id="st-save" type="button">Save settings</button></span>'; el.appendChild(sb2);
   })();
   function showTab(k, push) {
     if (!TABS.some(function (t) { return t[0] === k; })) k = "general";
@@ -2514,7 +2516,6 @@ VIEWS.settings = async function (el, args) {
     });
     this.disabled = true; try { await saveSettings(data); dirty = false; ["st-dirty", "st-dirty2"].forEach(function (i) { var d = $("#" + i); if (d) d.classList.add("hidden"); }); toast("Settings saved. The website is updated."); } catch (e) { fail(e); } this.disabled = false;
   };
-  $("#st-save2").onclick = $("#st-save").onclick;
   /* automatic translation card */
   async function trStatus() {
     var box = $("#tr-status", el); if (!box) return;
@@ -2535,6 +2536,14 @@ VIEWS.settings = async function (el, args) {
       onOk: async function () { var a = val("pw1"); if (a.length < 10) { toast("Use at least 10 characters.", true); return false; } if (a !== val("pw2")) { toast("The two passwords do not match.", true); return false; } var r = await sb.auth.updateUser({ password: a }); if (r.error) throw r.error; toast("Password updated"); } });
   };
 };
+
+/* ---------- learning platform (js/admin-learning.js) ---------- */
+if (window.InayaLearningAdmin) {
+  try {
+    window.InayaLearningAdmin({ h: h, q: q, F: F, val: val, mark: mark, modal: modal, confirmBox: confirmBox, toast: toast, fail: fail, badge: badge, pageHead: pageHead, fmtDT: fmtDT, fmtD: fmtD,
+      slugify: slugify, $: $, $$: $$, needWrite: needWrite, VIEWS: VIEWS, NAV: NAV, download: download, csvCell: csvCell, sb: function () { return sb; }, role: function () { return role; } });
+  } catch (e) { console.error("Learning module failed to load", e); }
+}
 
 /* ---------- start ---------- */
 initAuth();

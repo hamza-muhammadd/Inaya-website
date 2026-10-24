@@ -295,3 +295,15 @@ Programs & Curriculum থেকে কোনো প্রোগ্রাম খ�
 4. অ্যাডমিন > Settings > Automatic translation এ গিয়ে চাইলে আরও ভাষা টিক দিন, Save করুন, তারপর একবার "Translate everything now" চাপুন।
 
 পরে: পাতা Publish করলে নিজে থেকে পেছনে অনুবাদ গরম হয়ে যায়। কোনো অনুবাদ ভুল মনে হলে "Review translations" এ গিয়ে নিজের শব্দ লিখে দিন, মেশিন সেটা আর বদলাবে না। কুরআনের আয়াত কখনো অনুবাদ বা বদল হয় না, আরবি লেখা যেমন আছে তেমনই থাকে। ধর্মীয় ব্যাখ্যার অনুবাদ কোনো জ্ঞানী মানুষকে দিয়ে একবার দেখিয়ে নিন।
+
+## Learning Programs ar Student Progress (notun)
+
+Puro guide English e ache: docs/LEARNING_PLATFORM.md. Choto kore Bangla te:
+
+1. Supabase SQL Editor e age sql/010_learning_platform.sql, tarpor sql/011_seed_quranic_excellence.sql run korun.
+2. Student sign-in function deploy: `npx supabase functions deploy student-account --use-api --project-ref AAPNAR_REF`
+3. Puro website folder abar Vercel e upload korun.
+4. Admin, Academy, Learning Programs e Quranic Excellence khulun. Eta sample content shoho draft. Porun, Arabic gulo apnader source theke mailiye nin, tarpor "I have reviewed it" ar "Publish" chapun.
+5. Program er Students tab e student enrol korun. Tarpor Student Progress e student er profile khule "Student sign-in" theke email ar password din.
+6. Student der kache /learn link din. Seikhane login kore lesson, quiz ar audio answer dite parbe.
+7. Teacher Student Progress, Review queue theke written ar audio answer e number dibe.

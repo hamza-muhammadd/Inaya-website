@@ -23,6 +23,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&family=Hind+Siliguri:wght@400;500;600&family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
 <link rel="stylesheet" href="/css/site.css">
+<link rel="stylesheet" href="/css/learn.css">
 
 </head>
 <body>
@@ -36,6 +37,7 @@
 <script src="/js/i18n.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/sections.js"></script>
+<script src="/js/curriculum.js"></script>
 <script>
 Inaya.boot(async function (s) {
   var qs = new URLSearchParams(location.search).get("slug"), last = decodeURIComponent(location.pathname.replace(/\/+$/, "").split("/").pop() || "");
@@ -51,6 +53,7 @@ Inaya.boot(async function (s) {
     return;
   }
   main.innerHTML = InayaSections.programDetail(p, { settings: s });
+  try { await InayaCurriculum.render(p); } catch (e) { console.error(e); }
   Inaya.setMeta({ title: p.title + " | " + s.academy_name, description: p.short_description || p.description.slice(0, 155), image: p.image_url || s.og_image, siteUrl: s.site_url, canonical: s.site_url.replace(/\/+$/, "") + "/programs/" + p.slug });
 });
 </script>
