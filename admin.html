@@ -7,6 +7,7 @@
 <title>Admin - Inaya Quran Academy</title>
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,600&display=swap">
+<link rel="stylesheet" href="/css/journey.css">
 <style>
 :root{--g:#0F4C3A;--g2:#0A3528;--sand:#B8975A;--sand-soft:#F3ECDB;--bg:#F6F3EA;--card:#fff;--tx:#26312C;--mu:#66726B;--bd:#E4DECE;--bad:#A12B2B;--ok:#1F7A4D;--warn:#9A6B12;--r:12px;
 --f:"Inter",system-ui,-apple-system,"Segoe UI","Hind Siliguri",sans-serif}
@@ -349,6 +350,7 @@ input[type=text],input[type=email],input[type=password],input[type=search],input
 <script src="/config.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/sections.js"></script>
+<script src="/js/journey.js"></script>
 <script src="/js/admin-learning.js"></script>
 <script>
 (function () {
@@ -790,19 +792,19 @@ VIEWS.overview = async function (el) {
     var selIso = st.sel || (days.some(function (d) { return isoLocal(d) === today; }) ? today : isoLocal(days[0]));
     var dayEv = fu.filter(function (l) { return l.follow_up_date === selIso; });
     var rangeLbl = days[0].toLocaleDateString([], { month: "short", day: "numeric" }) + " – " + days[6].toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
-    var k = function (cls, label, val, chip, note, go) { return '<button class="hs ' + cls + '" data-go="' + go + '" title="' + h(note) + '"><b>' + val + '</b><span class="l">' + label + "</span>" + chip + "</button>"; };
+    var k = function (cls, label, val, chip, note, go) { return '<button class="kpi ' + cls + '" data-go="' + go + '"><div class="top"><span></span>' + chip + "</div><b>" + val + '</b><span class="l">' + label + "</span><small>" + note + "</small></button>"; };
     var qcards = [["leads", "Leads & Inquiries", "New requests and follow-ups", "mail"], ["students", "Students", "Student records", "user"], ["progress", "Student Progress", "Lessons, quizzes, grading", "chart"], ["classes", "Classes & Timetable", "Groups and weekly schedule", "cal"], ["attendance", "Attendance", "Take today's attendance", "clip"], ["teachers", "Teachers", "Staff and assignments", "users"], ["finance", "Finance", "Fees and teacher pay", "cash"], ["learning", "Learning Programs", "Levels, units and lessons", "cap"], ["builder", "Website Builder", "Edit your public website", "brush"], ["reports", "Reports", "Downloads and numbers", "chart"], ["settings", "Settings", "Brand, analytics and more", "gear"]].filter(function (c) { return (canAdmin || !NAV_ADMIN[c[0]]) && (role === "owner" || !NAV_OWNER[c[0]]); });
 
     if (!$("#ov-body")) return;   // the person already moved to another page
     $("#ov-body").innerHTML =
-      '<div class="hero"><div class="eyebrow">Admin dashboard</div><h2>Welcome back</h2><div class="hero-stats">' +
+      '<div class="kpis">' +
       k("k1", "Inquiries (30 days)", last30, trendChip(last30, prev30), "vs " + prev30 + " in the 30 days before", "") +
       k("k2", "New inquiries", newN, '<span class="chip2 ' + (newN ? "down" : "up") + '">' + (newN ? (oldestNew != null ? "oldest " + oldestNew + "d" : "waiting") : "all clear") + "</span>", "Status “New”. Click to open the list.", "New") +
       k("k3", "Follow-ups due", overdue + dueToday, '<span class="chip2 ' + (overdue ? "down" : "flat") + '">' + overdue + " overdue</span>", "Overdue plus due today (" + dueToday + " today).", "") +
       k("k4", "Enrollment confirmed", conf, '<span class="chip2 flat">' + rate + "% of " + total + "</span>", "Share of inquiries (last 400 days). Not a payment record.", "Enrollment Confirmed") +
-      "</div></div>" +
-      '<h3 class="sec-t">Quick actions</h3><div class="qgrid">' + qcards.map(function (c) { return '<a class="qc" href="#' + c[0] + '"><span class="qi">' + ico(c[3]) + "</span><b>" + h(c[1]) + "</b><small>" + h(c[2]) + "</small></a>"; }).join("") + "</div>" +
+      "</div>" +
       '<div class="pills">' + [["Assessment Scheduled"], ["Assessment Completed"], ["Follow-up Required"], ["Enrollment Pending"], ["Not Proceeding"]].map(function (s) { return '<button class="pillb" data-go="' + s[0] + '">' + h(s[0]) + "<b>" + cnt(s[0]) + "</b></button>"; }).join("") + "</div>" +
+      '<h3 class="sec-t">Quick actions</h3><div class="qgrid">' + qcards.map(function (c) { return '<a class="qc" href="#' + c[0] + '"><span class="qi">' + ico(c[3]) + "</span><b>" + h(c[1]) + "</b><small>" + h(c[2]) + "</small></a>"; }).join("") + "</div>" +
       (unhandled ? '<div class="alert warn">You have <b>' + unhandled + "</b> unhandled contact message" + (unhandled > 1 ? "s" : "") + '. <a href="#leads/messages">Open messages</a></div>' : "") +
       '<div class="dash"><div>' +
       '<div class="panel"><div class="ph2"><h3>Inquiries received</h3><select id="ch-range"><option value="7"' + (st.chart === "7" ? " selected" : "") + '>Last 7 days</option><option value="30"' + (st.chart === "30" ? " selected" : "") + '>Last 30 days</option><option value="12"' + (st.chart === "12" ? " selected" : "") + ">Last 12 months</option></select></div>" +
@@ -847,13 +849,14 @@ VIEWS.students = async function (el, args) {
     '<select id="st-s" style="width:auto"><option value="">All statuses</option>' + SSTAT.map(function (s) { return '<option' + (SS.status === s ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select>" +
     '<label class="row small" style="gap:6px"><input id="st-a" type="checkbox"' + (SS.archived ? " checked" : "") + '> Show archived</label></div><div id="st-list"></div></div>';
   var rows = (await q(sb.from("students").select("id,student_code,full_name,status,country,program_id,start_date,created_at,deleted_at").order("created_at", { ascending: false }).limit(1000))).data || [];
+  var enrolled = {}; ((await q(sb.from("student_programs").select("student_id").neq("status", "withdrawn").limit(5000))).data || []).forEach(function (e) { enrolled[e.student_id] = 1; });
   function draw() {
     var t = SS.q.toLowerCase();
     var r = rows.filter(function (s) { return (SS.archived ? !!s.deleted_at : !s.deleted_at) && (!SS.status || s.status === SS.status) && (!t || (s.full_name + " " + s.student_code).toLowerCase().indexOf(t) > -1); });
     $("#st-list").innerHTML = r.length ? '<div class="tw"><table class="tbl"><thead><tr><th>Student</th><th>Program</th><th>Status</th><th>Country</th><th>Added</th></tr></thead><tbody>' +
       r.map(function (s) { return '<tr class="click" data-id="' + s.id + '"><td><b>' + h(s.full_name) + '</b><br><span class="muted small">' + h(s.student_code) + "</span></td><td>" + h(progName(progs, s.program_id)) + "</td><td>" + sbadge(s.status) + "</td><td>" + h(s.country || "-") + "</td><td>" + fmtD(s.created_at) + "</td></tr>"; }).join("") + "</tbody></table></div>" :
       '<div class="empty">' + (rows.length ? "No students match." : "No students yet. Convert a confirmed inquiry or add one manually.") + "</div>";
-    $$("tr[data-id]", $("#st-list")).forEach(function (tr) { tr.onclick = function () { location.hash = "#students/" + tr.getAttribute("data-id"); }; });
+    $$("tr[data-id]", $("#st-list")).forEach(function (tr) { tr.onclick = function () { var i = tr.getAttribute("data-id"); location.hash = (enrolled[i] ? "#progress/" : "#students/") + i; }; });
   }
   $("#st-q").oninput = function () { SS.q = this.value; draw(); };
   $("#st-s").onchange = function () { SS.status = this.value; draw(); };
